@@ -42,10 +42,8 @@ const App = () => {
 
       if (nextAppState === 'active') {
         console.log('✅ App resumed');
-        // Example: Reconnect sockets, refresh data, or perform any necessary tasks
       } else if (nextAppState === 'background') {
         console.log('🔕 App moved to background');
-        // Example: Pause ongoing tasks, close sockets, etc.
       }
     });
 

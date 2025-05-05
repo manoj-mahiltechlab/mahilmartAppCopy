@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   gradient: {
     width: '100%',
-    height: screenHeight * 0.4,
+    height: screenHeight * 0.5,
     position: 'absolute',
   },
   cloud: {

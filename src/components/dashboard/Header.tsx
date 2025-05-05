@@ -12,23 +12,25 @@ import {reverseGeocode} from '@service/mapService';
 const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
   const {setUser, user} = useAuthStore();
 
-  const updateUserLocation = async () => {
-    Geolocation.requestAuthorization();
-    Geolocation.getCurrentPosition(
-      position => {
-        const {latitude, longitude} = position.coords;
-        reverseGeocode(latitude, longitude, setUser);
-      },
-      error => console.log(error),
-      {
-        enableHighAccuracy: false,
-        timeout: 10000,
-      },
-    );
-  };
   useEffect(() => {
-    updateUserLocation;
-  });
+    const updateUserLocation = async () => {
+      Geolocation.requestAuthorization();
+      Geolocation.getCurrentPosition(
+        position => {
+          console.log('latitude****', position.coords.latitude);
+          const {latitude, longitude} = position.coords;
+          reverseGeocode(latitude, longitude, setUser);
+        },
+        error => console.log(error),
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+        },
+      );
+    };
+
+    updateUserLocation();
+  }, [setUser]);
 
   return (
     <View style={styles.subContainer}>
@@ -99,10 +101,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingTop: Platform.OS === 'android' ? 10 : 5,
+    paddingTop: Platform.OS === 'android' ? 25 : 9,
     justifyContent: 'space-between',
   },
   flexRowGap: {
+    //paddingTop: 15,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,

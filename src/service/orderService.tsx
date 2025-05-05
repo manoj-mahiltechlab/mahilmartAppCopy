@@ -3,16 +3,21 @@ import {BRANCH_ID} from './config';
 
 export const createOrder = async (items: any, totalPrice: number) => {
   try {
+    console.log('createOrder.items :', items);
+    console.log('createOrder.totalPrice :', totalPrice);
+
     const response = await appAxios.post('/order', {
-      items,
+      items: items,
       branch: BRANCH_ID,
-      totalPrice,
+      totalPrice: totalPrice,
     });
+
     console.log('Order Response:', response);
     console.log('check', items, totalPrice, BRANCH_ID);
+
     return response.data;
   } catch (error) {
-    console.error('Create Order Error', error);
+    console.error('Create Order Error : ', error);
     return null;
   }
 };

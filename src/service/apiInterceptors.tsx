@@ -14,7 +14,6 @@ appAxios.interceptors.request.use(async config => {
   }
   return config;
 });
-
 appAxios.interceptors.response.use(
   response => response,
   async error => {

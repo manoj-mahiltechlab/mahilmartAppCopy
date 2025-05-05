@@ -8,8 +8,12 @@ import {resetAndNavigate} from '@utils/NavigationUtils';
 
 export const customerLogin = async (phone: string) => {
   try {
+    console.log('customerLogin phone', phone);
     const response = await axios.post(`${BASE_URL}/customer/login`, {phone});
     const {accessToken, refreshToken, customer} = response.data;
+    console.log('accessToken', accessToken);
+    console.log('refreshToken', refreshToken);
+    console.log('customer', customer);
     tokenStorage.set('accessToken', accessToken);
     tokenStorage.set('refreshToken', refreshToken);
     const {setUser} = useAuthStore.getState();
@@ -48,7 +52,7 @@ export const refresh_Tokens = async () => {
     tokenStorage.set('refreshToken', new_refresh_token);
     return new_access_token;
   } catch (error) {
-    console.log('REFRESH TOKEN ERROR', error);
+    console.log('REFRESH TOKEN ERROR : ', error);
     tokenStorage.clearAll();
     resetAndNavigate('CustomerLogin');
   }
@@ -56,7 +60,8 @@ export const refresh_Tokens = async () => {
 
 export const refetchUser = async (setUser: any) => {
   try {
-    const response = await appAxios.get(`/user`);
+    const response = await appAxios.get('/user');
+    console.info('Response : ', response.data.user);
     setUser(response.data.user);
   } catch (error) {
     console.log('Login Error', error);
@@ -65,7 +70,9 @@ export const refetchUser = async (setUser: any) => {
 
 export const updateUserLocation = async (data: any, setUser: any) => {
   try {
+    console.log('Location updated successfully:', data);
     const response = await appAxios.patch('/user', data);
+    console.log('Location updated successfully:', response.data);
     refetchUser(setUser);
   } catch (error) {
     console.log('update User Location Error', error);

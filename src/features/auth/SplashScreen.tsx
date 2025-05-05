@@ -1,21 +1,16 @@
-import React, {FC, useEffect} from 'react';
-import {View, StyleSheet, Image, Alert, Platform} from 'react-native';
+import React, {FC, useEffect, useCallback} from 'react';
+import {View, StyleSheet, Image, Alert, Platform, Linking} from 'react-native';
+import {useIsFocused} from '@react-navigation/native';
 import {Colors} from '@utils/Constants';
 import Logo from '@assets/images/logo.jpeg';
 import {screenHeight, screenWidth} from '@utils/Scaling';
 import GeoLocation from '@react-native-community/geolocation';
 import {useAuthStore} from '@state/authStore';
-import {tokenStorage} from '@state/storage';
+import {mmkvStorage} from '@state/storage'; // Updated import for mmkvStorage
 import {jwtDecode} from 'jwt-decode';
 import {refetchUser, refresh_Tokens} from '@service/authService';
 import {resetAndNavigate} from '@utils/NavigationUtils';
-import {
-  check,
-  request,
-  PERMISSIONS,
-  RESULTS,
-  openSettings,
-} from 'react-native-permissions';
+import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 
 GeoLocation.setRNConfiguration({
   skipPermissionRequests: false,
@@ -30,6 +25,7 @@ interface DecodedToken {
 
 const SplashScreen: FC = () => {
   const {user, setUser} = useAuthStore();
+  const isFocused = useIsFocused();
 
   const navigateBasedOnRole = () => {
     if (user?.role === 'Customer') {
@@ -41,8 +37,11 @@ const SplashScreen: FC = () => {
 
   const validateTokens = async () => {
     try {
-      const accessToken = tokenStorage.getString('accessToken');
-      const refreshToken = tokenStorage.getString('refreshToken');
+      // Use mmkvStorage for consistent token retrieval
+      const accessToken = mmkvStorage.getItem('accessToken');
+      const refreshToken = mmkvStorage.getItem('refreshToken');
+
+      console.log('Access token ******', accessToken);
 
       if (!accessToken || !refreshToken) {
         resetAndNavigate('CustomerLogin');
@@ -60,7 +59,7 @@ const SplashScreen: FC = () => {
       }
 
       if (decodedAccess.exp < currentTime) {
-        await refresh_Tokens(); // get new access token
+        await refresh_Tokens(); // Get a new access token
       }
 
       await refetchUser(setUser);
@@ -72,7 +71,33 @@ const SplashScreen: FC = () => {
     }
   };
 
-  const handleLocationPermission = async () => {
+  const checkLocationServices = useCallback(async () => {
+    try {
+      const result = await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+
+      if (result === RESULTS.GRANTED) {
+        validateTokens(); // GPS is ON
+      } else {
+        const requestResult = await request(
+          PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+        );
+        if (requestResult === RESULTS.GRANTED) {
+          validateTokens(); // Now permission is granted
+        } else {
+          Alert.alert(
+            'Enable Location',
+            'Location permission is required to use the app.',
+            [{text: 'OK'}],
+          );
+        }
+      }
+    } catch (error) {
+      console.log('Error checking GPS status:', error);
+      Alert.alert('Error', 'Unable to check location services.');
+    }
+  }, [validateTokens]);
+
+  const handleLocationPermission = useCallback(async () => {
     const permission =
       Platform.OS === 'android'
         ? PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION
@@ -83,12 +108,14 @@ const SplashScreen: FC = () => {
     switch (status) {
       case RESULTS.GRANTED:
         console.log('Permission granted');
-        validateTokens();
+        checkLocationServices();
         break;
       case RESULTS.DENIED:
+      case RESULTS.UNAVAILABLE:
+      case RESULTS.LIMITED:
         const newStatus = await request(permission);
         if (newStatus === RESULTS.GRANTED) {
-          validateTokens();
+          checkLocationServices();
         } else {
           Alert.alert(
             'Permission Needed',
@@ -102,16 +129,25 @@ const SplashScreen: FC = () => {
           'Please enable location access in your settings.',
           [
             {text: 'Cancel', style: 'cancel'},
-            {text: 'Open Settings', onPress: () => openSettings()},
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                Linking.openSettings().catch(() => {
+                  Alert.alert('Error', 'Unable to open settings');
+                });
+              },
+            },
           ],
         );
         break;
     }
-  };
+  }, [checkLocationServices]); // Add checkLocationServices to dependencies
 
   useEffect(() => {
-    handleLocationPermission();
-  });
+    if (isFocused) {
+      handleLocationPermission();
+    }
+  }, [isFocused, handleLocationPermission]);
 
   return (
     <View style={styles.container}>

@@ -1,6 +1,12 @@
 import {NoticeHeight, screenHeight} from '@utils/Scaling';
 import {useEffect, useRef} from 'react';
-import {StyleSheet, Platform, TouchableOpacity, View} from 'react-native';
+import {
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  View,
+  Alert,
+} from 'react-native';
 import {
   CollapsibleHeaderContainer,
   CollapsibleScrollView,
@@ -26,15 +32,13 @@ import Animated, {
 import AnimatedHeader from './AnimaterHeader';
 import React from 'react';
 import Content from '@components/dashboard/Content';
-import StickySearchBar from './StickySearchBar';
 import withCart from '@features/cart/WithCart';
 import {reverseGeocode} from '@service/mapService';
 
-const NOTICE_HEIGHT = -(NoticeHeight + 12);
+const NOTICE_HEIGHT = -(NoticeHeight + 50);
 
 const ProductDashboard = () => {
   const {user, setUser} = useAuthStore();
-  // const {scrollY, expand, scrollTo} = useCollapsibleContext();
   const insets = useSafeAreaInsets();
   const noticePosition = useSharedValue(0);
   const showBackToTop = useSharedValue(false);
@@ -52,6 +56,14 @@ const ProductDashboard = () => {
     [scrollY],
   );
 
+  const slideUp = () => {
+    noticePosition.value = withTiming(NOTICE_HEIGHT, {duration: 1300});
+  };
+
+  const slideDown = () => {
+    noticePosition.value = withTiming(0, {duration: 1000});
+  };
+
   useEffect(() => {
     const updateUser = () => {
       Geolocation.getCurrentPosition(
@@ -66,12 +78,11 @@ const ProductDashboard = () => {
         },
       );
     };
+
     updateUser();
   }, []);
 
   const backToTopStyle = useAnimatedStyle(() => {
-    const isScrollingUp =
-      scrollY.value < previousScroll.current && scrollY.value > 180;
     const opacity = withTiming(showBackToTop.value ? 1 : 0, {duration: 300});
     const translateY = withTiming(showBackToTop.value ? 0 : 10, {
       duration: 300,
@@ -81,14 +92,6 @@ const ProductDashboard = () => {
       transform: [{translateY}],
     };
   });
-
-  const slideUp = () => {
-    noticePosition.value = withTiming(NOTICE_HEIGHT, {duration: 1300});
-  };
-
-  const slideDown = () => {
-    noticePosition.value = withTiming(0, {duration: 1000});
-  };
 
   useEffect(() => {
     slideDown();

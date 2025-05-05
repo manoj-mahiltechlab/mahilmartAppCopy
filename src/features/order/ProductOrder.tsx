@@ -29,6 +29,8 @@ const ProductOrder = () => {
   const [loading, setLoading] = useState(false);
 
   const handlePlaceOrder = async () => {
+    console.log('currentOrder--->', currentOrder);
+
     if (currentOrder !== null) {
       Alert.alert('Let your first order be delivered');
       return;
@@ -39,19 +41,19 @@ const ProductOrder = () => {
       item: item._id,
       count: item.count,
     }));
+    console.log('formatted Data :---', formattedData);
 
     if (formattedData.length === 0) {
       Alert.alert('Add any items to place order');
       return;
     }
 
-    console.log('Formatted Data:', formattedData);
+    console.log('  Data:', formattedData);
     console.log('Total Price:', totalItemPrice);
 
     setLoading(true);
 
     const data = await createOrder(formattedData, totalItemPrice);
-
     console.log('Response from createOrder:', data);
 
     if (data != null) {
@@ -60,24 +62,11 @@ const ProductOrder = () => {
       navigate('OrderSuccess', {...data});
     } else {
       Alert.alert('Create Order: There was an error');
+      throw new Error('Create Order: There was an error');
     }
 
     setLoading(false);
   };
-
-  // if (cart.length === 0) {
-  //   return (
-  //     <View style={styles.container}>
-  //       <CustomHeader title="Checkout" />
-  //       <View style={[styles.scrollContainer, styles.emptyCartContainer]}>
-  //         <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-  //           Your cart is empty
-  //         </CustomText>
-  //       </View>
-  //     </View>
-  //   );
-  // }
-
   return (
     <View style={styles.container}>
       <CustomHeader title="Checkout" />

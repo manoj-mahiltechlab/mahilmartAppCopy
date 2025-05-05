@@ -23,7 +23,7 @@
 
       <meta-data
       android:name="com.google.android.geo.API_KEY"
-      android:value='YOUR_GOOGLE_MAP_API_KEY'
+      android:value='AIzaSyDWWgXk0R4O2um_lDSjw6xYfHwfHM2H1r0'
       />
 
 
@@ -41,3 +41,4 @@
       </activity>
     </application>
 </manifest>
+ <!-- android:value='AIzaSyDFnxfmhhIQbHzecar-BJuW2-aPoX29N0w' -->

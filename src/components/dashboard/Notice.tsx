@@ -16,7 +16,7 @@ const Notice = () => {
           <SafeAreaView style={{padding: 10, paddingTop: insets?.top || 20}}>
             <CustomText
               style={styles.heading}
-              variant="h8"
+              variant="h9"
               fontFamily={Fonts.SemiBold}>
               It's raining near this location
             </CustomText>

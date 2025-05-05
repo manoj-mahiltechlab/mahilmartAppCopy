@@ -9,10 +9,18 @@ export const SOCKET_URL =
     ? 'http://192.168.0.135:3000'
     : 'http://192.168.0.135:3000';
 
-export const GOOGLE_MAP_API = 'AIzaSyBjrXmMEEqvBzC67eSNenjUXPe@e.Jn-Qak';
-export const BRANCH_ID = '67ea68fc40d4e9bfd7413dec';
+// youtube API
+//export const GOOGLE_MAP_API = 'AIzaSyBjrXmMEEqvBzC67eSNenjUXPe0eJn-Qak';
 
-//export const GOOGLE_MAP_API = 'AIzaSyDFnxfmhhIQbHzecar-BJuW2-aPoX29N0w';
+// MY API
+// export const GOOGLE_MAP_API = 'AIzaSyDFnxfmhhIQbHzecar-BJuW2-aPoX29N0w';
+
+// Generated my Manoj's ID 03/05/25
+//export const GOOGLE_MAP_API = '3M2XwQbeA-LTaKwAmLwt_Ddw8sQ=';
+
+export const GOOGLE_MAP_API = 'AIzaSyDWWgXk0R4O2um_lDSjw6xYfHwfHM2H1r0';
+
+export const BRANCH_ID = '681854c3722ca802c3a1d592';
 
 // USE YOUR NETWORK IP OR HOSTED URL
 

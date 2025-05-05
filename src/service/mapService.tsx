@@ -11,8 +11,12 @@ export const reverseGeocode = async (
     const response = await axios.get(
       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAP_API}`,
     );
+
+    console.log('response.data : ', response.data);
     if (response.data.status === 'OK') {
       const address = response.data.results[0].formatted_address;
+
+      console.log('address : ', address);
 
       updateUserLocation(
         {liveLocation: {latitude, longitude}, address},
