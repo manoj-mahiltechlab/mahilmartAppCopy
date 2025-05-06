@@ -29,18 +29,18 @@ const ProductOrder = () => {
   const [loading, setLoading] = useState(false);
 
   const handlePlaceOrder = async () => {
-    console.log('currentOrder--->', currentOrder);
+    // console.log('currentOrder--->', currentOrder);
 
-    if (currentOrder !== null) {
-      Alert.alert('Let your first order be delivered');
-      return;
-    }
-
+    // if (currentOrder !== null) {
+    //   Alert.alert('Let your first order be delivered');
+    //   return;
+    // }
     const formattedData = cart.map(item => ({
-      id: item._id,
-      item: item._id,
-      count: item.count,
+      product: item._id,
+      quantity: item.count,
+      price: item.price,
     }));
+
     console.log('formatted Data :---', formattedData);
 
     if (formattedData.length === 0) {
@@ -48,25 +48,29 @@ const ProductOrder = () => {
       return;
     }
 
-    console.log('  Data:', formattedData);
     console.log('Total Price:', totalItemPrice);
 
     setLoading(true);
 
-    const data = await createOrder(formattedData, totalItemPrice);
-    console.log('Response from createOrder:', data);
+    try {
+      const data = await createOrder(formattedData, totalItemPrice);
+      console.log('Response from createOrder:', data);
 
-    if (data != null) {
-      setCurrentOrder(data);
-      clearCart();
-      navigate('OrderSuccess', {...data});
-    } else {
-      Alert.alert('Create Order: There was an error');
-      throw new Error('Create Order: There was an error');
+      if (data != null) {
+        setCurrentOrder(data);
+        clearCart();
+        navigate('OrderSuccess', {...data});
+      } else {
+        Alert.alert('Create Order: There was an error');
+      }
+    } catch (err) {
+      console.error('Create Order Error:', err);
+      Alert.alert('Create Order: There was an unexpected error');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
+
   return (
     <View style={styles.container}>
       <CustomHeader title="Checkout" />
