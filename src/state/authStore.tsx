@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
-import {mmkvStorage} from './storage'; // make sure mmkvStorage is correctly exported here
+import {mmkvStorage} from './storage';
 
 interface AuthStore {
   user: Record<string, any> | null;

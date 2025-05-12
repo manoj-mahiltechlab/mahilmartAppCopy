@@ -33,6 +33,6 @@ appAxios.interceptors.response.use(
         error.response.data.message || 'something went wrong';
       console.log(errorMessage);
     }
-    return Promise.resolve(error);
+    return Promise.reject(error);
   },
 );

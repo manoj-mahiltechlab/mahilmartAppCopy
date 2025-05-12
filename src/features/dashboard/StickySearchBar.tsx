@@ -1,12 +1,13 @@
 import {StyleSheet} from 'react-native';
 import React from 'react';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
+
 import {
   StickyView,
   useCollapsibleContext,
 } from '@r0b0t3d/react-native-collapsible';
 import Animated, {interpolate, useAnimatedStyle} from 'react-native-reanimated';
 import SearchBar from '@components/dashboard/SearchBar';
+import {Colors} from '@utils/Constants';
 
 const StickySearchBar = () => {
   const {scrollY} = useCollapsibleContext();

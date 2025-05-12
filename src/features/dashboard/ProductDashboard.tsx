@@ -34,6 +34,8 @@ import React from 'react';
 import Content from '@components/dashboard/Content';
 import withCart from '@features/cart/WithCart';
 import {reverseGeocode} from '@service/mapService';
+import withLiveStatus from '@features/map/withLiveStatus';
+import StickySearchBar from './StickySearchBar';
 
 const NOTICE_HEIGHT = -(NoticeHeight + 50);
 
@@ -189,4 +191,6 @@ const styles = StyleSheet.create({
   },
 });
 
-export default withCart(withCollapsibleContext(ProductDashboard));
+export default withLiveStatus(
+  withCart(withCollapsibleContext(ProductDashboard)),
+);
