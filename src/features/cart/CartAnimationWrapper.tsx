@@ -1,5 +1,5 @@
-import React, {FC, useEffect, useRef, useState} from 'react';
 import {hocStyles} from '@styles/GlobleStyles';
+import React, {FC, useEffect, useRef, useState} from 'react';
 import {Animated} from 'react-native';
 
 interface CartAnimationWrapperProps {

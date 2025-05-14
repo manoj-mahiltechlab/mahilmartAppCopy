@@ -53,7 +53,6 @@ const Sidebar: FC<SidebarProps> = ({
   return (
     <View style={styles.SideBar}>
       <View style={{flex: 1}}>
-        {/* Move Animated View on top */}
         <Animated.View style={[styles.indicator, indicatorStyle]} />
         <ScrollView
           ref={scrollViewRef}
@@ -80,7 +79,7 @@ const Sidebar: FC<SidebarProps> = ({
                     style={[styles.image, animatedStyle]}
                   />
                 </View>
-                <CustomText fontSize={RFValue(7)} style={{textAlign: 'center'}}>
+                <CustomText fontSize={RFValue(9)} style={{textAlign: 'center'}}>
                   {category?.name}
                 </CustomText>
               </TouchableOpacity>

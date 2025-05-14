@@ -1,6 +1,5 @@
 import {StyleSheet} from 'react-native';
 import React from 'react';
-
 import {
   StickyView,
   useCollapsibleContext,
@@ -11,27 +10,31 @@ import {Colors} from '@utils/Constants';
 
 const StickySearchBar = () => {
   const {scrollY} = useCollapsibleContext();
+
   const animatedShadow = useAnimatedStyle(() => {
     const opacity = interpolate(scrollY.value, [0, 140], [0, 1]);
     return {opacity};
   });
+
   const backgroundColorChanges = useAnimatedStyle(() => {
     const opacity = interpolate(scrollY.value, [1, 80], [0, 1]);
     return {backgroundColor: `rgba(255,255,255,${opacity})`};
   });
+
   return (
     <StickyView style={backgroundColorChanges}>
       <SearchBar />
-      <Animated.View style={[style.shadow, animatedShadow]} />
+      <Animated.View style={[styles.shadow, animatedShadow]} />
     </StickyView>
   );
 };
-const style = StyleSheet.create({
+
+const styles = StyleSheet.create({
   shadow: {
     height: 15,
     width: '100%',
     borderBottomWidth: 1,
-    borderBlockColor: Colors.border,
+    borderColor: Colors.border,
   },
 });
 

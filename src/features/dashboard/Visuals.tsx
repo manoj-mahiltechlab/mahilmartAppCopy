@@ -73,11 +73,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 150,
     position: 'absolute',
-    transform: [{scaleX: -1}],
+    transform: [{scaleX: 0}],
   },
   gradient: {
     width: '100%',
-    height: screenHeight * 0.5,
+    height: screenHeight * 0.2,
     position: 'absolute',
   },
   cloud: {

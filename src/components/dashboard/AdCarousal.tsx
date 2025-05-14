@@ -9,17 +9,17 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
   const baseOptions = {
     vertical: false,
     width: screenWidth,
-    height: screenWidth * 0.5,
+    height: screenWidth * 0.6,
   };
   return (
-    <View style={{left: -20, marginVertical: 20}}>
+    <View style={{left: -20, marginVertical: 10}}>
       <Carousal
         {...baseOptions}
         loop
         pagingEnabled
         snapEnabled
         autoPlay
-        autoPlayInterval={3000}
+        autoPlayInterval={1000}
         mode="parallax"
         data={adData}
         modeConfig={{
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    borderRadius: 20,
+    borderRadius: 15,
   },
 });
 

@@ -13,6 +13,7 @@ const Content: FC = () => {
       <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
         Grocery & Kitchan
       </CustomText>
+
       <CategoryContainer data={categories} />
       <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
         Bestseller

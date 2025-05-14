@@ -122,7 +122,7 @@ const CustomerLogin = () => {
                   accessibilityLabel="App Logo"
                 />
                 <CustomText variant="h2" fontFamily={Fonts.Bold}>
-                  Grocery Delivery App
+                  MahilMart Shop
                 </CustomText>
                 <CustomText
                   variant="h5"
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 50,
   },
   subContainer: {
     flexGrow: 1,

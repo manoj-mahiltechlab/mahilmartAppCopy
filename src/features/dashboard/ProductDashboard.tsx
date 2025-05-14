@@ -1,11 +1,12 @@
-import {NoticeHeight, screenHeight} from '@utils/Scaling';
+import {NoticeHeight} from '@utils/Scaling';
+//import {screenHeight} from '@utils/Scaling';
 import {useEffect, useRef} from 'react';
 import {
   StyleSheet,
-  Platform,
+  // Platform,
   TouchableOpacity,
-  View,
-  Alert,
+  //View,
+  //Alert,
 } from 'react-native';
 import {
   CollapsibleHeaderContainer,
@@ -62,9 +63,9 @@ const ProductDashboard = () => {
     noticePosition.value = withTiming(NOTICE_HEIGHT, {duration: 1300});
   };
 
-  const slideDown = () => {
-    noticePosition.value = withTiming(0, {duration: 1000});
-  };
+  // const slideDown = () => {
+  //   noticePosition.value = withTiming(0, {duration: 1000});
+  // };
 
   useEffect(() => {
     const updateUser = () => {
@@ -85,9 +86,9 @@ const ProductDashboard = () => {
   }, []);
 
   const backToTopStyle = useAnimatedStyle(() => {
-    const opacity = withTiming(showBackToTop.value ? 1 : 0, {duration: 300});
+    const opacity = withTiming(showBackToTop.value ? 1 : 0, {duration: 100});
     const translateY = withTiming(showBackToTop.value ? 0 : 10, {
-      duration: 300,
+      duration: 100,
     });
     return {
       opacity,
@@ -96,7 +97,8 @@ const ProductDashboard = () => {
   });
 
   useEffect(() => {
-    slideDown();
+    slideUp();
+    // slideDown();
     const timeoutId = setTimeout(() => {
       slideUp();
     }, 3500);
@@ -134,13 +136,14 @@ const ProductDashboard = () => {
           <CollapsibleHeaderContainer containerStyle={styles.transparent}>
             <AnimatedHeader
               showNotice={() => {
-                slideDown();
+                // slideDown();
                 const timeoutId = setTimeout(() => {
                   slideUp();
                 }, 3500);
                 return () => clearTimeout(timeoutId);
               }}
             />
+            <StickySearchBar />
           </CollapsibleHeaderContainer>
 
           <CollapsibleScrollView
@@ -148,8 +151,7 @@ const ProductDashboard = () => {
             style={styles.panelContainer}
             showsVerticalScrollIndicator={false}>
             <Content />
-
-            <View style={{backgroundColor: '#f8f8f8', padding: 20}}>
+            {/* <View style={{backgroundColor: '#f8f8f8', padding: 20}}>
               <CustomText
                 fontSize={RFValue(32)}
                 fontFamily={Fonts.Bold}
@@ -161,7 +163,7 @@ const ProductDashboard = () => {
                 style={{marginTop: 10, paddingBottom: 100, opacity: 0.2}}>
                 Developed By ❤ Mahil Mart
               </CustomText>
-            </View>
+            </View> */}
           </CollapsibleScrollView>
         </CollapsibleContainer>
       </>
@@ -178,8 +180,9 @@ const styles = StyleSheet.create({
   },
   backToTopButton: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 400,
     right: 20,
+    height: '6%',
     backgroundColor: 'black',
     borderRadius: 20,
     paddingHorizontal: 10,
@@ -190,7 +193,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
 export default withLiveStatus(
   withCart(withCollapsibleContext(ProductDashboard)),
 );

@@ -34,7 +34,7 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
 
   return (
     <View style={styles.subContainer}>
-      <TouchableOpacity activeOpacity={0.8}>
+      <TouchableOpacity activeOpacity={0.6}>
         <CustomText fontFamily={Fonts.Bold} variant="h8" style={styles.text}>
           Delivery in
         </CustomText>
