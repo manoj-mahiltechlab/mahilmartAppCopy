@@ -27,16 +27,16 @@ const UniversalAdd: FC<{item: any}> = ({item}) => {
       ) : (
         <View style={styles.counterContainer}>
           <Pressable onPress={() => removeItem(item._id)}>
-            <Icon name="minus" color="#fff" size={RFValue(13)} />
+            <Icon name="minus" color="#fff" size={RFValue(15)} />
           </Pressable>
           <CustomText
             fontFamily={Fonts.SemiBold}
             style={styles.text}
-            variant="h8">
+            variant="h6">
             {count}
           </CustomText>
           <Pressable onPress={() => addItem(item)}>
-            <Icon name="plus" color="#fff" size={RFValue(13)} />
+            <Icon name="plus" color="#fff" size={RFValue(15)} />
           </Pressable>
         </View>
       )}
@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
   },
   addText: {
     color: Colors.secondary,
+    fontSize: 11,
   },
   counterContainer: {
     flexDirection: 'row',

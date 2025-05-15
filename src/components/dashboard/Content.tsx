@@ -1,6 +1,12 @@
 import {View, StyleSheet} from 'react-native';
 import React, {FC} from 'react';
-import {adData, categories} from '@utils/dummyData';
+import {
+  adData,
+  bestseller,
+  groceryKitchen,
+  homeLifeStyle,
+  snacksDrinks,
+} from '@utils/dummyData';
 import AdCarousal from './AdCarousal';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
@@ -11,22 +17,21 @@ const Content: FC = () => {
     <View style={styles.container}>
       <AdCarousal adData={adData} />
       <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-        Grocery & Kitchan
+        Grocery & Kitchen
       </CustomText>
-
-      <CategoryContainer data={categories} />
+      <CategoryContainer data={groceryKitchen} />
       <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
         Bestseller
       </CustomText>
-      <CategoryContainer data={categories} />
+      <CategoryContainer data={bestseller} />
       <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
         Snacks & Drinks
       </CustomText>
-      <CategoryContainer data={categories} />
+      <CategoryContainer data={snacksDrinks} />
       <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
         Home & Lifestyle
       </CustomText>
-      <CategoryContainer data={categories} />
+      <CategoryContainer data={homeLifeStyle} />
     </View>
   );
 };

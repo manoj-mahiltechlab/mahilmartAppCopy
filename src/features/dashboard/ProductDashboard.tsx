@@ -1,13 +1,6 @@
 import {NoticeHeight} from '@utils/Scaling';
-//import {screenHeight} from '@utils/Scaling';
 import {useEffect, useRef} from 'react';
-import {
-  StyleSheet,
-  // Platform,
-  TouchableOpacity,
-  //View,
-  //Alert,
-} from 'react-native';
+import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {
   CollapsibleHeaderContainer,
   CollapsibleScrollView,
@@ -143,7 +136,7 @@ const ProductDashboard = () => {
                 return () => clearTimeout(timeoutId);
               }}
             />
-            <StickySearchBar />
+            {/* <StickySearchBar /> */}
           </CollapsibleHeaderContainer>
 
           <CollapsibleScrollView
@@ -151,19 +144,9 @@ const ProductDashboard = () => {
             style={styles.panelContainer}
             showsVerticalScrollIndicator={false}>
             <Content />
-            {/* <View style={{backgroundColor: '#f8f8f8', padding: 20}}>
-              <CustomText
-                fontSize={RFValue(32)}
-                fontFamily={Fonts.Bold}
-                style={{opacity: 0.2}}>
-                Grocery Delivery App 🛒
-              </CustomText>
-              <CustomText
-                fontFamily={Fonts.Bold}
-                style={{marginTop: 10, paddingBottom: 100, opacity: 0.2}}>
-                Developed By ❤ Mahil Mart
-              </CustomText>
-            </View> */}
+            <View style={{backgroundColor: 'white', padding: 20}}>
+              <></>
+            </View>
           </CollapsibleScrollView>
         </CollapsibleContainer>
       </>

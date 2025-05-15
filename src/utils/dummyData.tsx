@@ -118,7 +118,7 @@ const productsList = [
   },
 ];
 
-export const categories = [
+export const groceryKitchen = [
   {
     id: 1,
     name: 'Milk, Curd & Paneer',
@@ -159,6 +159,137 @@ export const categories = [
     id: 8,
     name: 'Cleaning Essentials',
     image: require('../assets/category/8.png'),
+  },
+];
+
+export const bestseller = [
+  {
+    id: 1,
+    name: 'Aashirvaad-Shudh-Chakki-Atta-5-kg',
+    image: require('../assets/bestseller/Aashirvaad-Shudh-Chakki-Atta-5-kg1.png'),
+    products: productsList,
+  },
+  {
+    id: 2,
+    name: 'Masala Magic',
+    image: require('../assets/bestseller/download.png'),
+  },
+  {
+    id: 3,
+    name: 'sbc_coffee',
+    image: require('../assets/bestseller/grocery_sbc_coffee_440x460.png'),
+  },
+  {
+    id: 4,
+    name: 'Head & Shoulders',
+    image: require('../assets/bestseller/Head_&_Shoulders.png'),
+  },
+  {
+    id: 5,
+    name: 'honey',
+    image: require('../assets/bestseller/honey.png'),
+  },
+  {
+    id: 6,
+    name: 'pressedRoe',
+    image: require('../assets/bestseller/pressedRoe.png'),
+  },
+  {
+    id: 7,
+    name: 'Seasonings',
+    image: require('../assets/bestseller/Seasonings.png'),
+  },
+  {
+    id: 8,
+    name: 'Tea',
+    image: require('../assets/bestseller/Tea.png'),
+  },
+];
+
+export const snacksDrinks = [
+  {
+    id: 1,
+    name: 'Fruit',
+    image: require('../assets/snacks_&_drinks/fruit.png'),
+    products: productsList,
+  },
+  {
+    id: 2,
+    name: 'HiChew',
+    image: require('../assets/snacks_&_drinks/hi_chew.png'),
+  },
+  {
+    id: 3,
+    name: 'IceCubes',
+    image: require('../assets/snacks_&_drinks/ice_cubes.png'),
+  },
+  {
+    id: 4,
+    name: 'Mentos',
+    image: require('../assets/snacks_&_drinks/mentos.png'),
+  },
+  {
+    id: 5,
+    name: 'Munch',
+    image: require('../assets/snacks_&_drinks/munch-chocolate.png'),
+  },
+  {
+    id: 6,
+    name: 'PeanutCandy',
+    image: require('../assets/snacks_&_drinks/peanut_candy.png'),
+  },
+  {
+    id: 7,
+    name: 'TomJenny',
+    image: require('../assets/snacks_&_drinks/tom_&_jenny.png'),
+  },
+  {
+    id: 8,
+    name: 'yummyPeanut',
+    image: require('../assets/snacks_&_drinks/yummy_peanut.png'),
+  },
+];
+export const homeLifeStyle = [
+  {
+    id: 1,
+    name: 'Flat Mops Bucket',
+    image: require('../assets/homeLifeStyle/flat_mops_bucket.png'),
+    products: productsList,
+  },
+  {
+    id: 2,
+    name: 'cleaning towels',
+    image: require('../assets/homeLifeStyle/kisspng-microfiber-norwex-textile-cloth.png'),
+  },
+  {
+    id: 3,
+    name: 'Kitchen Set',
+    image: require('../assets/homeLifeStyle/Kitchen_Bliss_Utensil_Set.png'),
+  },
+  {
+    id: 4,
+    name: 'Plastic hangers',
+    image: require('../assets/homeLifeStyle/PremiumQualityUnbreakablePlasticHangers.jpg'),
+  },
+  {
+    id: 5,
+    name: 'Plastic Dustbin',
+    image: require('../assets/homeLifeStyle/Unbreakable_Plastic_Material_Plastic_Dustbin.jpg'),
+  },
+  {
+    id: 6,
+    name: 'Storage Baskets',
+    image: require('../assets/homeLifeStyle/Storage_Baskets.png'),
+  },
+  {
+    id: 7,
+    name: 'waterBottle',
+    image: require('../assets/homeLifeStyle/waterbottle.png'),
+  },
+  {
+    id: 8,
+    name: 'Sweet Tea And Camp',
+    image: require('../assets/homeLifeStyle/Sweet_tea_and_camp_margaritas.jpg'),
   },
 ];
 

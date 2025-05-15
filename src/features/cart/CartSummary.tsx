@@ -55,13 +55,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     paddingHorizontal: screenWidth * 0.05,
-    paddingBottom: screenWidth * 0.03,
+    paddingBottom: screenWidth * 0.07,
     paddingTop: screenHeight * 0.014,
   },
   flexRopGap: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: screenWidth * 0.03,
+    gap: screenWidth * 0.05,
   },
   image: {
     width: screenWidth * 0.1,

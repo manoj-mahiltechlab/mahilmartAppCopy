@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   imageContainer: {
-    height: screenHeight * 0.12,
+    height: screenHeight * 0.15,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
   image: {
     height: '100%',
     width: '100%',
+    borderRadius: 10,
     aspectRatio: 1 / 1,
     resizeMode: 'contain',
   },
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   flexRow: {
     flexDirection: 'row',
     padding: 2,
-    borderRadius: 4,
+    borderRadius: 5,
     alignItems: 'center',
     gap: 4,
     backgroundColor: Colors.backgroundSecondary || '#e6e6e6', // fallback color if needed
