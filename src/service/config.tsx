@@ -9,6 +9,19 @@ export const SOCKET_URL =
     ? 'http://192.168.0.135:3000'
     : 'http://192.168.0.135:3000';
 
+// export const BASE_URL = 'https://d1b2-61-0-63-192.ngrok-free.app/api';
+// export const SOCKET_URL = 'https://d1b2-61-0-63-192.ngrok-free.app';
+
+// export const BASE_URL =
+//   Platform.OS === 'android'
+//     ? 'https://79ec-61-0-63-192.ngrok-free.app/api'
+//     : 'https://79ec-61-0-63-192.ngrok-free.app/api';
+
+// export const SOCKET_URL =
+//   Platform.OS === 'android'
+//     ? 'https://79ec-61-0-63-192.ngrok-free.app'
+//     : 'https://79ec-61-0-63-192.ngrok-free.app';
+
 // youtube API
 //export const GOOGLE_MAP_API = 'AIzaSyBjrXmMEEqvBzC67eSNenjUXPe0eJn-Qak';
 

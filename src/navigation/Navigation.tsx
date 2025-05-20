@@ -14,6 +14,7 @@ import OrderSuccess from '@features/order/OrderSuccess';
 import LiveTracking from '@features/map/LiveTracking';
 import profile from '@features/profile/profile';
 import DeliveryMap from '@features/delivery/DeliveryMap';
+import SnacksDrinks from '@components/dashboard/SnacksDrinks';
 
 export type RootStackParamList = {
   SplashScreen: undefined;
@@ -41,8 +42,8 @@ const Navigation: FC = () => {
         <Stack.Screen name="LiveTracking" component={LiveTracking} />
         <Stack.Screen name="Profile" component={profile} />
         <Stack.Screen name="DeliveryMap" component={DeliveryMap} />
-
         <Stack.Screen name="ProductCategories" component={ProductCategories} />
+        <Stack.Screen name="SnacksDrinks" component={SnacksDrinks} />
 
         <Stack.Screen
           options={{animation: 'fade'}}

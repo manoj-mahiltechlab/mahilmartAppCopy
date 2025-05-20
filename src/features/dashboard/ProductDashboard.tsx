@@ -70,7 +70,7 @@ const ProductDashboard = () => {
         err => console.log(err),
         {
           enableHighAccuracy: false,
-          timeout: 15000,
+          timeout: 1500,
         },
       );
     };

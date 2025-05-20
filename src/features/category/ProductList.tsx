@@ -15,6 +15,7 @@ const ProductList: FC<{data: any}> = ({data}) => {
       style={styles.container}
       contentContainerStyle={styles.content}
       numColumns={2}
+      removeClippedSubviews={false}
     />
   );
 };

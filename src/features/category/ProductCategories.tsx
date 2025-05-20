@@ -9,6 +9,7 @@ import {
 } from '@service/ProductService';
 import ProductList from './ProductList';
 import withCart from '@features/cart/WithCart';
+import {useRoute} from '@react-navigation/native';
 
 const ProductCategories = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -17,6 +18,9 @@ const ProductCategories = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState<boolean>(false);
 
+  const route = useRoute();
+  const {initialCategory, commonId} = route.params || {};
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -24,7 +28,12 @@ const ProductCategories = () => {
         const data = await getAllCategories();
         setCategories(data);
         if (data && data.length > 0) {
-          setSelectedCategory(data[0]);
+          if (commonId) {
+            const match = data.find(cat => cat._id === commonId);
+            setSelectedCategory(match || data[0]);
+          } else {
+            setSelectedCategory(data[0]);
+          }
         }
       } catch (error) {
         console.log('Error Fetching Categories:', error);
@@ -52,6 +61,8 @@ const ProductCategories = () => {
       fetchProducts(selectedCategory?._id);
     }
   }, [selectedCategory]);
+
+  console.log('selectedCategory =-=-=- : ', selectedCategory);
 
   return (
     <View style={styles.mainContainer}>

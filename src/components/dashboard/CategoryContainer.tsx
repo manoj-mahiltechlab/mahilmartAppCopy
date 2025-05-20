@@ -15,7 +15,10 @@ const CategoryContainer: FC<{data: any}> = ({data}) => {
             <ScalePress
               key={index}
               style={styles.item}
-              onPress={() => navigate('ProductCategories')}>
+              onPress={() => {
+                console.log('Touched item:', items);
+                navigate('ProductCategories', {category: items});
+              }}>
               <View style={styles.imageContainer}>
                 <Image source={items?.image} style={styles.image} />
               </View>

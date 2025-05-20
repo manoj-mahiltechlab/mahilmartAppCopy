@@ -1,8 +1,7 @@
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import React, {FC} from 'react';
 import {
   adData,
-  bestseller,
   groceryKitchen,
   homeLifeStyle,
   snacksDrinks,
@@ -11,6 +10,7 @@ import AdCarousal from './AdCarousal';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
 import CategoryContainer from './CategoryContainer';
+import SnacksDrinks from './SnacksDrinks';
 
 const Content: FC = () => {
   return (
@@ -20,14 +20,18 @@ const Content: FC = () => {
         Grocery & Kitchen
       </CustomText>
       <CategoryContainer data={groceryKitchen} />
-      <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
+      {/* <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
         Bestseller
       </CustomText>
-      <CategoryContainer data={bestseller} />
-      <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-        Snacks & Drinks
-      </CustomText>
-      <CategoryContainer data={snacksDrinks} />
+      <CategoryContainer data={bestseller} /> */}
+      <TouchableOpacity
+        onPress={() => console.log('Snacks & Drinks Title Pressed')}>
+        <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
+          Snacks & Drinks
+        </CustomText>
+        <SnacksDrinks data={snacksDrinks} />
+      </TouchableOpacity>
+
       <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
         Home & Lifestyle
       </CustomText>
