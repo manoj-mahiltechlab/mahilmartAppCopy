@@ -38,7 +38,7 @@ const ArrowButton: FC<ArrowButtonProps> = ({
             variant="h7"
             style={{color: 'white'}}
             fontFamily={Fonts.Medium}>
-            ₹{price + 34}.0
+            ₹{price + 0}.0
           </CustomText>
           <CustomText
             variant="h9"

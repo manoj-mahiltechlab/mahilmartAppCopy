@@ -25,7 +25,7 @@ const NoticeAnimation: FC<{
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.noticeContainer, noticeStyle]}>
-        <Notice />
+        {/* <Notice /> */}
       </Animated.View>
       <Animated.View style={[styles.contentContainer, contentStyle]}>
         {children}

@@ -1,4 +1,4 @@
-import React, {useState, useRef, useCallback} from 'react';
+import React, {useState, useRef, useCallback, useEffect} from 'react';
 import {
   View,
   StyleSheet,
@@ -11,19 +11,21 @@ import {
 } from 'react-native';
 import {
   GestureHandlerRootView,
-  PanGestureHandler,
+  // PanGestureHandler,  // Commented out for now
   State,
 } from 'react-native-gesture-handler';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import ProductSlider from '@components/login/ProductSlider';
 import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
-//import {resetAndNavigate} from '@utils/NavigationUtils';
 import Animated, {
   useSharedValue,
   withTiming,
   useDerivedValue,
   useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  Easing,
 } from 'react-native-reanimated';
 import {RootStackParamList} from '@navigation/Navigation';
 import LinearGradient from 'react-native-linear-gradient';
@@ -35,21 +37,64 @@ import CustomButton from '@components/ui/CustomButton';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-//import {resetAndNavigate} from '@utils/NavigationUtils';
 
 const bottomColors = [...lightColors].reverse();
 
 const CustomerLogin = () => {
-  // Removed duplicate navigation definition, keeping the correct one
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamList, 'CustomerLogin'>>();
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
-  const animatedValue = useSharedValue(0);
-  const gestureSequenceRef = useRef<string[]>([]);
 
+  const floating = useSharedValue(0);
+  const progress = useSharedValue(0);
+  const radius = 0; // increased radius for better circle visibility
+  const animationDuration = 3000;
+
+  useEffect(() => {
+    progress.value = withRepeat(
+      withSequence(
+        withTiming(1, {
+          duration: animationDuration,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(0, {
+          duration: animationDuration,
+          easing: Easing.inOut(Easing.ease),
+        }),
+      ),
+      -1,
+      false,
+    );
+  }, []);
+
+  const shopTitleStyle = useAnimatedStyle(() => {
+    const theta = progress.value * 2 * Math.PI;
+    const translateX = radius * Math.cos(theta);
+    const translateY = radius * Math.sin(theta);
+    return {
+      transform: [{translateX}, {translateY}],
+    };
+  });
+
+  useEffect(() => {
+    floating.value = withRepeat(
+      withSequence(
+        withTiming(-10, {duration: 1000}),
+        withTiming(0, {duration: 1000}),
+      ),
+      -1,
+      true,
+    );
+  }, []);
+
+  const floatingLogoStyle = useAnimatedStyle(() => ({
+    transform: [{translateY: floating.value}],
+  }));
+
+  const animatedValue = useSharedValue(0);
   useDerivedValue(() => {
     animatedValue.value = withTiming(
       keyboardOffsetHeight === 0 ? 0 : -keyboardOffsetHeight * 0.84,
@@ -61,53 +106,31 @@ const CustomerLogin = () => {
     transform: [{translateY: animatedValue.value}],
   }));
 
-  const handleGesture = useCallback(
-    ({nativeEvent}: any) => {
-      if (nativeEvent.state === State.END) {
-        const {translationX, translationY} = nativeEvent;
-        const direction =
-          Math.abs(translationX) > Math.abs(translationY)
-            ? translationX > 0
-              ? 'right'
-              : 'left'
-            : translationY > 0
-            ? 'down'
-            : 'up';
-
-        gestureSequenceRef.current = [
-          ...gestureSequenceRef.current,
-          direction,
-        ].slice(-5);
-
-        if (gestureSequenceRef.current.join(' ') === 'up up down left right') {
-          gestureSequenceRef.current = [];
-          navigation.navigate('DeliveryLogin');
-        }
-      }
-    },
-    [navigation],
-  );
+  const isPhoneValid =
+    phoneNumber.trim().length === 10 && /^\d{10}$/.test(phoneNumber);
 
   const handleAuth = async () => {
     Keyboard.dismiss();
-    setLoading(true);
-    try {
-      await customerLogin(phoneNumber);
-      navigation.navigate('ProductDashboard');
-    } catch (error) {
-      Alert.alert('Login Failed', 'Please try again.');
-    } finally {
-      setLoading(false);
-    }
+
+    setTimeout(async () => {
+      setLoading(true);
+      try {
+        await customerLogin(phoneNumber);
+        navigation.navigate('ProductDashboard');
+      } catch (error) {
+        Alert.alert('Login Failed', 'Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }, 100);
   };
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.container}>
-        <CustomSafeAreaView>
-          <ProductSlider />
-
-          <PanGestureHandler onHandlerStateChange={handleGesture}>
+        <SafeAreaView style={{flex: 1}}>
+          <CustomSafeAreaView>
+            <ProductSlider />
             <Animated.ScrollView
               bounces={false}
               style={animatedStyle}
@@ -116,14 +139,19 @@ const CustomerLogin = () => {
               contentContainerStyle={styles.subContainer}>
               <LinearGradient colors={bottomColors} style={styles.gradient} />
               <View style={styles.content}>
-                <Image
-                  source={require('@assets/images/logo.jpeg')}
-                  style={styles.logo}
-                  accessibilityLabel="App Logo"
-                />
-                <CustomText variant="h2" fontFamily={Fonts.Bold}>
-                  MahilMart Shop
-                </CustomText>
+                <Animated.View style={[styles.logoWrapper, floatingLogoStyle]}>
+                  <Image
+                    source={require('@assets/images/logo.jpeg')}
+                    style={styles.logoImage}
+                    accessibilityLabel="App Logo"
+                  />
+                </Animated.View>
+                {/* <Animated.View style={shopTitleStyle}>
+                  <CustomText variant="h2" fontFamily={Fonts.Bold}>
+                    MahilMart Shop
+                  </CustomText>
+                </Animated.View> */}
+
                 <CustomText
                   variant="h5"
                   fontFamily={Fonts.SemiBold}
@@ -149,27 +177,29 @@ const CustomerLogin = () => {
                   }
                 />
                 <CustomButton
-                  disabled={phoneNumber.length !== 10}
+                  disabled={!isPhoneValid || loading}
                   onPress={handleAuth}
                   loading={loading}
                   title="Continue"
                 />
               </View>
             </Animated.ScrollView>
-          </PanGestureHandler>
-        </CustomSafeAreaView>
-        <View style={styles.footer}>
-          <SafeAreaView />
-          <CustomText fontSize={RFValue(8)} style={styles.termsText}>
-            By Continuing, you agree to our Terms of Service & Privacy Policy
-          </CustomText>
-          <SafeAreaView />
-        </View>
-        <TouchableOpacity
-          style={styles.absoluteSwitch}
-          onPress={() => navigation.navigate('DeliveryLogin')}>
-          <Icon name="bike-fast" color="#000" size={RFValue(18)} />
-        </TouchableOpacity>
+          </CustomSafeAreaView>
+
+          <View style={styles.footer}>
+            <SafeAreaView />
+            <CustomText fontSize={RFValue(8)} style={styles.termsText}>
+              By Continuing, you agree to our Terms of Service & Privacy Policy
+            </CustomText>
+            <SafeAreaView />
+          </View>
+
+          <TouchableOpacity
+            style={styles.absoluteSwitch}
+            onPress={() => navigation.navigate('DeliveryLogin')}>
+            <Icon name="bike-fast" color="#000" size={RFValue(18)} />
+          </TouchableOpacity>
+        </SafeAreaView>
       </View>
     </GestureHandlerRootView>
   );
@@ -203,39 +233,47 @@ const styles = StyleSheet.create({
   text: {
     marginTop: 2,
     marginBottom: 10,
-    opacity: 0.8,
+    opacity: 0.9,
     textAlign: 'center',
     alignSelf: 'center',
   },
-  logo: {
-    height: 50,
-    width: 50,
+  logoWrapper: {
+    height: 110,
+    width: 110,
     borderRadius: 20,
     marginVertical: 10,
     alignSelf: 'center',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 100,
   },
   content: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 50,
+    marginBottom: 55,
+    width: '100%',
+    paddingHorizontal: 10,
   },
+
   subContainer: {
-    flexGrow: 1,
+    flexGrow: 2,
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
   footer: {
     width: '100%',
-    position: 'absolute', // Fix the footer to the bottom
+    position: 'absolute',
     bottom: 0,
-    paddingVertical: 10,
+    paddingVertical: 5,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f8f9fc',
   },
   gradient: {
-    paddingTop: 90,
+    paddingTop: '0%',
     width: '100%',
   },
   termsText: {

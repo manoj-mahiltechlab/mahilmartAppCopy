@@ -1,38 +1,46 @@
-import {View, StyleSheet} from 'react-native';
 import React, {FC} from 'react';
+import {View, StyleSheet, Image} from 'react-native';
 import ScalePress from '@components/ui/ScallPress';
 import {navigate} from '@utils/NavigationUtils';
-import {Image} from 'react-native';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
 
-const CategoryContainer: FC<{data: any}> = ({data}) => {
-  const renderItems = (items: any[]) => {
-    return (
-      <>
-        {items?.map((items, index) => {
-          return (
-            <ScalePress
-              key={index}
-              style={styles.item}
-              onPress={() => {
-                console.log('Touched item:', items);
-                navigate('ProductCategories', {category: items});
-              }}>
-              <View style={styles.imageContainer}>
-                <Image source={items?.image} style={styles.image} />
-              </View>
-              <CustomText
-                style={styles.text}
-                variant="h8"
-                fontFamily={Fonts.Medium}>
-                {items?.name}
-              </CustomText>
-            </ScalePress>
-          );
-        })}
-      </>
-    );
+interface CategoryItem {
+  _id: string;
+  id: string;
+  name: string;
+  image: any;
+  categoryId: string | number;
+  products?: any[];
+}
+
+interface CategoryContainerProps {
+  data: CategoryItem[];
+}
+
+const CategoryContainer: FC<CategoryContainerProps> = ({data}) => {
+  const renderItems = (items: CategoryItem[]) => {
+    return items.map((item, index) => {
+      return (
+        <ScalePress
+          key={item.id}
+          style={styles.item}
+          onPress={() => {
+            console.log('Touched item category ID item i id :', item.id, index);
+            navigate('ProductCategories', {category: item.id});
+          }}>
+          <View style={styles.imageContainer}>
+            <Image source={item.image} style={styles.image} />
+          </View>
+          <CustomText
+            style={styles.text}
+            variant="h8"
+            fontFamily={Fonts.Medium}>
+            {item.name}
+          </CustomText>
+        </ScalePress>
+      );
+    });
   };
 
   return (
@@ -42,6 +50,7 @@ const CategoryContainer: FC<{data: any}> = ({data}) => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     marginVertical: 15,
@@ -56,22 +65,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   item: {
-    width: '22%',
+    width: '23%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   imageContainer: {
     width: '100%',
-    height: 80,
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    padding: 6,
+    padding: 9,
     backgroundColor: '#E5F3F3',
     marginBottom: 8,
   },
   image: {
-    width: '100%',
+    width: '120%',
     height: '100%',
     resizeMode: 'contain',
   },

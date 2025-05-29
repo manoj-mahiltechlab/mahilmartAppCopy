@@ -16,6 +16,7 @@ const ProductList: FC<{data: any}> = ({data}) => {
       contentContainerStyle={styles.content}
       numColumns={2}
       removeClippedSubviews={false}
+      keyboardShouldPersistTaps="handled"
     />
   );
 };

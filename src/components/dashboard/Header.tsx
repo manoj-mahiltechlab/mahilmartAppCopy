@@ -18,6 +18,7 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
       Geolocation.getCurrentPosition(
         position => {
           console.log('latitude****', position.coords.latitude);
+          console.log('longitude**', position.coords.longitude);
           const {latitude, longitude} = position.coords;
           reverseGeocode(latitude, longitude, setUser);
         },

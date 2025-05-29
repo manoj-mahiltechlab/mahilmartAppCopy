@@ -1,7 +1,7 @@
 import React, {FC} from 'react';
 import {View, StyleSheet, Image} from 'react-native';
 import {screenHeight} from '@utils/Scaling';
-import {Colors} from 'react-native/Libraries/NewAppScreen'; // Make sure this Colors import is correct
+import {Colors} from 'react-native/Libraries/NewAppScreen';
 import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {Fonts} from '@utils/Constants';
@@ -9,10 +9,12 @@ import UniversalAdd from '@components/ui/UniversalAdd';
 
 interface ProductItemProps {
   item: {
+    id: string;
     image: string;
     name: string;
     price: number | string;
     discountPrice: number | string;
+    products?: any[];
   };
   index: number;
 }
@@ -53,7 +55,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
             <CustomText
               fontFamily={Fonts.Medium}
               variant="h8"
-              style={styles.strikePrice}>
+              style={{opacity: 0.8, textDecorationLine: 'line-through'}}>
               ₹{item?.discountPrice}
             </CustomText>
           </View>
@@ -66,19 +68,19 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '45%',
+    width: '46%',
     borderRadius: 10,
     backgroundColor: '#f8f8f8',
     marginBottom: 10,
     marginLeft: 10,
-    // overflow: 'hidden',
+    overflow: 'hidden',
   },
   imageContainer: {
-    height: screenHeight * 0.15,
+    height: screenHeight * 0.16,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 1,
+    paddingHorizontal: 5,
   },
   image: {
     height: '100%',

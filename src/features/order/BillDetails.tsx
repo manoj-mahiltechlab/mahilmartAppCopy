@@ -47,9 +47,9 @@ const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
           title="Items total"
           price={totalItemPrice}
         />
-        <ReportItem iconName="pedal-bike" title="Delivery charge" price={29} />
-        <ReportItem iconName="shopping-bag" title="Handling charge" price={2} />
-        <ReportItem iconName="cloudy-snowing" title="Surge charge" price={3} />
+        <ReportItem iconName="pedal-bike" title="Delivery charge" price={0} />
+        <ReportItem iconName="shopping-bag" title="Handling charge" price={0} />
+        <ReportItem iconName="cloudy-snowing" title="Surge charge" price={0} />
       </View>
       <View style={[styles.flexRowBetween, {marginBottom: 15}]}>
         <CustomText
@@ -59,7 +59,7 @@ const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
           Grand Total
         </CustomText>
         <CustomText style={styles.text} fontFamily={Fonts.SemiBold}>
-          ₹{totalItemPrice + 34}
+          ₹{totalItemPrice + 0}
         </CustomText>
       </View>
     </View>

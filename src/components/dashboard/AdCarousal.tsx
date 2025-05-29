@@ -24,7 +24,7 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
         data={adData}
         modeConfig={{
           parallaxScrollingOffset: 0,
-          parallaxScrollingScale: 0.94,
+          parallaxScrollingScale: 0.93,
         }}
         renderItem={({item}: any) => {
           return (

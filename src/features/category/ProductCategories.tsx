@@ -9,7 +9,7 @@ import {
 } from '@service/ProductService';
 import ProductList from './ProductList';
 import withCart from '@features/cart/WithCart';
-import {useRoute} from '@react-navigation/native';
+import {RouteProp, useRoute} from '@react-navigation/native';
 
 const ProductCategories = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -18,8 +18,10 @@ const ProductCategories = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState<boolean>(false);
 
-  const route = useRoute();
-  const {initialCategory, commonId} = route.params || {};
+  // Expect param 'category' which is the category ID (string)
+  const route =
+    useRoute<RouteProp<Record<string, {category?: string}>, string>>();
+  const {category} = route.params || {};
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -27,10 +29,14 @@ const ProductCategories = () => {
         setCategoriesLoading(true);
         const data = await getAllCategories();
         setCategories(data);
+
         if (data && data.length > 0) {
-          if (commonId) {
-            const match = data.find(cat => cat._id === commonId);
-            setSelectedCategory(match || data[0]);
+          if (category) {
+            // Find category by _id or id matching param
+            const matchedCategory = data.find(
+              cat => cat._id === category || cat.id === category,
+            );
+            setSelectedCategory(matchedCategory || data[0]);
           } else {
             setSelectedCategory(data[0]);
           }
@@ -43,7 +49,7 @@ const ProductCategories = () => {
     };
 
     fetchCategories();
-  }, []);
+  }, [category]);
 
   useEffect(() => {
     const fetchProducts = async (categoryId: string) => {
@@ -57,12 +63,11 @@ const ProductCategories = () => {
         setProductsLoading(false);
       }
     };
-    if (selectedCategory?._id) {
-      fetchProducts(selectedCategory?._id);
+
+    if (selectedCategory?._id || selectedCategory?.id) {
+      fetchProducts(selectedCategory._id || selectedCategory.id);
     }
   }, [selectedCategory]);
-
-  console.log('selectedCategory =-=-=- : ', selectedCategory);
 
   return (
     <View style={styles.mainContainer}>

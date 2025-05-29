@@ -50,6 +50,7 @@ export const mmkvStorage = {
   removeItem: (key: string) => {
     storage.delete(key);
   },
+  clearAll: () => storage.clearAll(), // ✅ Add this line
 };
 
 // Example of how to use tokenStorage for storing sensitive tokens (like access tokens)

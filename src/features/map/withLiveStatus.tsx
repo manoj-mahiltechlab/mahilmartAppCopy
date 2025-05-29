@@ -78,7 +78,7 @@ const withLiveStatus = <P extends object>(
                 style={styles.btn}>
                 <CustomText
                   fontFamily={Fonts.Medium}
-                  variant="h8"
+                  variant="h7"
                   style={{
                     color: Colors.secondary,
                   }}>
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
   },
   btn: {
     paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderWidth: 0.7,
+    paddingVertical: 5,
+    borderWidth: 0.9,
     borderColor: Colors.secondary,
     borderRadius: 5,
   },

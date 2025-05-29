@@ -1,23 +1,32 @@
-import React, {FC, useEffect, useCallback} from 'react';
-import {View, StyleSheet, Image, Alert, Platform, Linking} from 'react-native';
+import React, {FC, useEffect, useCallback, useState, useRef} from 'react';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Alert,
+  Platform,
+  BackHandler,
+  ActivityIndicator,
+  AppState,
+  AppStateStatus,
+} from 'react-native';
 import {useIsFocused} from '@react-navigation/native';
 import {Colors} from '@utils/Constants';
 import Logo from '@assets/images/logo.jpeg';
 import {screenHeight, screenWidth} from '@utils/Scaling';
-import GeoLocation from '@react-native-community/geolocation';
+import Geolocation from '@react-native-community/geolocation';
 import {useAuthStore} from '@state/authStore';
-import {mmkvStorage} from '@state/storage'; // Updated import for mmkvStorage
-import {jwtDecode} from 'jwt-decode';
+import {mmkvStorage} from '@state/storage';
+import jwtDecode from 'jwt-decode';
 import {refetchUser, refresh_Tokens} from '@service/authService';
 import {resetAndNavigate} from '@utils/NavigationUtils';
-import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
-
-GeoLocation.setRNConfiguration({
-  skipPermissionRequests: false,
-  authorizationLevel: 'always',
-  enableBackgroundLocationUpdates: true,
-  locationProvider: 'auto',
-});
+import {
+  request,
+  openSettings,
+  PERMISSIONS,
+  RESULTS,
+} from 'react-native-permissions';
+import DeviceInfo from 'react-native-device-info';
 
 interface DecodedToken {
   exp: number;
@@ -26,22 +35,43 @@ interface DecodedToken {
 const SplashScreen: FC = () => {
   const {user, setUser} = useAuthStore();
   const isFocused = useIsFocused();
+  const appState = useRef<AppStateStatus>(AppState.currentState);
 
-  const navigateBasedOnRole = () => {
+  const [loading, setLoading] = useState(false);
+  const [locationAlertShown, setLocationAlertShown] = useState(false);
+
+  const locationPermissions =
+    Platform.OS === 'android'
+      ? [
+          PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+          PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION,
+        ]
+      : [PERMISSIONS.IOS.LOCATION_WHEN_IN_USE];
+
+  const exitApp = () => {
+    resetAndNavigate('CustomerLogin');
+  };
+
+  const clearCache = async () => {
+    try {
+      await mmkvStorage.clearAll();
+    } catch (error) {
+      console.log('Error clearing cache:', error);
+    }
+  };
+
+  const navigateBasedOnRole = useCallback(() => {
     if (user?.role === 'Customer') {
       resetAndNavigate('ProductDashboard');
     } else {
       resetAndNavigate('DeliveryDashboard');
     }
-  };
+  }, [user]);
 
-  const validateTokens = async () => {
+  const validateTokens = useCallback(async () => {
     try {
-      // Use mmkvStorage for consistent token retrieval
-      const accessToken = mmkvStorage.getItem('accessToken');
-      const refreshToken = mmkvStorage.getItem('refreshToken');
-
-      console.log('Access token ******', accessToken);
+      const accessToken = mmkvStorage.getString('accessToken');
+      const refreshToken = mmkvStorage.getString('refreshToken');
 
       if (!accessToken || !refreshToken) {
         resetAndNavigate('CustomerLogin');
@@ -59,99 +89,155 @@ const SplashScreen: FC = () => {
       }
 
       if (decodedAccess.exp < currentTime) {
-        await refresh_Tokens(); // Get a new access token
+        await refresh_Tokens();
       }
 
       await refetchUser(setUser);
       navigateBasedOnRole();
     } catch (error) {
       console.log('Token validation error:', error);
-      Alert.alert('Something went wrong', 'Please login again');
       resetAndNavigate('CustomerLogin');
+    }
+  }, [setUser, navigateBasedOnRole]);
+
+  const requestPermissions = async (): Promise<boolean> => {
+    for (const permission of locationPermissions) {
+      const result = await request(permission);
+      if (result === RESULTS.BLOCKED) {
+        Alert.alert(
+          'Permission Blocked',
+          'Location permission is blocked. Please enable it in settings.',
+          [
+            {text: 'Open Settings', onPress: () => openSettings()},
+            {text: 'Back to Login', style: 'cancel', onPress: exitApp},
+          ],
+          {cancelable: false},
+        );
+
+        return false;
+      }
+      if (result !== RESULTS.GRANTED) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const checkLocationServicesEnabled = async (): Promise<boolean> => {
+    try {
+      if (Platform.OS === 'android') {
+        const enabled = await DeviceInfo.isLocationEnabled();
+        if (!enabled) return false;
+      }
+
+      return new Promise(resolve => {
+        Geolocation.getCurrentPosition(
+          () => resolve(true),
+          error => {
+            console.log('Geolocation error:', error);
+
+            if (error.code === 1) {
+              // PERMISSION_DENIED
+              resolve(false);
+            } else {
+              resolve(true);
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+          },
+        );
+      });
+    } catch (error) {
+      console.log('Error checking location services:', error);
+      return false;
     }
   };
 
-  const checkLocationServices = useCallback(async () => {
+  const checkLocationAndPermission = useCallback(async () => {
+    setLoading(true);
     try {
-      const result = await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+      const permissionsGranted = await requestPermissions();
 
-      if (result === RESULTS.GRANTED) {
-        validateTokens(); // GPS is ON
-      } else {
-        const requestResult = await request(
-          PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
-        );
-        if (requestResult === RESULTS.GRANTED) {
-          validateTokens(); // Now permission is granted
-        } else {
-          Alert.alert(
-            'Enable Location',
-            'Location permission is required to use the app.',
-            [{text: 'OK'}],
-          );
-        }
-      }
-    } catch (error) {
-      console.log('Error checking GPS status:', error);
-      Alert.alert('Error', 'Unable to check location services.');
-    }
-  }, [validateTokens]);
-
-  const handleLocationPermission = useCallback(async () => {
-    const permission =
-      Platform.OS === 'android'
-        ? PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION
-        : PERMISSIONS.IOS.LOCATION_WHEN_IN_USE;
-
-    const status = await check(permission);
-
-    switch (status) {
-      case RESULTS.GRANTED:
-        console.log('Permission granted');
-        checkLocationServices();
-        break;
-      case RESULTS.DENIED:
-      case RESULTS.UNAVAILABLE:
-      case RESULTS.LIMITED:
-        const newStatus = await request(permission);
-        if (newStatus === RESULTS.GRANTED) {
-          checkLocationServices();
-        } else {
-          Alert.alert(
-            'Permission Needed',
-            'Location access is required to continue.',
-          );
-        }
-        break;
-      case RESULTS.BLOCKED:
+      if (!permissionsGranted) {
+        setLoading(false);
         Alert.alert(
-          'Permission Blocked',
-          'Please enable location access in your settings.',
+          'Permission Required',
+          'Location permission is required to continue.',
           [
-            {text: 'Cancel', style: 'cancel'},
-            {
-              text: 'Open Settings',
-              onPress: () => {
-                Linking.openSettings().catch(() => {
-                  Alert.alert('Error', 'Unable to open settings');
-                });
-              },
-            },
+            {text: 'Retry', onPress: () => checkLocationAndPermission()},
+            {text: 'Exit', onPress: exitApp, style: 'cancel'},
           ],
+          {cancelable: false},
         );
-        break;
+        return;
+      }
+
+      const isLocationOn = await checkLocationServicesEnabled();
+
+      if (!isLocationOn && !locationAlertShown) {
+        setLocationAlertShown(true);
+        setLoading(false);
+        Alert.alert(
+          'Location Required',
+          'Please enable GPS/location services.',
+          [
+            {text: 'Open Settings', onPress: () => openSettings()},
+            {text: 'Exit', style: 'cancel', onPress: exitApp},
+          ],
+          {cancelable: false},
+        );
+        return;
+      }
+
+      await clearCache();
+      await validateTokens();
+    } catch (error) {
+      console.log('Error checking location:', error);
+      Alert.alert(
+        'Error',
+        'Something went wrong checking location.',
+        [{text: 'Exit', onPress: exitApp}],
+        {cancelable: false},
+      );
+    } finally {
+      setLoading(false);
     }
-  }, [checkLocationServices]); // Add checkLocationServices to dependencies
+  }, [validateTokens, locationAlertShown]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appState.current?.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        setLocationAlertShown(false);
+        checkLocationAndPermission();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => subscription.remove();
+  }, [checkLocationAndPermission]);
 
   useEffect(() => {
     if (isFocused) {
-      handleLocationPermission();
+      checkLocationAndPermission();
     }
-  }, [isFocused, handleLocationPermission]);
+  }, [isFocused, checkLocationAndPermission]);
 
   return (
     <View style={styles.container}>
       <Image source={Logo} style={styles.logoImage} />
+      {loading && (
+        <ActivityIndicator
+          size="large"
+          color={Colors.white}
+          style={{marginTop: 20}}
+        />
+      )}
     </View>
   );
 };

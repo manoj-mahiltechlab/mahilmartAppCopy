@@ -1,10 +1,4 @@
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import {View, StyleSheet, ScrollView, Alert} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useAuthStore} from '@state/authStore';
 import {
@@ -13,6 +7,7 @@ import {
   sendLiveOrderUpdates,
 } from '@service/orderService';
 import {Colors, Fonts} from '@utils/Constants';
+
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
@@ -22,22 +17,20 @@ import DeliveryDetails from '@features/map/DeliveryDetails';
 import OrderSummary from '@features/map/OrderSummary';
 import {useRoute} from '@react-navigation/native';
 import Geolocation from '@react-native-community/geolocation';
-import {hocStyles} from '@styles/GlobleStyles';
 import CustomButton from '@components/ui/CustomButton';
+import {hocStyles} from '@styles/GlobleStyles';
 
 const DeliveryMap = () => {
   const user = useAuthStore(state => state.user);
   const [orderData, setOrderData] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [myLocation, setMyLocation] = useState<any>(null);
   const route = useRoute();
+
   const orderDetails = route?.params as Record<string, any>;
   const {setCurrentOrder} = useAuthStore();
-
   const fetchOrderDetails = async () => {
     const data = await getOrderById(orderDetails?._id as any);
     setOrderData(data);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -120,7 +113,6 @@ const DeliveryMap = () => {
   ) {
     message = 'You missed it!';
   }
-
   useEffect(() => {
     const sendLiveUpdates = async () => {
       if (
@@ -139,18 +131,6 @@ const DeliveryMap = () => {
     sendLiveUpdates();
   }, [myLocation]);
 
-  if (loading) {
-    return (
-      <View
-        style={[
-          styles.container,
-          {justifyContent: 'center', alignItems: 'center'},
-        ]}>
-        <ActivityIndicator color="#000" size="small" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <LiveHeader
@@ -161,21 +141,18 @@ const DeliveryMap = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        {orderData?.deliveryLocation && orderData?.pickupLocation && (
-          <LiveMap
-            deliveryPersonLocation={
-              orderData?.deliveryPersonLocation || myLocation
-            }
-            deliveryLocation={orderData?.deliveryLocation || null}
-            hasAccepted={
-              orderData?.deliveryPartner?._id === user?._id &&
-              orderData?.status === 'confirmed'
-            }
-            hasPickedUp={orderData?.status === 'arriving'}
-            pickupLocation={orderData?.pickupLocation || null}
-          />
-        )}
-
+        <LiveMap
+          deliveryPersonLocation={
+            orderData?.deliveryPersonLocation || myLocation
+          }
+          deliveryLocation={orderData?.deliveryLocation || null}
+          hasAccepted={
+            orderData?.deliveryPartner?._id === user?._id &&
+            orderData?.status === 'confirmed'
+          }
+          hasPickedUp={orderData?.status === 'arriving'}
+          pickupLocation={orderData?.pickupLocation || null}
+        />
         <DeliveryDetails details={orderData?.customer} />
         <OrderSummary order={orderData} />
 
@@ -197,7 +174,6 @@ const DeliveryMap = () => {
             </CustomText>
           </View>
         </View>
-
         <CustomText
           fontFamily={Fonts.SemiBold}
           variant="h7"
@@ -240,19 +216,15 @@ const DeliveryMap = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.secondary,
   },
   scrollContent: {
     paddingBottom: 150,
     backgroundColor: Colors.backgroundSecondary,
     padding: 15,
-  },
-  btnContainer: {
-    padding: 10,
   },
   flexRow: {
     flexDirection: 'row',
@@ -273,6 +245,9 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  btnContainer: {
+    padding: 10,
   },
 });
 

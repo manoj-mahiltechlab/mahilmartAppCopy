@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
-    paddingHorizontal: screenWidth * 0.05,
-    paddingBottom: screenWidth * 0.07,
+    paddingHorizontal: screenWidth * 0.02,
+    paddingBottom: screenWidth * 0.01,
     paddingTop: screenHeight * 0.014,
   },
   flexRopGap: {

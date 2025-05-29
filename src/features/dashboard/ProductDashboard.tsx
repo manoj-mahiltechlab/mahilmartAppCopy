@@ -79,9 +79,9 @@ const ProductDashboard = () => {
   }, []);
 
   const backToTopStyle = useAnimatedStyle(() => {
-    const opacity = withTiming(showBackToTop.value ? 1 : 0, {duration: 100});
+    const opacity = withTiming(showBackToTop.value ? 1 : 0, {duration: 500});
     const translateY = withTiming(showBackToTop.value ? 0 : 10, {
-      duration: 100,
+      duration: 500,
     });
     return {
       opacity,

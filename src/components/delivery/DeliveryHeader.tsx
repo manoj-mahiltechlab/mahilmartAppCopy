@@ -34,8 +34,8 @@ const DeliveryHeader: FC<DeliveryHeaderProps> = ({name, email}) => {
         onPress={() => {
           resetAndNavigate('CustomerLogin');
           logout();
-          tokenStorage.clearAll();
-          storage.clearAll();
+          // tokenStorage.clearAll();
+          // storage.clearAll();
         }}>
         <Icon name="logout" size={30} color="black" />
       </TouchableOpacity>

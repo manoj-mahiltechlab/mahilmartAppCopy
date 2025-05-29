@@ -25,6 +25,9 @@ const Sidebar: FC<SidebarProps> = ({
   const scrollViewRef = useRef<ScrollView>(null);
   const indicatorPosition = useSharedValue(0);
   const animatedValues = categories?.map(() => useSharedValue(0));
+  const CATEGORY_HEIGHT = 100;
+  const INDICATOR_HEIGHT = 80;
+  const VERTICAL_OFFSET = (CATEGORY_HEIGHT - INDICATOR_HEIGHT) / 2;
 
   useEffect(() => {
     let targetIndex = -1;
@@ -35,13 +38,20 @@ const Sidebar: FC<SidebarProps> = ({
       });
       if (isSelected) targetIndex = index;
     });
+
     if (targetIndex !== -1) {
-      indicatorPosition.value = withTiming(targetIndex * 100, {duration: 500});
-      runOnJS(() => {
-        scrollViewRef.current?.scrollTo({
-          y: targetIndex * 100,
-          animated: true,
-        });
+      const CATEGORY_HEIGHT = 100;
+      const INDICATOR_HEIGHT = 80;
+      const VERTICAL_OFFSET = (CATEGORY_HEIGHT - INDICATOR_HEIGHT) / 2;
+
+      indicatorPosition.value = withTiming(
+        targetIndex * CATEGORY_HEIGHT + VERTICAL_OFFSET,
+        {duration: 300},
+      );
+
+      scrollViewRef.current?.scrollTo({
+        y: targetIndex * CATEGORY_HEIGHT,
+        animated: true,
       });
     }
   }, [selectedCategory]);
@@ -53,11 +63,11 @@ const Sidebar: FC<SidebarProps> = ({
   return (
     <View style={styles.SideBar}>
       <View style={{flex: 1}}>
-        <Animated.View style={[styles.indicator, indicatorStyle]} />
         <ScrollView
           ref={scrollViewRef}
           contentContainerStyle={{paddingBottom: 50}}
           showsVerticalScrollIndicator={false}>
+          <Animated.View style={[styles.indicator, indicatorStyle]} />
           {categories?.map((category: any, index: number) => {
             const animatedStyle = useAnimatedStyle(() => ({
               bottom: animatedValues[index].value,
@@ -99,16 +109,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   indicator: {
-    position: 'absolute',
-    right: 0,
-    width: 4,
-    height: 80,
-    top: 10,
-    zIndex: 1, // make sure it's above ScrollView content
+    width: '10%',
+    height: 70,
     backgroundColor: Colors.secondary ?? 'green',
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
+    position: 'absolute',
   },
+
   categoryButton: {
     padding: 10,
     height: 100,
@@ -119,7 +127,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     borderRadius: 100,
-    height: '50%',
+    height: '55%',
     marginBottom: 10,
     width: '75%',
     justifyContent: 'center',
@@ -132,7 +140,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '80%',
-    height: '80%',
+    height: '100%',
     resizeMode: 'contain',
   },
 });

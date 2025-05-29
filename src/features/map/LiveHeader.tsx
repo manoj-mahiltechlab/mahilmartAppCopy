@@ -1,4 +1,10 @@
-import {View, StyleSheet, SafeAreaView, Pressable} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  Pressable,
+  TouchableOpacity,
+} from 'react-native';
 import React, {FC} from 'react';
 import {useAuthStore} from '@state/authStore';
 import {navigate} from '@utils/NavigationUtils';
@@ -18,24 +24,26 @@ const LiveHeader: FC<{
   return (
     <SafeAreaView>
       <View style={styles.headerContainer}>
-        <Pressable
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            if (isCustomer) {
-              navigate('ProductDashboard');
-              if (currentOrder?.status === 'delivered') {
-                setCurrentOrder(null);
+            requestAnimationFrame(() => {
+              if (isCustomer) {
+                navigate('ProductDashboard');
+                if (currentOrder?.status === 'delivered') {
+                  setCurrentOrder(null);
+                }
+              } else {
+                navigate('DeliveryDashboard');
               }
-              return;
-            }
-            navigate('DeliveryDashboard');
+            });
           }}>
           <Icon
             name="chevron-back"
             size={RFValue(16)}
             color={isCustomer ? '#fff' : '#000'}
           />
-        </Pressable>
+        </TouchableOpacity>
         <CustomText
           variant="h7"
           fontFamily={Fonts.Medium}
@@ -61,8 +69,12 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    left: 20,
+    top: 10, // or safe area inset
+    left: 10,
+    zIndex: 10, // ensures it's on top
+    padding: 10,
   },
+
   titleTextBlack: {
     color: 'black',
   },

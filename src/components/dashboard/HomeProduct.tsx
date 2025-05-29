@@ -1,22 +1,21 @@
-import {View, StyleSheet, Image, TouchableOpacity} from 'react-native';
+import {View, Text, Image, StyleSheet, TouchableOpacity} from 'react-native';
 import React, {FC, useEffect, useState} from 'react';
-import {navigate} from '@utils/NavigationUtils';
-import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
 import {
   getAllCategories,
   getProductsByCategoryId,
 } from '@service/ProductService';
+import CustomText from '@components/ui/CustomText';
+import {navigate} from '@utils/NavigationUtils';
+import {Fonts} from '@utils/Constants';
 
-const SnacksDrinks: FC<{data: any}> = ({data}) => {
+const HomeProduct: FC<{data: any}> = ({data}) => {
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
   const [products, setProducts] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState<boolean>(false);
 
-  // If you want to keep a constant ID, define it without 'item.'
-  const categoryId = '682721bc955e2124af638b5b';
+  const categoryId = '67e786faac8a406fb692a379';
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -114,8 +113,8 @@ const styles = StyleSheet.create({
     height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 15,
-    padding: 5,
+    borderRadius: 10,
+    padding: 6,
     backgroundColor: '#E5F3F3',
     marginBottom: 8,
   },
@@ -126,4 +125,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SnacksDrinks;
+export default HomeProduct;
