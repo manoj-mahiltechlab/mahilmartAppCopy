@@ -41,7 +41,7 @@ const Sidebar: FC<SidebarProps> = ({
 
     if (targetIndex !== -1) {
       const CATEGORY_HEIGHT = 100;
-      const INDICATOR_HEIGHT = 80;
+      const INDICATOR_HEIGHT = 90;
       const VERTICAL_OFFSET = (CATEGORY_HEIGHT - INDICATOR_HEIGHT) / 2;
 
       indicatorPosition.value = withTiming(
@@ -64,7 +64,7 @@ const Sidebar: FC<SidebarProps> = ({
     <View style={styles.SideBar}>
       <View style={{flex: 1}}>
         <ScrollView
-          ref={scrollViewRef}
+          // ref={scrollViewRef}
           contentContainerStyle={{paddingBottom: 50}}
           showsVerticalScrollIndicator={false}>
           <Animated.View style={[styles.indicator, indicatorStyle]} />
@@ -109,12 +109,12 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   indicator: {
-    width: '10%',
+    width: '4%',
     height: 70,
+    right: 0,
     backgroundColor: Colors.secondary ?? 'green',
-    borderTopLeftRadius: 15,
-    borderBottomLeftRadius: 15,
     position: 'absolute',
+    borderRadius: 10,
   },
 
   categoryButton: {
