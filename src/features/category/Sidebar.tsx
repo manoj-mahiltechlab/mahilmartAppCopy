@@ -26,7 +26,7 @@ const Sidebar: FC<SidebarProps> = ({
   const indicatorPosition = useSharedValue(0);
   const animatedValues = categories?.map(() => useSharedValue(0));
   const CATEGORY_HEIGHT = 100;
-  const INDICATOR_HEIGHT = 80;
+  const INDICATOR_HEIGHT = 10;
   const VERTICAL_OFFSET = (CATEGORY_HEIGHT - INDICATOR_HEIGHT) / 2;
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const Sidebar: FC<SidebarProps> = ({
     <View style={styles.SideBar}>
       <View style={{flex: 1}}>
         <ScrollView
-          // ref={scrollViewRef}
+          ref={scrollViewRef}
           contentContainerStyle={{paddingBottom: 50}}
           showsVerticalScrollIndicator={false}>
           <Animated.View style={[styles.indicator, indicatorStyle]} />
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   indicator: {
     width: '4%',
-    height: 70,
+    height: 80,
     right: 0,
     backgroundColor: Colors.secondary ?? 'green',
     position: 'absolute',

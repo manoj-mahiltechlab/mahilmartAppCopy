@@ -29,7 +29,7 @@ const CustomButton: FC<CustomButtonProps> = ({
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.8}
+      activeOpacity={0.5}
       style={[styles.btn, getButtonStyle(disabled)]}>
       <View style={styles.buttonContent}>
         {loading ? (
@@ -37,7 +37,7 @@ const CustomButton: FC<CustomButtonProps> = ({
         ) : (
           <CustomText
             style={styles.text}
-            variant="h6"
+            variant="h9"
             fontFamily={Fonts.SemiBold}>
             {title}
           </CustomText>
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   buttonContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%', // Ensures full width
+    width: '100%',
     alignItems: 'center',
   },
   text: {

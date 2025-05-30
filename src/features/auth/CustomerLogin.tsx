@@ -71,7 +71,7 @@ const CustomerLogin = () => {
   }, []);
 
   const shopTitleStyle = useAnimatedStyle(() => {
-    const theta = progress.value * 2 * Math.PI;
+    const theta = progress.value * 0 * Math.PI;
     const translateX = radius * Math.cos(theta);
     const translateY = radius * Math.sin(theta);
     return {
@@ -97,8 +97,8 @@ const CustomerLogin = () => {
   const animatedValue = useSharedValue(0);
   useDerivedValue(() => {
     animatedValue.value = withTiming(
-      keyboardOffsetHeight === 0 ? 0 : -keyboardOffsetHeight * 0.84,
-      {duration: 300},
+      keyboardOffsetHeight === 0 ? 0 : -keyboardOffsetHeight * 0.9,
+      {duration: 200},
     );
   }, [keyboardOffsetHeight]);
 
@@ -110,6 +110,8 @@ const CustomerLogin = () => {
     phoneNumber.trim().length === 10 && /^\d{10}$/.test(phoneNumber);
 
   const handleAuth = async () => {
+    console.log('Continue button pressed ✅'); // Add this line
+
     Keyboard.dismiss();
 
     setTimeout(async () => {
@@ -146,11 +148,11 @@ const CustomerLogin = () => {
                     accessibilityLabel="App Logo"
                   />
                 </Animated.View>
-                {/* <Animated.View style={shopTitleStyle}>
+                <Animated.View style={shopTitleStyle}>
                   <CustomText variant="h2" fontFamily={Fonts.Bold}>
                     MahilMart Shop
                   </CustomText>
-                </Animated.View> */}
+                </Animated.View>
 
                 <CustomText
                   variant="h5"
@@ -176,6 +178,7 @@ const CustomerLogin = () => {
                     </CustomText>
                   }
                 />
+
                 <CustomButton
                   disabled={!isPhoneValid || loading}
                   onPress={handleAuth}

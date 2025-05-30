@@ -121,9 +121,9 @@ const productsList = [
 export const groceryKitchen = [
   {
     id: '67e786faac8a406fb692a375',
-    name: 'Milk, Curd & Paneer',
+    name: 'Stationery Items',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748436276/zqcuvkjfhyjinxjrfh6y.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748583897/pwycaj664jly4uabxbrq.png',
     },
     products: productsList,
   },
@@ -185,7 +185,22 @@ export const snacksDrinks = [
     image: {
       uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748441177/20250527_1218_Chocolate_Delight_simple_compose_01jw87z9s3fgbassnrk0xb4hvm_p3gqhh.png',
     },
-    products: productsList,
+    subcategories: [
+      {
+        id: '68383e558bb07014d6ff1d7a',
+        name: 'Milk Chocolate',
+        image: {
+          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748441177/20250527_1218_Chocolate_Delight_simple_compose_01jw87z9s3fgbassnrk0xb4hvm_p3gqhh.png',
+        },
+      },
+      {
+        id: '68383eec8bb07014d6ff1d7e',
+        name: 'Dark Chocolate',
+        image: {
+          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748441177/20250527_1218_Chocolate_Delight_simple_compose_01jw87z9s3fgbassnrk0xb4hvm_p3gqhh.png',
+        },
+      },
+    ],
   },
   {
     id: '68357b64e99d2d90a0467883',
@@ -237,6 +252,7 @@ export const snacksDrinks = [
     },
   },
 ];
+
 export const homeLifeStyle = [
   {
     id: '683449c0b071144469a8a858',

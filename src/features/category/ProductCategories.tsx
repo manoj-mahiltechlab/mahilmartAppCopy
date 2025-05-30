@@ -5,6 +5,7 @@ import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Sidebar from './Sidebar';
 import {
   getAllCategories,
+  getAllSubcategories,
   getProductsByCategoryId,
 } from '@service/ProductService';
 import ProductList from './ProductList';
@@ -18,10 +19,19 @@ const ProductCategories = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState<boolean>(false);
 
-  // Expect param 'category' which is the category ID (string)
   const route =
     useRoute<RouteProp<Record<string, {category?: string}>, string>>();
   const {category} = route.params || {};
+
+  const [subcategories, setSubcategories] = useState([]);
+
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      const data = await getAllSubcategories();
+      setSubcategories(data);
+    };
+    fetchSubcategories();
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -32,7 +42,6 @@ const ProductCategories = () => {
 
         if (data && data.length > 0) {
           if (category) {
-            // Find category by _id or id matching param
             const matchedCategory = data.find(
               cat => cat._id === category || cat.id === category,
             );
@@ -47,7 +56,6 @@ const ProductCategories = () => {
         setCategoriesLoading(false);
       }
     };
-
     fetchCategories();
   }, [category]);
 
