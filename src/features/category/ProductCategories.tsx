@@ -11,6 +11,7 @@ import {
 import ProductList from './ProductList';
 import withCart from '@features/cart/WithCart';
 import {RouteProp, useRoute} from '@react-navigation/native';
+import CustomText from '@components/ui/CustomText';
 
 const ProductCategories = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -30,6 +31,7 @@ const ProductCategories = () => {
       const data = await getAllSubcategories();
       setSubcategories(data);
     };
+
     fetchSubcategories();
   }, []);
 
@@ -42,6 +44,7 @@ const ProductCategories = () => {
 
         if (data && data.length > 0) {
           if (category) {
+            // Find category by _id or id matching param
             const matchedCategory = data.find(
               cat => cat._id === category || cat.id === category,
             );
@@ -56,24 +59,42 @@ const ProductCategories = () => {
         setCategoriesLoading(false);
       }
     };
+
     fetchCategories();
   }, [category]);
+  const fetchProducts = async (categoryId: string) => {
+    try {
+      setProductsLoading(true);
+      const data = await getProductsByCategoryId(categoryId);
+      setProducts(data);
+    } catch (error) {
+      console.log('Error Fetching Products', error);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProducts = async (categoryId: string) => {
-      try {
-        setProductsLoading(true);
-        const data = await getProductsByCategoryId(categoryId);
-        setProducts(data);
-      } catch (error) {
-        console.log('Error Fetching Products', error);
-      } finally {
-        setProductsLoading(false);
+    const fetchSubcategories = async () => {
+      const data = await getAllSubcategories();
+
+      // Filter subcategories for the selected category
+      const filtered = data.filter(
+        sub =>
+          sub.parentCategory === selectedCategory?._id ||
+          sub.parentCategory === selectedCategory?.id,
+      );
+
+      setSubcategories(filtered);
+
+      // If no subcategories, fetch products directly
+      if (filtered.length === 0 && selectedCategory) {
+        fetchProducts(selectedCategory._id || selectedCategory.id);
       }
     };
 
-    if (selectedCategory?._id || selectedCategory?.id) {
-      fetchProducts(selectedCategory._id || selectedCategory.id);
+    if (selectedCategory) {
+      fetchSubcategories();
     }
   }, [selectedCategory]);
 
@@ -93,15 +114,42 @@ const ProductCategories = () => {
           />
         )}
 
-        {productsLoading ? (
-          <ActivityIndicator
-            size="large"
-            color={Colors.border}
-            style={styles.center}
-          />
-        ) : (
-          <ProductList data={products || []} />
-        )}
+        <View style={{flex: 1}}>
+          {/* Show subcategories if any */}
+          {subcategories.length > 0 && (
+            <View style={{padding: 10}}>
+              <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
+                {subcategories.map(sub => (
+                  <View
+                    key={sub._id || sub.id}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      margin: 5,
+                      backgroundColor: '#F0F0F0',
+                      borderRadius: 20,
+                    }}>
+                    <CustomText
+                      onPress={() => fetchProducts(sub._id || sub.id)}
+                      style={{color: '#333'}}>
+                      {sub.name}
+                    </CustomText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {productsLoading ? (
+            <ActivityIndicator
+              size="large"
+              color={Colors.border}
+              style={styles.center}
+            />
+          ) : (
+            <ProductList data={products || []} />
+          )}
+        </View>
       </View>
     </View>
   );

@@ -4,14 +4,20 @@ import ScalePress from '@components/ui/ScallPress';
 import {navigate} from '@utils/NavigationUtils';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
+interface Subcategory {
+  id: string;
+  name: string;
+  image: {uri: string};
+}
 
 interface CategoryItem {
-  _id: string;
+  _id?: string;
   id: string;
   name: string;
   image: any;
-  categoryId: string | number;
+  categoryId?: string | number;
   products?: any[];
+  subcategories?: Subcategory[];
 }
 
 interface CategoryContainerProps {
@@ -26,8 +32,12 @@ const CategoryContainer: FC<CategoryContainerProps> = ({data}) => {
           key={item.id}
           style={styles.item}
           onPress={() => {
+            console.log('ID : : ', items);
             console.log('Touched item category ID item i id :', item.id, index);
-            navigate('ProductCategories', {category: item.id});
+            navigate('CategoryOrSubcategory', {
+              categoryId: item.id,
+              subcategories: item.subcategories || null,
+            });
           }}>
           <View style={styles.imageContainer}>
             <Image source={item.image} style={styles.image} />

@@ -110,11 +110,11 @@ const ProductDashboard = () => {
               scrollY.value = 0;
               expand();
             }}
-            style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            style={{flexDirection: 'row', alignItems: 'center', gap: 1}}>
             <Icon
               name="arrow-up-circle-outline"
               color="white"
-              size={RFValue(12)}
+              size={RFValue(8)}
             />
             <CustomText
               variant="h9"
@@ -163,9 +163,9 @@ const styles = StyleSheet.create({
   },
   backToTopButton: {
     position: 'absolute',
-    bottom: 400,
-    right: 20,
-    height: '6%',
+    bottom: 200,
+    right: 10,
+    height: '5%',
     backgroundColor: 'black',
     borderRadius: 20,
     paddingHorizontal: 10,

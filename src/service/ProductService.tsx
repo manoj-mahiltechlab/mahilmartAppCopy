@@ -22,12 +22,22 @@ export const getProductsByCategoryId = async (id: string) => {
 export const getAllSubcategories = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/subcategories`);
-    return response.data;
+    const data = response.data;
+
+    // Transform data to expected format
+    return data.map((sub: any) => ({
+      id: sub._id || sub.id,
+      name: sub.name,
+      image: {
+        uri: sub.imageUrl || (sub.image && sub.image.uri) || '', // adjust based on your backend
+      },
+    }));
   } catch (error) {
     console.log('Error fetching subcategories:', error);
     return [];
   }
 };
+
 export const getSubcategoriesByCategoryId = async (categoryId: string) => {
   try {
     const response = await axios.get(

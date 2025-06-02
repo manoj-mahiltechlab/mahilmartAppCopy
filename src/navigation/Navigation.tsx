@@ -14,6 +14,7 @@ import OrderSuccess from '@features/order/OrderSuccess';
 import LiveTracking from '@features/map/LiveTracking';
 import profile from '@features/profile/profile';
 import DeliveryMap from '@features/delivery/DeliveryMap';
+import CategoryOrSubcategory from '@components/dashboard/CategoryOrSubcategory';
 
 export type RootStackParamList = {
   SplashScreen: undefined;
@@ -21,9 +22,21 @@ export type RootStackParamList = {
   DeliveryDashboard: undefined;
   DeliveryLogin: undefined;
   CustomerLogin: undefined;
+
+  ProductOrder: undefined;
+  OrderSuccess: undefined;
+  LiveTracking: undefined;
+  DeliveryMap: undefined;
+  Profile: undefined;
+  ProductCategories: {category?: string} | undefined;
+  CategoryOrSubcategory: {
+    categoryId: string;
+    subcategories: any[] | null;
+    categoryName?: string;
+  };
 };
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Navigation: FC = () => {
   return (
@@ -42,9 +55,13 @@ const Navigation: FC = () => {
         <Stack.Screen name="DeliveryMap" component={DeliveryMap} />
         <Stack.Screen name="Profile" component={profile} />
         <Stack.Screen name="ProductCategories" component={ProductCategories} />
+        <Stack.Screen
+          name="CategoryOrSubcategory"
+          component={CategoryOrSubcategory}
+        />
 
         <Stack.Screen
-          options={{animation: 'fade'}}
+          options={{animation: 'default'}}
           name="DeliveryLogin"
           component={DeliveryLogin}
         />

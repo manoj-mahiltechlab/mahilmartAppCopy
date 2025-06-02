@@ -25,107 +25,36 @@ export const adData = [
   require('../assets/products/c5.jpg'),
 ];
 
-const productsList = [
-  {
-    id: 1,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 38,
-    quantity: '500 ml',
-  },
-  {
-    id: 2,
-    name: 'Gowardhan Panner',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/app/images/products/sliding_image/123007a.jpg?ts=1688973208',
-    price: 89,
-    discountPrice: 99,
-    quantity: '200 gm',
-  },
-  {
-    id: 3,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 45,
-    quantity: '500 ml',
-  },
-  {
-    id: 4,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 45,
-    quantity: '500 ml',
-  },
-  {
-    id: 5,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 45,
-    quantity: '500 ml',
-  },
-  {
-    id: 6,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 45,
-    quantity: '500 ml',
-  },
-  {
-    id: 7,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 45,
-    quantity: '500 ml',
-  },
-  {
-    id: 8,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 45,
-    quantity: '500 ml',
-  },
-  {
-    id: 9,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 45,
-    quantity: '500 ml',
-  },
-  {
-    id: 10,
-    name: 'Amul Gold Full Cream Fresh Milk',
-    image:
-      'https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=360/app/assets/products/sliding_images/jpeg/1c0db977-31ab-4d8e-abf3-d42e4a4b4632.jpg?ts=1706182142',
-    price: 34,
-    discountPrice: 45,
-    quantity: '500 ml',
-  },
-];
-
 export const groceryKitchen = [
   {
     id: '67e786faac8a406fb692a375',
-    name: 'Stationery Items',
+    name: 'Pooja Essentials',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748583897/pwycaj664jly4uabxbrq.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748671122/zqfebzopgysqpldhayfx.png',
     },
-    products: productsList,
+    subcategories: [
+      {
+        id: '67e786faac8a406fb692a375',
+        name: 'Diyas & Lamps',
+        image: {
+          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748671877/zajelbdpwpscfclupotx.png',
+        },
+      },
+      {
+        id: '683aec71e5702432c0c61c7d',
+        name: 'Holy water bottles',
+        image: {
+          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748690741/ynipklihsxq7c4bo9prq.png',
+        },
+      },
+      {
+        id: '683947ea0eaebb9acb8cae38',
+        name: 'Kumkum Haldi & Chandan',
+        image: {
+          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748690965/ae67saa5bgmxgqwwoeik.png',
+        },
+      },
+    ],
   },
   {
     id: '67e786faac8a406fb692a376',
@@ -260,7 +189,6 @@ export const homeLifeStyle = [
     image: {
       uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748432009/q5cv1iflx0rse76qbwgq.png',
     },
-    products: productsList,
   },
   {
     id: '6834612ab071144469a8aa96',
