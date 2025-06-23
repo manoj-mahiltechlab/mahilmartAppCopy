@@ -7,6 +7,7 @@ const ProductList: FC<{data: any}> = ({data}) => {
   const renderItem = ({item, index}: any) => {
     return <ProductItem item={item} index={index} />;
   };
+
   return (
     <FlatList
       data={data}
@@ -17,13 +18,14 @@ const ProductList: FC<{data: any}> = ({data}) => {
       numColumns={2}
       removeClippedSubviews={false}
       keyboardShouldPersistTaps="handled"
+      scrollEnabled={false}
     />
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     backgroundColor: Colors.backgroundSecondary,
   },
   content: {

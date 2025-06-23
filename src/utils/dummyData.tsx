@@ -25,49 +25,26 @@ export const adData = [
   require('../assets/products/c5.jpg'),
 ];
 
-export const groceryKitchen = [
+export const HomeKitchen = [
   {
-    id: '67e786faac8a406fb692a375',
+    id: '683aec71e5702432c0c61c7d',
     name: 'Pooja Essentials',
     image: {
       uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748671122/zqfebzopgysqpldhayfx.png',
     },
-    subcategories: [
-      {
-        id: '67e786faac8a406fb692a375',
-        name: 'Diyas & Lamps',
-        image: {
-          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748671877/zajelbdpwpscfclupotx.png',
-        },
-      },
-      {
-        id: '683aec71e5702432c0c61c7d',
-        name: 'Holy water bottles',
-        image: {
-          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748690741/ynipklihsxq7c4bo9prq.png',
-        },
-      },
-      {
-        id: '683947ea0eaebb9acb8cae38',
-        name: 'Kumkum Haldi & Chandan',
-        image: {
-          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748690965/ae67saa5bgmxgqwwoeik.png',
-        },
-      },
-    ],
   },
   {
-    id: '67e786faac8a406fb692a376',
-    name: 'Pharma & Wellness',
+    id: '683fff1783c76f050ca59b7b',
+    name: 'Kitchen & Dining',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748436277/r3vtr349jcuvag77p8wx.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749024458/lmv23gohp2py9ocpu3rg.png',
     },
   },
   {
-    id: '67e786faac8a406fb692a377',
-    name: 'Vegetables & Fruits',
+    id: '684a82b593f21b7158e587f1',
+    name: 'Household Supplies',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748436278/giao6pmflhnlloe1g1wc.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749032434/vd0dyewrt7oqfjgrjabm.png',
     },
   },
   {
@@ -107,63 +84,47 @@ export const groceryKitchen = [
   },
 ];
 
-export const snacksDrinks = [
+export const GroceryItems = [
   {
     id: '6835656ae99d2d90a04675ec',
-    name: 'Chocolate',
+    name: 'Fruits & Vegetables',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748441177/20250527_1218_Chocolate_Delight_simple_compose_01jw87z9s3fgbassnrk0xb4hvm_p3gqhh.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749715699/b4nvxezs5irjls6nh4oe.png',
     },
-    subcategories: [
-      {
-        id: '68383e558bb07014d6ff1d7a',
-        name: 'Milk Chocolate',
-        image: {
-          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748441177/20250527_1218_Chocolate_Delight_simple_compose_01jw87z9s3fgbassnrk0xb4hvm_p3gqhh.png',
-        },
-      },
-      {
-        id: '68383eec8bb07014d6ff1d7e',
-        name: 'Dark Chocolate',
-        image: {
-          uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748441177/20250527_1218_Chocolate_Delight_simple_compose_01jw87z9s3fgbassnrk0xb4hvm_p3gqhh.png',
-        },
-      },
-    ],
   },
   {
     id: '68357b64e99d2d90a0467883',
-    name: 'Soft Drinks',
+    name: 'Dairy & Bakery',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748334986/slykrt9xw1amqlmlokkq.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749715961/qwmoclxgfznljawxes5t.png',
     },
   },
   {
-    id: '6836aaa7241e96ffcf02053c',
-    name: 'Nuts & Seeds',
+    id: '684a8edf93f21b7158e588f1',
+    name: 'Staples & Grains',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748413009/jj0ru9lqcue5wdqyfc9f.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749716522/nocbybu1de0embdjo5ov.png',
     },
   },
   {
-    id: '6836b86f241e96ffcf02068c',
-    name: 'Biscuit',
+    id: '684aa92ff43e1b6148b642f7',
+    name: 'Snacks & Branded Foods',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748416600/nqddkukaa5u5hun2h5r3.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749723052/dw1sr5uzjgzoymejcqnt.png',
     },
   },
   {
-    id: '6836c869241e96ffcf020733',
-    name: 'Spicy',
+    id: '684ac96df43e1b6148b64385',
+    name: 'Beverages',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748490598/v4otmjzjejculeekcopq.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749731603/tq5mqt8yf313obmzouxa.png',
     },
   },
   {
-    id: '6836ccb7241e96ffcf0207a1',
-    name: ' Sweets',
+    id: '684ad19e2cd5e4903bfe264b',
+    name: 'Spices & Condiment',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748491583/mk2t4e9hbcafvllehbfg.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749733720/sgvwzbuqwpyqv9f1hd0a.png',
     },
   },
   {

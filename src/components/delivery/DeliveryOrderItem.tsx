@@ -53,13 +53,14 @@ const DeliveryOrderItem: FC<{item: Order; index: number}> = ({item, index}) => {
         </View>
       </View>
       <View style={styles.itemContainer}>
-        {item.items.slice(0, 2).map((i, idx) => {
-          return (
+        {item.items
+          .slice(0, 2)
+          .filter(i => i?.product?.name)
+          .map((i, idx) => (
             <CustomText variant="h8" numberOfLines={1} key={idx}>
               {i.count}x{i.product.name}
             </CustomText>
-          );
-        })}
+          ))}
       </View>
       <View style={[styles.flexRowBetween, styles.addressContainer]}>
         <View style={styles.addressTextContainer}>

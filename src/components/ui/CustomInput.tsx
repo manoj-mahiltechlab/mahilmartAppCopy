@@ -38,7 +38,7 @@ const CustomInput: FC<InputProps & React.ComponentProps<typeof TextInput>> = ({
 
 const styles = StyleSheet.create({
   icon: {
-    width: '10%', // Increased width for better alignment
+    width: '10%',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingBottom: 15,
     height: '100%',
-    color: Colors.text, // Ensure text color is defined
+    color: Colors.text,
     bottom: -1,
   },
   text: {

@@ -1,175 +1,281 @@
-import {View, StyleSheet, ActivityIndicator} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback, useMemo, useRef} from 'react';
+import {
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Image,
+  FlatList,
+} from 'react-native';
 import CustomHeader from '@components/ui/CustomHeader';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
-import Sidebar from './Sidebar';
 import {
   getAllCategories,
   getAllSubcategories,
-  getProductsByCategoryId,
+  getProductsBySubcategoryId,
 } from '@service/ProductService';
-import ProductList from './ProductList';
+import ProductItem from './ProductItem';
 import withCart from '@features/cart/WithCart';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  NavigationProp,
+} from '@react-navigation/native';
 import CustomText from '@components/ui/CustomText';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
+
+const fallbackImage =
+  'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749819426/uxxb1eun3m48lkt6bgkb.png';
+
+type RootStackParamList = {
+  ProductDetails: {product: any; touchedSubcategoryId?: string};
+};
 
 const ProductCategories = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
-  const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
+  const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const [products, setProducts] = useState<any[]>([]);
-  const [productsLoading, setProductsLoading] = useState<boolean>(false);
+  const [productsLoading, setProductsLoading] = useState(false);
 
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route =
-    useRoute<RouteProp<Record<string, {category?: string}>, string>>();
-  const {category} = route.params || {};
+    useRoute<
+      RouteProp<
+        Record<
+          string,
+          {categoryId?: string; subcategoryId?: string; categoryName?: string}
+        >,
+        string
+      >
+    >();
+  const {categoryId, subcategoryId, categoryName} = route.params || {};
 
-  const [subcategories, setSubcategories] = useState([]);
-
-  useEffect(() => {
-    const fetchSubcategories = async () => {
-      const data = await getAllSubcategories();
-      setSubcategories(data);
-    };
-
-    fetchSubcategories();
+  const fetchProducts = useCallback(async (subId: string) => {
+    setProductsLoading(true);
+    try {
+      const data = await getProductsBySubcategoryId(subId);
+      const productsArray = Array.isArray(data) ? data : [];
+      console.log('[fetchProducts] products:', productsArray);
+      setProducts(productsArray);
+    } catch (error) {
+      console.error(
+        `[ProductCategories] Error fetching products for subId=${subId}:`,
+        error,
+      );
+      setProducts([]);
+    } finally {
+      setProductsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
         const data = await getAllCategories();
-        setCategories(data);
-
-        if (data && data.length > 0) {
-          if (category) {
-            // Find category by _id or id matching param
-            const matchedCategory = data.find(
-              cat => cat._id === category || cat.id === category,
-            );
-            setSelectedCategory(matchedCategory || data[0]);
-          } else {
-            setSelectedCategory(data[0]);
-          }
+        if (isMounted) {
+          setCategories(data);
+          const matched = categoryId
+            ? data.find(cat => cat._id === categoryId || cat.id === categoryId)
+            : data[0];
+          if (matched) setSelectedCategory(matched);
         }
       } catch (error) {
-        console.log('Error Fetching Categories:', error);
+        console.error('[ProductCategories] Error fetching categories:', error);
       } finally {
-        setCategoriesLoading(false);
+        if (isMounted) setCategoriesLoading(false);
       }
     };
 
     fetchCategories();
-  }, [category]);
-  const fetchProducts = async (categoryId: string) => {
-    try {
-      setProductsLoading(true);
-      const data = await getProductsByCategoryId(categoryId);
-      setProducts(data);
-    } catch (error) {
-      console.log('Error Fetching Products', error);
-    } finally {
-      setProductsLoading(false);
-    }
-  };
+
+    return () => {
+      isMounted = false;
+    };
+  }, [categoryId]);
 
   useEffect(() => {
+    if (!selectedCategory) return;
+
     const fetchSubcategories = async () => {
-      const data = await getAllSubcategories();
+      try {
+        const allSubcategories = await getAllSubcategories();
+        const filteredSubs = allSubcategories.filter(
+          sub =>
+            sub.category === selectedCategory?._id ||
+            sub.category === selectedCategory?.id,
+        );
+        setSubcategories(filteredSubs);
 
-      // Filter subcategories for the selected category
-      const filtered = data.filter(
-        sub =>
-          sub.parentCategory === selectedCategory?._id ||
-          sub.parentCategory === selectedCategory?.id,
-      );
+        const firstSubId = filteredSubs?.[0]?._id || filteredSubs?.[0]?.id;
 
-      setSubcategories(filtered);
-
-      // If no subcategories, fetch products directly
-      if (filtered.length === 0 && selectedCategory) {
-        fetchProducts(selectedCategory._id || selectedCategory.id);
+        if (subcategoryId) {
+          setSelectedSubId(subcategoryId);
+          fetchProducts(subcategoryId);
+        } else if (firstSubId) {
+          setSelectedSubId(firstSubId);
+          fetchProducts(firstSubId);
+        } else {
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error(
+          '[ProductCategories] Error fetching subcategories:',
+          error,
+        );
       }
     };
 
-    if (selectedCategory) {
-      fetchSubcategories();
-    }
+    fetchSubcategories();
   }, [selectedCategory]);
 
-  return (
-    <View style={styles.mainContainer}>
-      <CustomHeader title={selectedCategory?.name || 'Categories'} search />
-      <View style={styles.subContainer}>
-        {categoriesLoading ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="small" color={Colors.border} />
-          </View>
-        ) : (
-          <Sidebar
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryPress={(category: any) => setSelectedCategory(category)}
-          />
-        )}
+  const handleSubcategoryPress = (subId: string) => {
+    if (selectedSubId !== subId) {
+      setSelectedSubId(subId);
+      fetchProducts(subId);
+    }
+  };
 
-        <View style={{flex: 1}}>
-          {/* Show subcategories if any */}
-          {subcategories.length > 0 && (
-            <View style={{padding: 10}}>
-              <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
-                {subcategories.map(sub => (
-                  <View
-                    key={sub._id || sub.id}
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      margin: 5,
-                      backgroundColor: '#F0F0F0',
-                      borderRadius: 20,
-                    }}>
-                    <CustomText
-                      onPress={() => fetchProducts(sub._id || sub.id)}
-                      style={{color: '#333'}}>
-                      {sub.name}
-                    </CustomText>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
+  const renderSubcategory = useMemo(
+    () => (
+      <View style={styles.subcategoryGrid}>
+        {subcategories.map(sub => {
+          const id = sub._id || sub.id;
+          const uri =
+            typeof sub?.image === 'string'
+              ? sub.image
+              : sub?.image?.uri || fallbackImage;
 
-          {productsLoading ? (
-            <ActivityIndicator
-              size="large"
-              color={Colors.border}
-              style={styles.center}
-            />
-          ) : (
-            <ProductList data={products || []} />
-          )}
-        </View>
+          return (
+            <TouchableOpacity
+              key={id}
+              style={[
+                styles.subcategoryCard,
+                selectedSubId === id && styles.selectedSubcategoryCard,
+              ]}
+              onPress={() => handleSubcategoryPress(id)}>
+              <Image
+                source={{uri}}
+                style={styles.subcategoryImage}
+                resizeMode="contain"
+              />
+              <CustomText style={styles.subcategoryName}>{sub.name}</CustomText>
+            </TouchableOpacity>
+          );
+        })}
       </View>
+    ),
+    [subcategories, selectedSubId],
+  );
+
+  const renderItem = useCallback(
+    ({item, index}: {item: any; index: number}) => {
+      const imageUri =
+        typeof item.image === 'string'
+          ? item.image
+          : item.image?.uri || fallbackImage;
+
+      const transformedItem = {
+        _id: item._id || item.id || '',
+        image: imageUri,
+        name: item.name,
+        subImages: Array.isArray(item.subImages) ? item.subImages : [],
+        price: item.price,
+        discountPrice: item.discountPrice || '',
+        description: item.description || '',
+      };
+
+      return (
+        <ProductItem
+          item={transformedItem}
+          index={index}
+          onPress={() => {
+            console.log(
+              '[ProductCategories] Navigating to ProductDetails:',
+              transformedItem,
+              index,
+            );
+            navigation.navigate('ProductDetails', {
+              product: transformedItem,
+              touchedSubcategoryId: selectedSubId || undefined,
+            });
+          }}
+        />
+      );
+    },
+    [navigation, selectedSubId],
+  );
+
+  return (
+    <View style={styles.container}>
+      <CustomHeader
+        title={categoryName || selectedCategory?.name || 'Categories'}
+        search
+      />
+
+      {categoriesLoading ? (
+        <ActivityIndicator
+          size="small"
+          color={Colors.border}
+          style={styles.center}
+        />
+      ) : (
+        <FlatList
+          data={products}
+          keyExtractor={(item, index) =>
+            String(item._id || item.id || item.name || index)
+          }
+          renderItem={renderItem}
+          numColumns={2}
+          ListHeaderComponent={renderSubcategory}
+          ListFooterComponent={
+            productsLoading ? (
+              <ActivityIndicator
+                size="small"
+                color={Colors.border}
+                style={{marginVertical: 10}}
+              />
+            ) : products.length === 0 ? (
+              <View style={styles.center}>
+                <CustomText>No products found.</CustomText>
+              </View>
+            ) : null
+          }
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  subContainer: {
-    flex: 1,
+  container: {flex: 1, backgroundColor: '#fff'},
+  content: {paddingHorizontal: 10, paddingBottom: 50},
+  subcategoryGrid: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+    justifyContent: 'space-between',
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
+  subcategoryCard: {
+    width: '23%',
     alignItems: 'center',
+    marginBottom: 25,
   },
+  selectedSubcategoryCard: {
+    backgroundColor: '#cde5f6',
+    borderRadius: 10,
+    padding: 8,
+  },
+  subcategoryImage: {width: 50, height: 50, marginBottom: 4},
+  subcategoryName: {fontSize: 12, textAlign: 'center', color: '#333'},
+  center: {padding: 20, alignItems: 'center', width: '100%'},
 });
 
 export default withCart(ProductCategories);

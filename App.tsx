@@ -1,26 +1,3 @@
-// import React from 'react';
-// import Navigation from '@navigation/Navigation';
-
-// const App = () => {
-//   return <Navigation />;
-// };
-// export default App;
-
-// import 'react-native-gesture-handler';
-// import React from 'react';
-// import {GestureHandlerRootView} from 'react-native-gesture-handler';
-// import Navigation from '@navigation/Navigation';
-
-// const App = () => {
-//   return (
-//     <GestureHandlerRootView style={{flex: 1}}>
-//       <Navigation />
-//     </GestureHandlerRootView>
-//   );
-// };
-
-// export default App;
-
 import 'react-native-gesture-handler';
 import React, {useEffect, useRef} from 'react';
 import {AppState, AppStateStatus} from 'react-native';

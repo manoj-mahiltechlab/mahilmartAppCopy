@@ -60,49 +60,49 @@ const Sidebar: FC<SidebarProps> = ({
     transform: [{translateY: indicatorPosition.value}],
   }));
 
-  return (
-    <View style={styles.SideBar}>
-      <View style={{flex: 1}}>
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={{paddingBottom: 50}}
-          showsVerticalScrollIndicator={false}>
-          <Animated.View style={[styles.indicator, indicatorStyle]} />
-          {categories?.map((category: any, index: number) => {
-            const animatedStyle = useAnimatedStyle(() => ({
-              bottom: animatedValues[index].value,
-            }));
-            return (
-              <TouchableOpacity
-                key={index}
-                activeOpacity={1}
-                style={styles.categoryButton}
-                onPress={() => onCategoryPress(category)}>
-                <View
-                  style={[
-                    styles.imageContainer,
-                    selectedCategory?._id === category?._id &&
-                      styles.selectedImageContainer,
-                  ]}>
-                  <Animated.Image
-                    source={{uri: category?.image}}
-                    style={[styles.image, animatedStyle]}
-                  />
-                </View>
-                <CustomText fontSize={RFValue(9)} style={{textAlign: 'center'}}>
-                  {category?.name}
-                </CustomText>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-    </View>
-  );
+  // return (
+  //   <View style={styles.SideBar}>
+  //     <View style={{flex: 1}}>
+  //       <ScrollView
+  //         ref={scrollViewRef}
+  //         contentContainerStyle={{paddingBottom: 50}}
+  //         showsVerticalScrollIndicator={false}>
+  //         <Animated.View style={[styles.indicator, indicatorStyle]} />
+  //         {categories?.map((category: any, index: number) => {
+  //           const animatedStyle = useAnimatedStyle(() => ({
+  //             bottom: animatedValues[index].value,
+  //           }));
+  //           return (
+  //             <TouchableOpacity
+  //               key={index}
+  //               activeOpacity={1}
+  //               style={styles.categoryButton}
+  //               onPress={() => onCategoryPress(category)}>
+  //               <View
+  //                 style={[
+  //                   styles.imageContainer,
+  //                   selectedCategory?._id === category?._id &&
+  //                     styles.selectedImageContainer,
+  //                 ]}>
+  //                 <Animated.Image
+  //                   source={{uri: category?.image}}
+  //                   style={[styles.image, animatedStyle]}
+  //                 />
+  //               </View>
+  //               <CustomText fontSize={RFValue(9)} style={{textAlign: 'center'}}>
+  //                 {category?.name}
+  //               </CustomText>
+  //             </TouchableOpacity>
+  //           );
+  //         })}
+  //       </ScrollView>
+  //     </View>
+  //   </View>
+  // );
 };
 const styles = StyleSheet.create({
   SideBar: {
-    width: '24%',
+    width: '2%',
     backgroundColor: '#fff',
     borderRightWidth: 0.8,
     borderRightColor: '#eee',

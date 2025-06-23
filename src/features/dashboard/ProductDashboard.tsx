@@ -136,7 +136,6 @@ const ProductDashboard = () => {
                 return () => clearTimeout(timeoutId);
               }}
             />
-            {/* <StickySearchBar /> */}
           </CollapsibleHeaderContainer>
 
           <CollapsibleScrollView

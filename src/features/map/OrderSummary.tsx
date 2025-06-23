@@ -6,6 +6,14 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
 import BillDetails from '@features/order/BillDetails';
 
+// ✅ Helper function to handle different image structures
+const getImageSource = (value: any): {uri: string} | undefined => {
+  if (typeof value === 'string' && value.startsWith('http'))
+    return {uri: value};
+  if (value?.uri && typeof value.uri === 'string') return {uri: value.uri};
+  return undefined;
+};
+
 const OrderSummary: FC<{order: any}> = ({order}) => {
   const totalPrice =
     order?.items?.reduce(
@@ -13,10 +21,10 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
         total + (cartItem.product.price || 0) * cartItem.count,
       0,
     ) || 0;
-  console.log('order?.items?===>', order?.items);
-  console.log('order?.orderId?==>', order?.orderId);
+
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.flexRow}>
         <View style={styles.iconContainer}>
           <Icon
@@ -34,14 +42,32 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
           </CustomText>
         </View>
       </View>
+
+      {/* Order Items */}
       {order?.items?.map((item: any, index: number) => {
         const product = item?.product;
         if (!product) return null;
-        console.log('item?.product=====> : ', item?.product);
+
+        const imageSource = getImageSource(product.image);
+
         return (
           <View style={styles.flexRow} key={index}>
             <View style={styles.iconContainer}>
-              <Image source={{uri: product.image}} style={styles.img} />
+              {imageSource ? (
+                <Image source={imageSource} style={styles.img} />
+              ) : (
+                <View
+                  style={[
+                    styles.img,
+                    {
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: '#ddd',
+                    },
+                  ]}>
+                  <CustomText>No Img</CustomText>
+                </View>
+              )}
             </View>
             <View style={{width: '55%'}}>
               <CustomText
@@ -70,6 +96,7 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
         );
       })}
 
+      {/* Bill Details */}
       <BillDetails totalItemPrice={totalPrice} />
     </View>
   );
@@ -79,12 +106,6 @@ const styles = StyleSheet.create({
   img: {
     width: 40,
     height: 40,
-  },
-  imgContainer: {
-    backgroundColor: Colors.backgroundSecondary,
-    padding: 10,
-    borderRadius: 15,
-    width: '17%',
   },
   container: {
     width: '100%',

@@ -69,7 +69,9 @@ const withLiveStatus = <P extends object>(
                     Order is {currentOrder?.status}
                   </CustomText>
                   <CustomText variant="h9" fontFamily={Fonts.Medium}>
-                    {currentOrder?.items.length} +{` items in current order `}
+                    {(Array.isArray(currentOrder?.items)
+                      ? currentOrder.items.length
+                      : 0) + ` items in current order `}
                   </CustomText>
                 </View>
               </View>

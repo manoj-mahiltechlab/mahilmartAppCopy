@@ -29,12 +29,19 @@ const ProductOrder = () => {
   const [loading, setLoading] = useState(false);
 
   const handlePlaceOrder = async () => {
-    // console.log('currentOrder--->', currentOrder);
+    console.log('currentOrder--->', currentOrder);
 
-    // if (currentOrder !== null) {
-    //   Alert.alert('Let your first order be delivered');
-    //   return;
-    // }
+    if (
+      currentOrder &&
+      currentOrder.status !== 'delivered' &&
+      currentOrder.status !== 'cancelled'
+    ) {
+      Alert.alert(
+        'Let your first order be delivered before placing a new one.',
+      );
+      return;
+    }
+
     const formattedData = cart.map(item => ({
       product: item._id,
       quantity: item.count,

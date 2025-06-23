@@ -19,7 +19,7 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
         pagingEnabled
         snapEnabled
         autoPlay
-        autoPlayInterval={1000}
+        autoPlayInterval={2000}
         mode="parallax"
         data={adData}
         modeConfig={{

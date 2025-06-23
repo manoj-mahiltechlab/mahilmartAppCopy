@@ -1,35 +1,3 @@
-// import React from 'react';
-// import {StyleSheet, Image, Dimensions} from 'react-native';
-// import {useCollapsibleContext} from '@r0b0t3d/react-native-collapsible';
-// import Animated, {interpolate, useAnimatedStyle} from 'react-native-reanimated';
-// import LinearGradient from 'react-native-linear-gradient';
-// import LottieView from 'lottie-react-native';
-// import {darkWeatherColors} from '@utils/Constants';
-
-// const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
-
-// const Visuals = () => {
-
-//   return (
-//     <Animated.View style={[styles.container, headerAnimatedStyle]}>
-//       <LinearGradient colors={darkWeatherColors} style={styles.gradient} />
-//       <Image
-//         source={require('@assets/images/cloud.png')}
-//         style={styles.cloud}
-//       />
-//       <LottieView
-//         autoPlay={true}
-//         loop={true}
-//         enableMergePathsAndroidForKitKatAndAbove={true}
-//         style={styles.lottie}
-//         source={require('@assets/animations/raining.json')}
-//       />
-//     </Animated.View>
-//   );
-// };
-
-// export default Visuals;
-
 import {StyleSheet} from 'react-native';
 import React from 'react';
 import {screenHeight, screenWidth} from '@utils/Scaling';

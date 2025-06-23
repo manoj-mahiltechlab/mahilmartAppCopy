@@ -1,40 +1,87 @@
 import React, {FC} from 'react';
-import {View, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import {screenHeight} from '@utils/Scaling';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {Fonts} from '@utils/Constants';
 import UniversalAdd from '@components/ui/UniversalAdd';
 
-interface ProductItemProps {
+type ImageType = string | {uri?: string | null} | null | undefined;
+
+type ProductItemProps = {
   item: {
-    id: string;
-    image: string;
+    _id: string;
+    image: ImageType;
     name: string;
-    price: number | string;
-    discountPrice: number | string;
-    products?: any[];
+    subImages?: ImageType[];
+    price: string | number;
+    discountPrice?: string | number | null;
+    description?: string;
   };
   index: number;
-}
+  onPress?: () => void;
+};
 
-const ProductItem: FC<ProductItemProps> = ({index, item}) => {
+const fallbackImage =
+  'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749819426/uxxb1eun3m48lkt6bgkb.png';
+const logWarning = (msg: string) => {
+  if (__DEV__) {
+    console.warn(msg);
+  }
+};
+
+const getImageSource = (img: ImageType): {uri: string} => {
+  if (typeof img === 'string' && img.startsWith('http')) return {uri: img};
+  if (
+    typeof img === 'object' &&
+    typeof img?.uri === 'string' &&
+    img.uri.startsWith('http')
+  ) {
+    return {uri: img.uri};
+  }
+  return {uri: fallbackImage};
+};
+
+const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
   const isSecondColumn = index % 2 !== 0;
 
   return (
-    <View style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}>
-      <View style={styles.imageContainer}>
-        <Image source={{uri: item?.image}} style={styles.image} />
-      </View>
+    <View style={[styles.container, {marginRight: isSecondColumn ? 8 : 2}]}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        <View style={styles.imageContainer}>
+          <Image source={getImageSource(item?.image)} style={styles.image} />
+        </View>
+
+        {/* <View style={styles.subImagesContainer}>
+          {item?.subImages?.length > 0 ? (
+            item.subImages
+              .slice(0, 3)
+              .map((subImg, idx) => (
+                <Image
+                  key={idx}
+                  source={getImageSource(subImg)}
+                  style={styles.subImageThumb}
+                  resizeMode="cover"
+                  onError={() =>
+                    logWarning(
+                      `[ProductItem] Sub-image load failed (index ${idx})`,
+                    )
+                  }
+                />
+              ))
+          ) : (
+            <CustomText style={styles.noImageText}>No Images</CustomText>
+          )}
+        </View> */}
+      </TouchableOpacity>
 
       <View style={styles.content}>
-        <View style={styles.flexRow}>
+        <View style={styles.timeContainer}>
           <Image
             source={require('@assets/icons/clock.png')}
             style={styles.clockIcon}
           />
-          <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Medium}>
+          <CustomText fontSize={RFValue(7)} fontFamily={Fonts.Medium}>
             16 MINS
           </CustomText>
         </View>
@@ -48,15 +95,24 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
         </CustomText>
 
         <View style={styles.priceContainer}>
-          <View>
-            <CustomText variant="h8" fontFamily={Fonts.Medium}>
-              ₹{item?.price}
-            </CustomText>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            {item.discountPrice && (
+              <CustomText
+                style={{
+                  color: '#2e7d32',
+                  fontSize: RFValue(12),
+                  fontWeight: 'bold',
+                }}>
+                ₹{item.discountPrice}
+              </CustomText>
+            )}
             <CustomText
-              fontFamily={Fonts.Medium}
-              variant="h8"
-              style={{opacity: 0.8, textDecorationLine: 'line-through'}}>
-              ₹{item?.discountPrice}
+              style={{
+                textDecorationLine: 'line-through',
+                color: '#777',
+                fontSize: RFValue(10),
+              }}>
+              ₹{item.discountPrice ? item.price : ''}
             </CustomText>
           </View>
           <UniversalAdd item={item} />
@@ -68,58 +124,76 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '46%',
-    borderRadius: 10,
-    backgroundColor: '#f8f8f8',
+    width: '49%',
+    borderRadius: 12,
+    backgroundColor: '#fff',
     marginBottom: 10,
-    marginLeft: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowRadius: 4,
     overflow: 'hidden',
   },
   imageContainer: {
-    height: screenHeight * 0.16,
+    height: screenHeight * 0.18,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 5,
+    backgroundColor: '#fafafa',
   },
   image: {
     height: '100%',
     width: '100%',
-    borderRadius: 10,
-    aspectRatio: 1 / 1,
     resizeMode: 'contain',
+  },
+  subImagesContainer: {
+    flexDirection: 'row',
+    marginTop: 6,
+    gap: 6,
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  subImageThumb: {
+    width: 40,
+    height: 20,
+    borderRadius: 6,
+    backgroundColor: '#ddd',
+  },
+  noImageText: {
+    fontSize: 10,
+    color: '#999',
   },
   content: {
     flex: 1,
     paddingHorizontal: 10,
+    paddingBottom: 10,
   },
-  flexRow: {
+  timeContainer: {
     flexDirection: 'row',
-    padding: 2,
-    borderRadius: 5,
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.backgroundSecondary || '#e6e6e6', // fallback color if needed
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    borderRadius: 6,
     alignSelf: 'flex-start',
+    marginTop: 6,
   },
   clockIcon: {
-    height: 15,
-    width: 15,
+    height: 12,
+    width: 12,
+    marginRight: 4,
   },
   title: {
-    marginVertical: 4,
+    marginVertical: 6,
     textAlign: 'left',
+    color: '#222',
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10,
-    marginTop: 'auto',
-  },
-  strikePrice: {
-    opacity: 0.6,
-    textDecorationLine: 'line-through',
+    marginTop: 6,
   },
 });
 

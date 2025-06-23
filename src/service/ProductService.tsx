@@ -4,46 +4,102 @@ import {BASE_URL} from './config';
 export const getAllCategories = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/categories`);
+    console.log('response getAllCategories : : ', response);
     return response.data;
   } catch (error) {
     console.log('Error Categories', error);
     return [];
   }
 };
-export const getProductsByCategoryId = async (id: string) => {
+export const getProductsByCategory = async (id: string) => {
   try {
     const response = await axios.get(`${BASE_URL}/products/${id}`);
+    console.log('response getProductsByCategoryId : : ', response);
     return response.data;
   } catch (error) {
-    console.log('Error Categories', error);
+    console.log('Error fetching products:', error);
     return [];
   }
 };
 export const getAllSubcategories = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/subcategories`);
+    console.log('response getAllSubcategories : :', response);
     const data = response.data;
 
-    // Transform data to expected format
-    return data.map((sub: any) => ({
+    const mappedData = data.map((sub: any) => ({
       id: sub._id || sub.id,
       name: sub.name,
+      category: sub.category,
       image: {
-        uri: sub.imageUrl || (sub.image && sub.image.uri) || '', // adjust based on your backend
+        uri: sub.image || '',
       },
     }));
+
+    console.log('Mapped subcategories with category:', mappedData);
+
+    return mappedData;
   } catch (error) {
-    console.log('Error fetching subcategories:', error);
+    console.log('Error fetching all subcategories:', error);
+    return [];
+  }
+};
+export const getProductsBySubcategoryId = async (subcategoryId: string) => {
+  try {
+    const url = `${BASE_URL}/products/subcategory/${subcategoryId}`;
+
+    const response = await axios.get(url);
+
+    if (!Array.isArray(response.data)) {
+      console.warn('Unexpected response format:', response.data);
+      return [];
+    }
+
+    return response.data.map((product: any) => ({
+      id: product._id || product.id,
+      name: product.name,
+      price: product.price,
+      discountPrice: product.discountPrice || null,
+      quantity: product.quantity,
+      image: {
+        uri: product.image || '',
+      },
+      description: product.description || '',
+      subImages: product.subImages || [],
+    }));
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(
+        'Axios error fetching products by subcategory:',
+        error.response?.status,
+        error.response?.data,
+      );
+    } else {
+      console.error(
+        'Unexpected error fetching products by subcategory:',
+        error,
+      );
+    }
     return [];
   }
 };
 
 export const getSubcategoriesByCategoryId = async (categoryId: string) => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/categories/${categoryId}/subcategories`,
-    );
-    return response.data;
+    const url = `${BASE_URL}/subcategories/category/${categoryId}`;
+    console.log('Fetching subcategories by category from:', url);
+
+    const response = await axios.get(url);
+    const data = response.data;
+
+    return data.map((sub: any) => ({
+      id: sub._id || sub.id,
+      name: sub.name,
+      category: sub.category,
+      image: {
+        uri: sub.image || '',
+      },
+    }));
   } catch (error) {
     console.log('Error fetching subcategories by category:', error);
     return [];

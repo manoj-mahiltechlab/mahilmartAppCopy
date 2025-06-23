@@ -9,7 +9,7 @@ import {TouchableOpacity} from 'react-native';
 
 const UniversalAdd: FC<{item: any}> = ({item}) => {
   const count = useCartStore(
-    state => state.cart.find(i => i._id === item._id)?.count || 0,
+    state => state.cart.find(i => i._id === (item._id || item.id))?.count || 0,
   );
 
   const {addItem, removeItem} = useCartStore();
@@ -23,7 +23,9 @@ const UniversalAdd: FC<{item: any}> = ({item}) => {
         },
       ]}>
       {count === 0 ? (
-        <TouchableOpacity onPressOut={() => addItem(item)} style={styles.add}>
+        <TouchableOpacity
+          onPressOut={() => addItem({...item, _id: item._id || item.id})}
+          style={styles.add}>
           <CustomText
             variant="h9"
             fontFamily={Fonts.SemiBold}
@@ -33,16 +35,18 @@ const UniversalAdd: FC<{item: any}> = ({item}) => {
         </TouchableOpacity>
       ) : (
         <View style={styles.counterContainer}>
-          <TouchableOpacity onPressOut={() => removeItem(item._id)}>
+          <TouchableOpacity onPressOut={() => removeItem(item._id || item.id)}>
             <Icon name="minus" color="#fff" size={RFValue(15)} />
           </TouchableOpacity>
+
           <CustomText
             fontFamily={Fonts.SemiBold}
             style={styles.text}
             variant="h6">
             {count}
           </CustomText>
-          <TouchableOpacity onPressOut={() => addItem(item)}>
+          <TouchableOpacity
+            onPressOut={() => addItem({...item, _id: item._id || item.id})}>
             <Icon name="plus" color="#fff" size={RFValue(15)} />
           </TouchableOpacity>
         </View>
@@ -60,7 +64,7 @@ const styles = StyleSheet.create({
     width: 75,
     borderRadius: 8,
     zIndex: 10,
-    elevation: 3,
+    elevation: 5,
     overflow: 'visible',
   },
   add: {
@@ -72,7 +76,7 @@ const styles = StyleSheet.create({
   },
   addText: {
     color: Colors.secondary,
-    //  fontSize: 11,
+    fontSize: 11,
   },
   counterContainer: {
     flexDirection: 'row',

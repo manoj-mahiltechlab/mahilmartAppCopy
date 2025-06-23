@@ -15,6 +15,8 @@ import LiveTracking from '@features/map/LiveTracking';
 import profile from '@features/profile/profile';
 import DeliveryMap from '@features/delivery/DeliveryMap';
 import CategoryOrSubcategory from '@components/dashboard/CategoryOrSubcategory';
+import ProductDetails from '@features/category/ProductDetails';
+import ProductSubDetails from '@features/category/ProductSubDetails';
 
 export type RootStackParamList = {
   SplashScreen: undefined;
@@ -34,6 +36,7 @@ export type RootStackParamList = {
     subcategories: any[] | null;
     categoryName?: string;
   };
+  ProductDetails: {product: any};
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +58,9 @@ const Navigation: FC = () => {
         <Stack.Screen name="DeliveryMap" component={DeliveryMap} />
         <Stack.Screen name="Profile" component={profile} />
         <Stack.Screen name="ProductCategories" component={ProductCategories} />
+        <Stack.Screen name="ProductDetails" component={ProductDetails} />
+        <Stack.Screen name="ProductSubDetails" component={ProductSubDetails} />
+
         <Stack.Screen
           name="CategoryOrSubcategory"
           component={CategoryOrSubcategory}
