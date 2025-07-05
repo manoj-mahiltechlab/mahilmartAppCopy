@@ -14,10 +14,19 @@ export const customerLogin = async (phone: string) => {
     console.log('accessToken', accessToken);
     console.log('refreshToken', refreshToken);
     console.log('customer', customer);
+
     tokenStorage.set('accessToken', accessToken);
     tokenStorage.set('refreshToken', refreshToken);
+
     const {setUser} = useAuthStore.getState();
-    setUser(customer);
+
+    // ✅ Add token to Zustand user object
+    setUser({
+      ...customer,
+      token: accessToken, // ✅ Store token here
+    });
+
+    console.log(`"customer Details": `, customer);
   } catch (error) {
     console.log('Login Error', error);
   }
@@ -60,9 +69,12 @@ export const refresh_Tokens = async () => {
 
 export const refetchUser = async (setUser: any) => {
   try {
+    const token = tokenStorage.getString('accessToken'); // ✅ Fetch token again
     const response = await appAxios.get('/user');
-    console.info('Response : ', response.data.user);
-    setUser(response.data.user);
+    setUser({
+      ...response.data.user,
+      token, // ✅ Reattach token
+    });
   } catch (error) {
     console.log('Login Error', error);
   }

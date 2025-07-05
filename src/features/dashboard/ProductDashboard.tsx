@@ -127,7 +127,7 @@ const ProductDashboard = () => {
 
         <CollapsibleContainer style={styles.panelContainer}>
           <CollapsibleHeaderContainer containerStyle={styles.transparent}>
-            <AnimatedHeader
+            <AnimatedHeader // Navigate to header page
               showNotice={() => {
                 // slideDown();
                 const timeoutId = setTimeout(() => {

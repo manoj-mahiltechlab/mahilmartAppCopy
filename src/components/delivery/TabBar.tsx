@@ -12,7 +12,7 @@ const TabBar: FC<TabBarProps> = ({selectedTab, onTabChange}) => {
   return (
     <View style={styles.tabContainer}>
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.5}
         style={[styles.tab, selectedTab === 'available' && styles.activeTab]}
         onPress={() => onTabChange('available')}>
         <CustomText

@@ -5,6 +5,7 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {Colors} from '@utils/Constants';
@@ -17,6 +18,7 @@ import {fetchOrders} from '@service/orderService';
 import DeliveryOrderItem from '@components/delivery/DeliveryOrderItem';
 import CustomText from '@components/ui/CustomText';
 import withLiveOrder from './withLiveOrder';
+import {useNavigation} from '@react-navigation/native';
 
 const DeliveryDashboard = () => {
   const {user, setUser} = useAuthStore();
@@ -26,6 +28,7 @@ const DeliveryDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
 
   const updateUser = () => {
     Geolocation.getCurrentPosition(
@@ -40,6 +43,24 @@ const DeliveryDashboard = () => {
 
   useEffect(() => {
     updateUser(); // Update user location on component mount
+  }, []);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        useAuthStore.getState().logout();
+
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'CustomerLogin'}],
+        });
+
+        return true;
+      },
+    );
+
+    return () => backHandler.remove();
   }, []);
 
   const fetchData = async () => {

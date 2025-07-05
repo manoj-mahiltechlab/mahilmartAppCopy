@@ -1,7 +1,15 @@
 import {appAxios} from './apiInterceptors';
 import {BRANCH_ID} from './config';
+import {updateSelectedAddressType} from './customerService';
 
-export const createOrder = async (items: any[], totalPrice: number) => {
+// ✅ Create Order
+export const createOrder = async (
+  items: any[],
+  totalPrice: number,
+  deliveryLocation: {address: string; lat?: number; lng?: number},
+  customerId: string,
+  addressType: 'Primary' | 'Secondary',
+) => {
   try {
     if (!BRANCH_ID || !Array.isArray(items) || items.length === 0) {
       throw new Error('Invalid order data: Missing branch or items.');
@@ -10,9 +18,9 @@ export const createOrder = async (items: any[], totalPrice: number) => {
     if (isNaN(totalPrice) || totalPrice <= 0) {
       throw new Error('Invalid total price.');
     }
-    const updatedItems = items.map((item: any, index: number) => {
-      const productId = item.product?._id || item.product || item.id;
 
+    const updatedItems = items.map((item: any) => {
+      const productId = item.product?._id || item.product || item.id;
       return {
         product: productId,
         count: item.quantity,
@@ -24,6 +32,8 @@ export const createOrder = async (items: any[], totalPrice: number) => {
       items: updatedItems,
       branch: BRANCH_ID,
       totalPrice,
+      deliveryLocation,
+      deliveryAddress: deliveryLocation.address,
     };
 
     if (__DEV__) {
@@ -33,12 +43,12 @@ export const createOrder = async (items: any[], totalPrice: number) => {
       );
     }
 
-    console.log('payload : ****', payload);
-
     const response = await appAxios.post('/order', payload);
 
     if (response?.data) {
-      console.log('✅ Order Response:', response.data);
+      if (customerId && addressType) {
+        await updateSelectedAddressType(customerId, addressType);
+      }
       return response.data;
     } else {
       throw new Error('Unexpected response format.');
@@ -46,7 +56,7 @@ export const createOrder = async (items: any[], totalPrice: number) => {
   } catch (error: any) {
     const responseData = error?.response?.data;
 
-    console.error('❌ Create Order Error:', {
+    console.error('Create Order Error:', {
       message: responseData?.message || error.message,
       errorDetails: responseData?.error || null,
       status: error?.response?.status || 'Unknown',
@@ -62,42 +72,62 @@ export const createOrder = async (items: any[], totalPrice: number) => {
   }
 };
 
-export const getOrderById = async (Id: string) => {
+// ✅ Update Order Status (e.g. after payment success)
+export const updateOrderStatus = async (
+  orderId: string,
+  status: string,
+): Promise<any> => {
   try {
-    const response = await appAxios.get(`/order/${Id}`);
-    return response.data;
+    const response = await appAxios.patch(`/order/${orderId}/status`, {
+      status, // sending the status payload to backend
+    });
+    return response.data; // return updated order or success message
   } catch (error: any) {
-    console.error('❌ Get Order By ID Error:', {
+    console.error('Update Order Status Error', {
       message: error?.response?.data?.message || error.message,
       status: error?.response?.status || 'Unknown',
     });
+    throw error; // throw again so the caller can handle error
+  }
+};
 
+// ✅ Get Order By ID
+export const getOrderById = async (id: string) => {
+  try {
+    const response = await appAxios.get(`/order/${id}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Get Order By ID Error:', {
+      message: error?.response?.data?.message || error.message,
+      status: error?.response?.status || 'Unknown',
+    });
     throw error;
   }
 };
+
+// ✅ Fetch Customer Orders
 export const fetchCustomerOrders = async (userId: string) => {
   try {
     const response = await appAxios.get(`/order?customerId=${userId}`);
-    return response.data;
+    console.log('API response:', response.data); // ✅ Add this
+    return Array.isArray(response.data)
+      ? response.data
+      : response.data.orders || [];
   } catch (error) {
-    console.log('Fetch Customer Order Error ', error);
-    return null;
+    console.log('Fetch Customer Order Error', error);
+    return [];
   }
 };
+
+// ✅ Fetch Orders for Delivery Partner or Branch
 export const fetchOrders = async (
   status: string,
   userId: string,
   branchId: string,
 ) => {
   let uri = `/order?branchId=${branchId}`;
-
-  if (status) {
-    uri += `&status=${status}`;
-  }
-
-  if (userId) {
-    uri += `&deliveryPartnerId=${userId}`;
-  }
+  if (status) uri += `&status=${status}`;
+  if (userId) uri += `&deliveryPartnerId=${userId}`;
 
   try {
     const response = await appAxios.get(uri);
@@ -108,6 +138,7 @@ export const fetchOrders = async (
   }
 };
 
+// ✅ Send Live Order Updates (Delivery Location + Status)
 export const sendLiveOrderUpdates = async (
   id: string,
   location: any,
@@ -124,6 +155,8 @@ export const sendLiveOrderUpdates = async (
     return null;
   }
 };
+
+// ✅ Confirm Order (e.g. at handover)
 export const confirmOrder = async (id: string, location: any) => {
   try {
     const response = await appAxios.post(`/order/${id}/confirm`, {

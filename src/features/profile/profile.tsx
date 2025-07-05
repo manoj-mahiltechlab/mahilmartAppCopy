@@ -9,18 +9,22 @@ import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
 import ActionButton from './ActionButton';
 import {storage, tokenStorage} from '@state/storage';
-import {resetAndNavigate} from '@utils/NavigationUtils';
 import WalletSection from './WalletSection';
+import {CommonActions, useNavigation} from '@react-navigation/native';
+import {useOrderStore} from '@state/orderStore';
 
 const Profile = () => {
   const [orders, setOrders] = useState([]);
   const {logout, user} = useAuthStore();
   const {clearCart} = useCartStore();
+  const navigation = useNavigation();
+  const {setPastOrders} = useOrderStore();
 
   const fetchOrders = async () => {
     try {
       const data = await fetchCustomerOrders(user?._id);
       setOrders(data || []);
+      setPastOrders(data || []);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     }
@@ -37,38 +41,35 @@ const Profile = () => {
     logout();
     tokenStorage.clearAll();
     storage.clearAll();
-    resetAndNavigate('CustomerLogin');
-  };
 
-  const renderHeader = () => {
-    return (
-      <View>
-        <CustomText variant="h3" fontFamily={Fonts.SemiBold}>
-          Your account
-        </CustomText>
-        <CustomText variant="h7" fontFamily={Fonts.Medium}>
-          {user?.phone}
-        </CustomText>
-        <WalletSection />
-
-        <CustomText variant="h8" style={styles.informativeText}>
-          YOUR INFORMATION
-        </CustomText>
-
-        <ActionButton icon="book-outline" label="Address book" />
-        <ActionButton icon="information-outline" label="About us" />
-        <ActionButton icon="logout" label="Logout" onPress={handleLogout} />
-
-        <CustomText variant="h8" style={styles.pastText}>
-          PAST ORDERS
-        </CustomText>
-      </View>
+    // Reset navigation to remove tab bar and show login
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{name: 'CustomerLogin'}],
+      }),
     );
   };
 
-  const renderOrders = ({item, index}: any) => {
-    return <ProfileOrderItem item={item} index={index} />;
-  };
+  const renderHeader = () => (
+    <View>
+      <CustomText variant="h3" fontFamily={Fonts.SemiBold}>
+        Your account
+      </CustomText>
+      <CustomText variant="h7" fontFamily={Fonts.Medium}>
+        {user?.phone}
+      </CustomText>
+      <WalletSection />
+
+      <CustomText variant="h8" style={styles.informativeText}>
+        YOUR INFORMATION
+      </CustomText>
+
+      <ActionButton icon="book-outline" label="Address book" />
+      <ActionButton icon="information-outline" label="About us" />
+      <ActionButton icon="logout" label="Logout" onPress={handleLogout} />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -76,7 +77,6 @@ const Profile = () => {
       <FlatList
         data={orders}
         ListHeaderComponent={renderHeader}
-        renderItem={renderOrders}
         keyExtractor={(item, index) =>
           item?.orderId?.toString() || index.toString()
         }

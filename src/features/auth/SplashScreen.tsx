@@ -137,7 +137,6 @@ const SplashScreen: FC = () => {
             console.log('Geolocation error:', error);
 
             if (error.code === 1) {
-              // PERMISSION_DENIED
               resolve(false);
             } else {
               resolve(true);

@@ -14,12 +14,15 @@ export const reverseGeocode = async (
 
     console.log('response.data : ', response.data);
     if (response.data.status === 'OK') {
-      const address = response.data.results[0].formatted_address;
+      const PrimaryAddress = response.data.results[1].formatted_address;
 
-      console.log('address : ', address);
+      console.log('PrimaryAddress ********** : ', PrimaryAddress);
 
       updateUserLocation(
-        {liveLocation: {latitude, longitude}, address},
+        {
+          liveLocation: {latitude, longitude},
+          PrimaryAddress,
+        },
         setUser,
       );
     } else {

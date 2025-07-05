@@ -3,40 +3,33 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
 import {navigationRef} from '@utils/NavigationUtils';
 
+// Screens
 import SplashScreen from '@features/auth/SplashScreen';
 import DeliveryLogin from '@features/auth/DeliveryLogin';
 import CustomerLogin from '@features/auth/CustomerLogin';
-import ProductDashboard from '@features/dashboard/ProductDashboard';
 import DeliveryDashboard from '@features/delivery/DeliveryDashboard';
-import ProductCategories from '@features/category/ProductCategories';
-import ProductOrder from '@features/order/ProductOrder';
-import OrderSuccess from '@features/order/OrderSuccess';
-import LiveTracking from '@features/map/LiveTracking';
-import profile from '@features/profile/profile';
+import BottomTabNavigator from './BottomTabNavigator';
+import LogoutScreen from '@features/auth/LogoutScreen';
 import DeliveryMap from '@features/delivery/DeliveryMap';
-import CategoryOrSubcategory from '@components/dashboard/CategoryOrSubcategory';
-import ProductDetails from '@features/category/ProductDetails';
-import ProductSubDetails from '@features/category/ProductSubDetails';
+import PaymentScreen from '@features/order/PaymentScreen';
+
+// Fake auth state — ✅ Replace this with Zustand or Context later
+const isLoggedIn = true;
+const userRole = 'Customer'; // or 'DeliveryPartner'
 
 export type RootStackParamList = {
   SplashScreen: undefined;
-  ProductDashboard: undefined;
+  BottomTabs: undefined;
   DeliveryDashboard: undefined;
   DeliveryLogin: undefined;
   CustomerLogin: undefined;
-
-  ProductOrder: undefined;
-  OrderSuccess: undefined;
-  LiveTracking: undefined;
-  DeliveryMap: undefined;
-  Profile: undefined;
-  ProductCategories: {category?: string} | undefined;
-  CategoryOrSubcategory: {
-    categoryId: string;
-    subcategories: any[] | null;
-    categoryName?: string;
+  DeliveryMap: any;
+  PaymentScreen: {
+    totalAmount: number;
+    orderId: string;
+    deliveryAddress: string;
+    addressType: string;
   };
-  ProductDetails: {product: any};
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -46,36 +39,26 @@ const Navigation: FC = () => {
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName="SplashScreen"
-        screenOptions={{
-          headerShown: false,
-        }}>
+        screenOptions={{headerShown: false}}>
+        {/* Always registered — needed for navigation.reset() to work */}
         <Stack.Screen name="SplashScreen" component={SplashScreen} />
-        <Stack.Screen name="ProductDashboard" component={ProductDashboard} />
+        <Stack.Screen name="CustomerLogin" component={CustomerLogin} />
+        <Stack.Screen name="DeliveryLogin" component={DeliveryLogin} />
+        <Stack.Screen name="Logout" component={LogoutScreen} />
         <Stack.Screen name="DeliveryDashboard" component={DeliveryDashboard} />
-        <Stack.Screen name="ProductOrder" component={ProductOrder} />
-        <Stack.Screen name="OrderSuccess" component={OrderSuccess} />
-        <Stack.Screen name="LiveTracking" component={LiveTracking} />
         <Stack.Screen name="DeliveryMap" component={DeliveryMap} />
-        <Stack.Screen name="Profile" component={profile} />
-        <Stack.Screen name="ProductCategories" component={ProductCategories} />
-        <Stack.Screen name="ProductDetails" component={ProductDetails} />
-        <Stack.Screen name="ProductSubDetails" component={ProductSubDetails} />
+        <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
 
-        <Stack.Screen
-          name="CategoryOrSubcategory"
-          component={CategoryOrSubcategory}
-        />
-
-        <Stack.Screen
-          options={{animation: 'default'}}
-          name="DeliveryLogin"
-          component={DeliveryLogin}
-        />
-        <Stack.Screen
-          options={{animation: 'fade'}}
-          name="CustomerLogin"
-          component={CustomerLogin}
-        />
+        {isLoggedIn ? (
+          userRole === 'Customer' ? (
+            <Stack.Screen name="BottomTabs" component={BottomTabNavigator} />
+          ) : (
+            <Stack.Screen
+              name="DeliveryDashboard"
+              component={DeliveryDashboard}
+            />
+          )
+        ) : null}
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -145,16 +145,21 @@ const ProductDetails = () => {
         <View style={styles.priceContainer1}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <CustomText
-              style={{color: '#2e7d32', fontSize: 22, fontWeight: 'bold'}}>
+              style={{
+                color: '#777',
+                fontSize: 14,
+
+                textDecorationLine: 'line-through',
+              }}>
               ₹{productData.discountPrice || productData.price}
             </CustomText>
             {productData.discountPrice && (
               <CustomText
                 style={{
-                  textDecorationLine: 'line-through',
-                  color: '#777',
-                  fontSize: 14,
+                  color: '#2e7d32',
+                  fontSize: 20,
                   marginLeft: 10,
+                  fontWeight: 'bold',
                 }}>
                 ₹{productData.price}
               </CustomText>
@@ -190,13 +195,9 @@ const ProductDetails = () => {
       <CustomHeader title="Product Details" />
       {loadingRelated ? (
         <ActivityIndicator style={{marginTop: 20}} />
-      ) : relatedProducts.length === 0 ? (
-        <CustomText style={{textAlign: 'center', marginTop: 20}}>
-          No related products found.
-        </CustomText>
       ) : (
         <FlatList
-          data={relatedProducts}
+          data={relatedProducts.length > 0 ? relatedProducts : [productData]}
           keyExtractor={item =>
             (item._id || item.id)?.toString() || Math.random().toString()
           }

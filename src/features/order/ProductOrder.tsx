@@ -1,3 +1,5 @@
+// ✅ Final Clean and Optimized Version of ProductOrder.js with Address Handling
+
 import {
   View,
   StyleSheet,
@@ -7,7 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import CustomHeader from '@components/ui/CustomHeader';
 import {Colors, Fonts} from '@utils/Constants';
 import OrderList from './OrderList';
@@ -21,72 +23,156 @@ import {hocStyles} from '@styles/GlobleStyles';
 import ArrowButton from '@components/ui/ArrowButton';
 import {createOrder} from '@service/orderService';
 import {navigate} from '@utils/NavigationUtils';
+import {useRoute, useNavigation} from '@react-navigation/native';
+import {updateSelectedAddressType} from '@service/customerService';
 
 const ProductOrder = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
   const {getTotalPrice, cart, clearCart} = useCartStore();
-  const {user, setCurrentOrder, currentOrder} = useAuthStore();
+  const {user, setCurrentOrder, currentOrder, setUser} = useAuthStore();
   const totalItemPrice = getTotalPrice();
   const [loading, setLoading] = useState(false);
+  const [activeAddressType, setActiveAddressType] = useState('primary');
+  const [hasTriggeredOrder, setHasTriggeredOrder] = useState(false);
+  const {params} = route;
+  const newAddress = params?.newAddress;
+  const addressType = params?.addressType;
+  const name = params?.name;
+  const phone = params?.phone;
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (route.params?.newAddress) {
+        navigation.setParams({
+          ...route.params,
+          newAddress: null,
+        });
+      }
+    });
+    return unsubscribe;
+  }, [navigation, route.params]);
+
+  const selectedAddress =
+    newAddress ||
+    (activeAddressType === 'primary'
+      ? user?.PrimaryAddress
+      : user?.SecondaryAddress);
 
   const handlePlaceOrder = async () => {
-    console.log('currentOrder--->', currentOrder);
+    const secondaryAddress = user?.SecondaryAddress;
 
-    if (
-      currentOrder &&
-      currentOrder.status !== 'delivered' &&
-      currentOrder.status !== 'cancelled'
-    ) {
-      Alert.alert(
-        'Let your first order be delivered before placing a new one.',
-      );
-      return;
-    }
+    Alert.alert(
+      'Confirm Address',
+      selectedAddress
+        ? `Current selected address:\n\n${selectedAddress}\n\nSecondary address ${
+            secondaryAddress ? 'exists.' : 'not available.'
+          }`
+        : 'No address selected. Please add an address.',
+      [
+        {
+          text: 'Change Address',
+          onPress: () =>
+            navigate('EditAddressScreen', {
+              addressType: activeAddressType,
+              existingAddress: selectedAddress,
+              fromPlaceOrder: true,
+            }),
+        },
+        {
+          text: 'Proceed',
+          onPress: async () => {
+            if (
+              currentOrder &&
+              currentOrder.status !== 'delivered' &&
+              currentOrder.status !== 'cancelled'
+            ) {
+              Alert.alert(
+                'Order Already in Progress',
+                'Please wait for your current order to be delivered before placing a new one.',
+              );
+              return;
+            }
 
-    const formattedData = cart.map(item => ({
-      product: item._id,
-      quantity: item.count,
-      price: item.price,
-    }));
+            const formattedData = cart.map(item => ({
+              product: item._id,
+              quantity: item.count,
+              price: item.price,
+            }));
 
-    console.log('formatted Data :---', formattedData);
+            if (formattedData.length === 0) {
+              Alert.alert(
+                'No Items',
+                'Please add items to your cart before placing an order.',
+              );
+              return;
+            }
 
-    if (formattedData.length === 0) {
-      Alert.alert('Add any items to place order');
-      return;
-    }
+            if (!selectedAddress) {
+              Alert.alert(
+                'Missing Address',
+                `Please add your ${activeAddressType} address to proceed.`,
+                [
+                  {
+                    text: 'Go to Address',
+                    onPress: () =>
+                      navigate('EditAddressScreen', {
+                        addressType: activeAddressType,
+                        fromPlaceOrder: true,
+                      }),
+                  },
+                  {text: 'Cancel', style: 'cancel'},
+                ],
+              );
+              return;
+            }
 
-    console.log('Total Price:', totalItemPrice);
+            setLoading(true);
 
-    setLoading(true);
+            try {
+              // Save selected address type to user profile
+              await updateSelectedAddressType(
+                user._id,
+                activeAddressType === 'primary' ? 'Primary' : 'Secondary',
+                selectedAddress,
+              );
 
-    try {
-      const data = await createOrder(formattedData, totalItemPrice);
-      console.log('Response from createOrder:', data);
-
-      if (data != null) {
-        setCurrentOrder(data);
-        clearCart();
-        navigate('OrderSuccess', {...data});
-      } else {
-        Alert.alert('Create Order: There was an error');
-      }
-    } catch (err) {
-      console.error('Create Order Error:', err);
-      Alert.alert('Create Order: There was an unexpected error');
-    } finally {
-      setLoading(false);
-    }
+              // 👉 Now send all info to PaymentScreen (no order yet)
+              navigate('PaymentScreen', {
+                cartData: formattedData,
+                totalAmount: totalItemPrice,
+                deliveryAddress: selectedAddress,
+                addressType: activeAddressType,
+                userId: user._id,
+                liveLocation: user?.liveLocation || {
+                  latitude: 0,
+                  longitude: 0,
+                },
+              });
+            } catch (err) {
+              console.error('Error preparing order:', err);
+              Alert.alert(
+                'Error',
+                'Unexpected error occurred while preparing the order.',
+              );
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
+  console.log('Touched selected address : ', selectedAddress);
   return (
     <View style={styles.container}>
       <CustomHeader title="Checkout" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <OrderList />
 
-        <TouchableOpacity
-          style={styles.flexRowBetween}
-          onPress={() => console.log('Navigate to coupons')}>
+        <TouchableOpacity style={styles.flexRowBetween}>
           <View style={styles.flexRow}>
             <Image
               source={require('@assets/icons/coupon.png')}
@@ -116,35 +202,63 @@ const ProductOrder = () => {
           </View>
         </View>
       </ScrollView>
+
       <View style={hocStyles.cartContainer}>
         <View style={styles.absoluteContainer}>
           <View style={styles.addressContainer}>
-            <View style={styles.flexRow}>
-              <Image
-                source={require('@assets/icons/home.png')}
-                style={{width: 20, height: 20}}
-              />
-              <View style={{width: '75%'}}>
-                <CustomText variant="h8" fontFamily={Fonts.Medium}>
-                  Delivering to Home
-                </CustomText>
-                <CustomText
-                  variant="h9"
-                  numberOfLines={2}
-                  style={{opacity: 0.6}}>
-                  {user?.address}
-                </CustomText>
+            <View style={{flex: 1}}>
+              <View style={{flexDirection: 'row', marginBottom: 10}}>
+                <TouchableOpacity
+                  onPress={() => setActiveAddressType('primary')}
+                  style={{marginRight: 10}}>
+                  <CustomText
+                    style={{
+                      color:
+                        activeAddressType === 'primary'
+                          ? Colors.primary
+                          : '#000',
+                    }}>
+                    Primary
+                  </CustomText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setActiveAddressType('secondary')}>
+                  <CustomText
+                    style={{
+                      color:
+                        activeAddressType === 'secondary'
+                          ? Colors.primary
+                          : '#000',
+                    }}>
+                    Secondary
+                  </CustomText>
+                </TouchableOpacity>
               </View>
+
+              <CustomText numberOfLines={2} style={{opacity: 0.6}}>
+                {selectedAddress || 'No address saved yet'}
+              </CustomText>
             </View>
-            <TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() =>
+                navigate('EditAddressScreen', {
+                  addressType: activeAddressType,
+                  existingAddress: selectedAddress,
+                })
+              }
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              activeOpacity={0.7}
+              style={styles.changeAddressButton}>
               <CustomText
-                variant="h8"
+                variant="h6"
                 style={{color: Colors.secondary}}
                 fontFamily={Fonts.Medium}>
                 Change
               </CustomText>
             </TouchableOpacity>
           </View>
+
           <View style={styles.paymentGateway}>
             <View style={{width: '30%'}}>
               <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Regular}>
@@ -182,11 +296,6 @@ const styles = StyleSheet.create({
     padding: 10,
     paddingBottom: 250,
   },
-  emptyCartContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   cancelText: {
     marginTop: 4,
     opacity: 0.6,
@@ -203,7 +312,7 @@ const styles = StyleSheet.create({
   flexRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: 20,
   },
   paymentGateway: {
     flexDirection: 'row',
@@ -217,13 +326,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     paddingHorizontal: 10,
-    paddingBottom: 10,
+    paddingBottom: 20,
     borderBottomWidth: 0.7,
     borderColor: Colors.border,
   },
   absoluteContainer: {
     marginVertical: 15,
     marginBottom: Platform.OS === 'ios' ? 30 : 10,
+  },
+  changeAddressButton: {
+    padding: 5,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  changeAddressText: {
+    color: Colors.secondary,
+    textAlign: 'center',
   },
 });
 

@@ -5,10 +5,24 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
 
-const DeliveryDetails: FC<{details: any}> = ({details}) => {
-  console.log('details?.address========>>>>>', details?.address);
+interface DeliveryDetailsProps {
+  details: {
+    address?: string;
+    name?: string;
+    phone?: string;
+  };
+}
+
+const DeliveryDetails: FC<DeliveryDetailsProps> = ({details}) => {
+  const {
+    address = '------',
+    name = 'Anonymous',
+    phone = 'XXXXXXXXXX',
+  } = details || {};
+  console.log('current Address 🏠', details);
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.flexRow}>
         <View style={styles.iconContainer}>
           <Icon name="bike-fast" color={Colors.disabled} size={RFValue(20)} />
@@ -18,11 +32,12 @@ const DeliveryDetails: FC<{details: any}> = ({details}) => {
             Your delivery details
           </CustomText>
           <CustomText variant="h8" fontFamily={Fonts.Medium}>
-            Details of you current order
+            Details of your current order
           </CustomText>
         </View>
       </View>
 
+      {/* Address Section */}
       <View style={styles.flexRow2}>
         <View style={styles.iconContainer}>
           <Icon
@@ -36,10 +51,12 @@ const DeliveryDetails: FC<{details: any}> = ({details}) => {
             Delivery at Home
           </CustomText>
           <CustomText variant="h8" numberOfLines={2} fontFamily={Fonts.Regular}>
-            {details?.address || '------'}
+            {address}
           </CustomText>
         </View>
       </View>
+
+      {/* Contact Section */}
       <View style={styles.flexRow2}>
         <View style={styles.iconContainer}>
           <Icon
@@ -50,12 +67,16 @@ const DeliveryDetails: FC<{details: any}> = ({details}) => {
         </View>
         <View style={{width: '80%'}}>
           <CustomText variant="h8" fontFamily={Fonts.Medium}>
-            {details?.name || 'Anonymous'}
-            {details?.phone || 'XXXXXXXXX'}
+            {name}
           </CustomText>
-          <CustomText variant="h8" numberOfLines={2} fontFamily={Fonts.Regular}>
-            Receiver's contact no.
+          <CustomText variant="h8" fontFamily={Fonts.Regular}>
+            Customer: {details.customerPhone || 'N/A'}
           </CustomText>
+          {details.receiverPhone ? (
+            <CustomText variant="h8" fontFamily={Fonts.Regular}>
+              Receiver: {details.receiverPhone}
+            </CustomText>
+          ) : null}
         </View>
       </View>
     </View>
@@ -92,4 +113,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
 export default DeliveryDetails;

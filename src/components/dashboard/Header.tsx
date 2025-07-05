@@ -36,35 +36,17 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
   return (
     <View style={styles.subContainer}>
       <TouchableOpacity activeOpacity={0.6}>
-        <CustomText fontFamily={Fonts.Bold} variant="h8" style={styles.text}>
+        <CustomText fontFamily={Fonts.Bold} variant="h5" style={styles.text}>
           Delivery in
         </CustomText>
-
-        <View style={styles.flexRowGap}>
-          <CustomText
-            fontFamily={Fonts.SemiBold}
-            variant="h2"
-            style={styles.text}>
-            15 minutes
-          </CustomText>
-
-          <TouchableOpacity style={styles.noticeBtn} onPress={showNotice}>
-            <CustomText
-              fontSize={RFValue(5)}
-              fontFamily={Fonts.SemiBold}
-              style={{color: '#3B4886'}}>
-              Rain
-            </CustomText>
-          </TouchableOpacity>
-        </View>
 
         <View style={styles.flexRow}>
           <CustomText
             variant="h8"
-            numberOfLines={1}
+            numberOfLines={2}
             fontFamily={Fonts.Medium}
             style={styles.text2}>
-            {user?.address || 'Knowhere, Somewhere 😄'}
+            {user?.PrimaryAddress || 'Knowhere, Somewhere 😄'}
           </CustomText>
           <Icon
             name="menu-down"
@@ -96,13 +78,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 2,
-    width: '70%',
+    width: '90%',
   },
   subContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingTop: Platform.OS === 'android' ? 25 : 9,
+    paddingHorizontal: 1,
+    paddingTop: Platform.OS === 'android' ? 5 : 9,
     justifyContent: 'space-between',
   },
   flexRowGap: {

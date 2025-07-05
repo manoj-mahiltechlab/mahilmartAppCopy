@@ -153,7 +153,15 @@ const DeliveryMap = () => {
           hasPickedUp={orderData?.status === 'arriving'}
           pickupLocation={orderData?.pickupLocation || null}
         />
-        <DeliveryDetails details={orderData?.customer} />
+        <DeliveryDetails
+          details={{
+            address: orderData?.deliveryLocation?.address,
+            name: orderData?.customer?.name,
+            customerPhone: orderData?.customer?.phone,
+            receiverPhone: orderData?.customer?.secondaryContact?.phone,
+          }}
+        />
+
         <OrderSummary order={orderData} />
 
         <View style={styles.flexRow}>

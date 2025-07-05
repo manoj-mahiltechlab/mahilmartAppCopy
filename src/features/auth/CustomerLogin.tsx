@@ -1,4 +1,4 @@
-import React, {useState, useRef, useCallback, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -8,16 +8,9 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
-import {
-  GestureHandlerRootView,
-  // PanGestureHandler,  // Commented out for now
-  State,
-} from 'react-native-gesture-handler';
-import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
-import ProductSlider from '@components/login/ProductSlider';
-import CustomText from '@components/ui/CustomText';
-import {RFValue} from 'react-native-responsive-fontsize';
+import {GestureHandlerRootView, ScrollView} from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   withTiming,
@@ -27,16 +20,21 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
-import {RootStackParamList} from '@navigation/Navigation';
 import LinearGradient from 'react-native-linear-gradient';
-import {Fonts, lightColors} from '@utils/Constants';
-import CustomInput from '@components/ui/CustomInput';
-import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
-import {customerLogin} from '@service/authService';
-import CustomButton from '@components/ui/CustomButton';
+import {RFValue} from 'react-native-responsive-fontsize';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
+import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
+import ProductSlider from '@components/login/ProductSlider';
+import CustomText from '@components/ui/CustomText';
+import CustomInput from '@components/ui/CustomInput';
+import CustomButton from '@components/ui/CustomButton';
+import {Fonts, lightColors} from '@utils/Constants';
+import {RootStackParamList} from '@navigation/Navigation';
+import {customerLogin} from '@service/authService';
+import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 
 const bottomColors = [...lightColors].reverse();
 
@@ -49,9 +47,10 @@ const CustomerLogin = () => {
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
 
   const floating = useSharedValue(0);
-  const progress = useSharedValue(0);
-  const radius = 0; // increased radius for better circle visibility
+  const animatedValue = useSharedValue(0);
   const animationDuration = 3000;
+
+  const progress = useSharedValue(0);
 
   useEffect(() => {
     progress.value = withRepeat(
@@ -68,18 +67,7 @@ const CustomerLogin = () => {
       -1,
       false,
     );
-  }, []);
 
-  const shopTitleStyle = useAnimatedStyle(() => {
-    const theta = progress.value * 0 * Math.PI;
-    const translateX = radius * Math.cos(theta);
-    const translateY = radius * Math.sin(theta);
-    return {
-      transform: [{translateX}, {translateY}],
-    };
-  });
-
-  useEffect(() => {
     floating.value = withRepeat(
       withSequence(
         withTiming(-10, {duration: 1000}),
@@ -90,11 +78,6 @@ const CustomerLogin = () => {
     );
   }, []);
 
-  const floatingLogoStyle = useAnimatedStyle(() => ({
-    transform: [{translateY: floating.value}],
-  }));
-
-  const animatedValue = useSharedValue(0);
   useDerivedValue(() => {
     animatedValue.value = withTiming(
       keyboardOffsetHeight === 0 ? 0 : -keyboardOffsetHeight * 0.9,
@@ -106,35 +89,47 @@ const CustomerLogin = () => {
     transform: [{translateY: animatedValue.value}],
   }));
 
+  const floatingLogoStyle = useAnimatedStyle(() => ({
+    transform: [{translateY: floating.value}],
+  }));
+
   const isPhoneValid =
     phoneNumber.trim().length === 10 && /^\d{10}$/.test(phoneNumber);
 
   const handleAuth = async () => {
-    console.log('Continue button pressed ✅'); // Add this line
-
     Keyboard.dismiss();
 
-    setTimeout(async () => {
-      setLoading(true);
-      try {
-        await customerLogin(phoneNumber);
-        navigation.navigate('ProductDashboard');
-      } catch (error) {
-        Alert.alert('Login Failed', 'Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    }, 100);
+    if (!isPhoneValid) {
+      Alert.alert(
+        'Invalid Input',
+        'Please enter a valid 10-digit phone number.',
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await customerLogin(phoneNumber);
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'BottomTabs'}],
+      });
+    } catch (error) {
+      Alert.alert('Login Failed', 'Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <View style={styles.container}>
-        <SafeAreaView style={{flex: 1}}>
-          <CustomSafeAreaView>
-            <ProductSlider />
+      <SafeAreaView style={{flex: 1}}>
+        <CustomSafeAreaView>
+          <ProductSlider />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{flex: 1}}>
             <Animated.ScrollView
-              bounces={false}
               style={animatedStyle}
               keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps="handled"
@@ -148,12 +143,9 @@ const CustomerLogin = () => {
                     accessibilityLabel="App Logo"
                   />
                 </Animated.View>
-                <Animated.View style={shopTitleStyle}>
-                  <CustomText variant="h2" fontFamily={Fonts.Bold}>
-                    MahilMart Shop
-                  </CustomText>
-                </Animated.View>
-
+                <CustomText variant="h2" fontFamily={Fonts.Bold}>
+                  MahilMart Shop
+                </CustomText>
                 <CustomText
                   variant="h5"
                   fontFamily={Fonts.SemiBold}
@@ -187,23 +179,23 @@ const CustomerLogin = () => {
                 />
               </View>
             </Animated.ScrollView>
-          </CustomSafeAreaView>
+          </KeyboardAvoidingView>
+        </CustomSafeAreaView>
 
-          <View style={styles.footer}>
-            <SafeAreaView />
-            <CustomText fontSize={RFValue(8)} style={styles.termsText}>
-              By Continuing, you agree to our Terms of Service & Privacy Policy
-            </CustomText>
-            <SafeAreaView />
-          </View>
+        <View style={styles.footer}>
+          <SafeAreaView />
+          <CustomText fontSize={RFValue(8)} style={styles.termsText}>
+            By Continuing, you agree to our Terms of Service & Privacy Policy
+          </CustomText>
+          <SafeAreaView />
+        </View>
 
-          <TouchableOpacity
-            style={styles.absoluteSwitch}
-            onPress={() => navigation.navigate('DeliveryLogin')}>
-            <Icon name="bike-fast" color="#000" size={RFValue(18)} />
-          </TouchableOpacity>
-        </SafeAreaView>
-      </View>
+        <TouchableOpacity
+          style={styles.absoluteSwitch}
+          onPress={() => navigation.navigate('DeliveryLogin')}>
+          <Icon name="bike-fast" color="#000" size={RFValue(18)} />
+        </TouchableOpacity>
+      </SafeAreaView>
     </GestureHandlerRootView>
   );
 };
@@ -260,7 +252,6 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 10,
   },
-
   subContainer: {
     flexGrow: 2,
     justifyContent: 'flex-start',

@@ -52,7 +52,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
           <Image source={getImageSource(item?.image)} style={styles.image} />
         </View>
 
-        {/* <View style={styles.subImagesContainer}>
+        <View style={styles.subImagesContainer}>
           {item?.subImages?.length > 0 ? (
             item.subImages
               .slice(0, 3)
@@ -70,9 +70,9 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
                 />
               ))
           ) : (
-            <CustomText style={styles.noImageText}>No Images</CustomText>
+            <CustomText style={styles.noImageText}></CustomText>
           )}
-        </View> */}
+        </View>
       </TouchableOpacity>
 
       <View style={styles.content}>
@@ -99,18 +99,18 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
             {item.discountPrice && (
               <CustomText
                 style={{
-                  color: '#2e7d32',
-                  fontSize: RFValue(12),
-                  fontWeight: 'bold',
+                  textDecorationLine: 'line-through',
+                  color: '#777',
+                  fontSize: RFValue(10),
                 }}>
                 ₹{item.discountPrice}
               </CustomText>
             )}
             <CustomText
               style={{
-                textDecorationLine: 'line-through',
-                color: '#777',
-                fontSize: RFValue(10),
+                color: '#2e7d32',
+                fontSize: RFValue(12),
+                fontWeight: 'bold',
               }}>
               ₹{item.discountPrice ? item.price : ''}
             </CustomText>

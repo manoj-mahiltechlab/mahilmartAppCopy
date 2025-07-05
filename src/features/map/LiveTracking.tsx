@@ -1,5 +1,5 @@
+import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, ScrollView} from 'react-native';
-import React, {useEffect} from 'react';
 import {useAuthStore} from '@state/authStore';
 import {getOrderById} from '@service/orderService';
 import {Colors, Fonts} from '@utils/Constants';
@@ -10,31 +10,42 @@ import CustomText from '@components/ui/CustomText';
 import OrderSummary from './OrderSummary';
 import DeliveryDetails from './DeliveryDetails';
 import LiveMap from './LiveMap';
+import {useRoute} from '@react-navigation/native';
 
 const LiveTracking = () => {
-  const {currentOrder, setCurrentOrder} = useAuthStore();
+  const route = useRoute();
+  const {orderId} = route.params;
+
+  const {setCurrentOrder} = useAuthStore();
+  const [orderData, setOrderData] = useState(null);
 
   const fetchOrderDetails = async () => {
-    if (currentOrder?._id) {
-      const data = await getOrderById(currentOrder._id);
-      setCurrentOrder(data);
+    if (!orderId) return;
+    try {
+      const data = await getOrderById(orderId);
+      setOrderData(data);
+      setCurrentOrder(data); // Optional: in case you're using global state elsewhere
+    } catch (error) {
+      console.error('Failed to fetch order details:', error);
     }
   };
 
   useEffect(() => {
     fetchOrderDetails();
-  }, []);
+  }, [orderId]);
+
+  if (!orderData) return null;
 
   let msg = 'Packing your order';
   let time = 'Arriving in 10 minutes';
 
-  if (currentOrder?.status === 'confirmed') {
+  if (orderData.status === 'confirmed') {
     msg = 'Arriving Soon';
     time = 'Arriving in 8 minutes';
-  } else if (currentOrder?.status === 'arriving') {
+  } else if (orderData.status === 'arriving') {
     msg = 'Order Picked Up';
     time = 'Arriving in 6 minutes';
-  } else if (currentOrder?.status === 'delivered') {
+  } else if (orderData.status === 'delivered') {
     msg = 'Order Delivered';
     time = 'Faster Delivery⚡';
   }
@@ -46,17 +57,17 @@ const LiveTracking = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
         <LiveMap
-          deliveryLocation={currentOrder?.deliveryLocation}
-          pickupLocation={currentOrder?.pickupLocation}
-          deliveryPersonLocation={currentOrder?.deliveryPersonLocation}
-          hasAccepted={currentOrder?.status === 'confirmed'}
-          hasPickedUp={currentOrder?.status === 'arriving'}
+          deliveryLocation={orderData?.deliveryLocation}
+          pickupLocation={orderData?.pickupLocation}
+          deliveryPersonLocation={orderData?.deliveryPersonLocation}
+          hasAccepted={orderData?.status === 'confirmed'}
+          hasPickedUp={orderData?.status === 'arriving'}
         />
 
         <View style={styles.flexRow}>
           <View style={styles.iconContainer}>
             <Icon
-              name={currentOrder?.deliveryPartner ? 'phone' : 'shopping'}
+              name={orderData?.deliveryPartner ? 'phone' : 'shopping'}
               color={Colors.primary}
               size={RFValue(20)}
             />
@@ -66,31 +77,41 @@ const LiveTracking = () => {
               numberOfLines={1}
               variant="h7"
               fontFamily={Fonts.SemiBold}>
-              {currentOrder?.deliveryPartner?.name ||
+              {orderData?.deliveryPartner?.name ||
                 'We will soon assign delivery partner'}
             </CustomText>
-            {currentOrder?.deliveryPartner && (
+            {orderData?.deliveryPartner && (
               <CustomText variant="h7" fontFamily={Fonts.Medium}>
-                {currentOrder?.deliveryPartner?.phone}
+                {orderData?.deliveryPartner?.phone}
               </CustomText>
             )}
             <CustomText variant="h9" fontFamily={Fonts.Medium}>
-              {currentOrder?.deliveryPartner
+              {orderData?.deliveryPartner
                 ? 'For Delivery instructions you can contact here'
                 : msg}
             </CustomText>
           </View>
         </View>
 
+        {orderData?.addressType && (
+          <CustomText
+            variant="h8"
+            fontFamily={Fonts.SemiBold}
+            style={styles.addressTypeText}>
+            {orderData.addressType === 'primary' ? 'Primary' : 'Secondary'}
+          </CustomText>
+        )}
+
         <DeliveryDetails
           details={{
-            address: currentOrder?.deliveryLocation?.address,
-            name: currentOrder?.customer?.name,
-            phone: currentOrder?.customer?.phone,
+            address: orderData?.deliveryLocation?.address,
+            name: orderData?.customer?.name,
+            customerPhone: orderData?.customer?.phone,
+            receiverPhone: orderData?.customer?.secondaryContact?.phone,
           }}
         />
 
-        <OrderSummary order={currentOrder} />
+        <OrderSummary order={orderData} />
 
         <View style={styles.flexRow}>
           <View style={styles.iconContainer}>
@@ -151,6 +172,11 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  addressTypeText: {
+    marginTop: 20,
+    marginBottom: 10,
+    color: Colors.textDark,
   },
 });
 

@@ -6,16 +6,36 @@ import LottieView from 'lottie-react-native';
 import CustomText from '@components/ui/CustomText';
 import {Colors, Fonts} from '@utils/Constants';
 import {replace} from '@utils/NavigationUtils';
+import {useRoute} from '@react-navigation/native';
 
 const OrderSuccess: FC = () => {
-  const {user} = useAuthStore();
+  const route = useRoute();
+
+  const {
+    deliveryAddress = 'No address information',
+    addressType = 'unknown',
+    name = 'Anonymous',
+    phone = 'XXXXXXXXXX',
+  } = route.params || {};
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      replace('LiveTracking');
+      replace('LiveTracking', {
+        addressType,
+        deliveryAddress,
+      });
+      console.log('delivery Address 🚚: ', deliveryAddress);
     }, 2300);
     return () => clearTimeout(timeoutId);
   }, []);
+
+  const formattedAddressType =
+    addressType === 'primary'
+      ? 'Primary'
+      : addressType === 'secondary'
+      ? 'Secondary'
+      : 'Unknown';
+
   return (
     <View style={styles.container}>
       <LottieView
@@ -28,25 +48,35 @@ const OrderSuccess: FC = () => {
         enableMergePathsAndroidForKitKatAndAbove
         hardwareAccelerationAndroid
       />
+
       <CustomText
         variant="h8"
         fontFamily={Fonts.SemiBold}
         style={styles.orderPlaceText}>
         ORDER PLACED
       </CustomText>
+
       <View style={styles.deliveryContainer}>
         <CustomText
           variant="h4"
           fontFamily={Fonts.SemiBold}
           style={styles.deliveryText}>
-          Delivering to Home
+          Delivering to {formattedAddressType}
         </CustomText>
       </View>
+
       <CustomText
         variant="h8"
         style={styles.addressText}
         fontFamily={Fonts.Medium}>
-        {user?.address || 'Somewhere,Knowhere😀'}
+        {deliveryAddress}
+      </CustomText>
+
+      <CustomText
+        variant="h8"
+        style={styles.contactText}
+        fontFamily={Fonts.Medium}>
+        📞 {name} ({phone})
       </CustomText>
     </View>
   );
@@ -80,6 +110,11 @@ const styles = StyleSheet.create({
     width: '80%',
     textAlign: 'center',
     marginTop: 10,
+  },
+  contactText: {
+    opacity: 0.6,
+    marginTop: 5,
+    fontSize: 14,
   },
 });
 

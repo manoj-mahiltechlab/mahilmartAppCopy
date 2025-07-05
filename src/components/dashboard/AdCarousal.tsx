@@ -8,11 +8,11 @@ import {Image} from 'react-native';
 const AdCarousal: FC<{adData: any}> = ({adData}) => {
   const baseOptions = {
     vertical: false,
-    width: screenWidth,
+    width: 400,
     height: screenWidth * 0.6,
   };
   return (
-    <View style={{left: -20, marginVertical: 10}}>
+    <View style={{left: -27, marginVertical: 15}}>
       <Carousal
         {...baseOptions}
         loop

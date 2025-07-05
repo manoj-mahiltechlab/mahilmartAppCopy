@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import React, {useEffect, useRef} from 'react';
 import {AppState, AppStateStatus} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import Navigation from '@navigation/Navigation'; // Your navigation component
+import Navigation from '@navigation/Navigation'; // This should handle all navigation, including tabs
 
 const App = () => {
   const appState = useRef<AppStateStatus>(AppState.currentState);

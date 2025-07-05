@@ -8,7 +8,7 @@ import {Colors} from '@utils/Constants';
 interface InputProps {
   left: React.ReactNode;
   onClear?: () => void;
-  right?: boolean;
+  right?: React.ReactNode;
 }
 
 const CustomInput: FC<InputProps & React.ComponentProps<typeof TextInput>> = ({
@@ -26,11 +26,13 @@ const CustomInput: FC<InputProps & React.ComponentProps<typeof TextInput>> = ({
         placeholderTextColor={'#ccc'}
       />
       <View style={styles.icon}>
-        {props?.value?.length !== 0 && right && (
+        {right ? (
+          right
+        ) : props?.value?.length !== 0 && onClear ? (
           <TouchableOpacity onPress={onClear}>
             <Icon name="close-circle-sharp" size={RFValue(16)} color="#ccc" />
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
     </View>
   );
