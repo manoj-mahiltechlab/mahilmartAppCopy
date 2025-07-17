@@ -41,14 +41,18 @@ const DeliveryLogin: FC = () => {
     setLoading(true);
     try {
       const res = await deliveryLogin(email, password);
+      console.log('Login Response:', res); // <-- Add this
 
       if (res?.success) {
         navigation.reset({
           index: 0,
           routes: [{name: 'DeliveryDashboard'}],
         });
+      } else {
+        Alert.alert('Login Failed', 'Invalid credentials.');
       }
     } catch (error) {
+      console.error('Login error:', error); // <-- Add this
       Alert.alert('Login Failed', 'Email or password is incorrect.');
     } finally {
       setLoading(false);

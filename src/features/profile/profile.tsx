@@ -37,12 +37,15 @@ const Profile = () => {
   }, [user?._id]);
 
   const handleLogout = () => {
+    // Clear local/global app states
     clearCart();
-    logout();
-    tokenStorage.clearAll();
-    storage.clearAll();
+    useAuthStore.getState().setUser(null);
 
-    // Reset navigation to remove tab bar and show login
+    // Clear persistent storage
+    tokenStorage.clearAll(); // MMKV or similar
+    storage.clearAll(); // Optional, depending on what you store here
+
+    // Reset navigation
     navigation.dispatch(
       CommonActions.reset({
         index: 0,

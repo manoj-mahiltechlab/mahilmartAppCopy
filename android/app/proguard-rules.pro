@@ -1,10 +1,35 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /usr/local/Cellar/android-sdk/24.3.3/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ========== React Native Core ==========
+-keep class com.facebook.react.** { *; }
+-dontwarn com.facebook.react.**
 
-# Add any project specific keep options here:
+# ========== Razorpay ==========
+-keep class com.razorpay.** { *; }
+-dontwarn com.razorpay.**
+
+# Razorpay missing annotations fix
+-dontwarn proguard.annotation.Keep
+-dontwarn proguard.annotation.KeepClassMembers
+
+# ========== Twilio (if used) ==========
+-keep class com.twilio.** { *; }
+-dontwarn com.twilio.**
+
+# ========== Retrofit / Gson (if used) ==========
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+-keep class com.google.gson.** { *; }
+-dontwarn com.google.gson.**
+
+# ========== Vector Icons ==========
+-keep class com.oblador.vectoricons.** { *; }
+-dontwarn com.oblador.vectoricons.**
+
+# ========== Java Annotations (safe fallback) ==========
+-keepattributes *Annotation*
+
+# ========== Prevent stripping of Application class ==========
+-keep class **.MainApplication { *; }
+
+# ========== Keep all Activities ==========
+-keep class * extends android.app.Activity
+-keep class * extends androidx.appcompat.app.AppCompatActivity

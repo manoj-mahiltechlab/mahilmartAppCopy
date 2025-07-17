@@ -1,12 +1,9 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-import ProductDashboard from '@features/dashboard/ProductDashboard';
 import CartScreen from '../screens/CartScreen';
 import Profile from '@features/profile/profile';
 import CustomerStack from './CustomerStack';
-import DeliveryDashboard from '@features/delivery/DeliveryDashboard';
 
 const Tab = createBottomTabNavigator();
 

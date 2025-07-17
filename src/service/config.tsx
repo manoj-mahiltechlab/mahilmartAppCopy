@@ -1,13 +1,13 @@
-// import {Platform} from 'react-native';
+import {Platform} from 'react-native';
 
-// export const BASE_URL =
-//   Platform.OS === 'android'
-//     ? 'http://192.168.1.144:3000/api'
-//     : 'http://192.168.1.144:3000/api';
-// export const SOCKET_URL =
-//   Platform.OS === 'android'
-//     ? 'http://192.168.1.144:3000'
-//     : 'http://192.168.1.144:3000';
+export const BASE_URL =
+  Platform.OS === 'android'
+    ? 'http://192.168.1.144:3000/api'
+    : 'http://192.168.1.144:3000/api';
+export const SOCKET_URL =
+  Platform.OS === 'android'
+    ? 'http://192.168.1.144:3000'
+    : 'http://192.168.1.144:3000';
 
 // // export const BASE_URL = 'https://d1b2-61-0-63-192.ngrok-free.app/api';
 // // export const SOCKET_URL = 'https://d1b2-61-0-63-192.ngrok-free.app';
@@ -42,12 +42,9 @@
 
 // src/config/constants.js
 
-// ✅ Ngrok URLs for API & Socket
-export const BASE_URL = 'https://068c-61-0-49-136.ngrok-free.app/api';
-export const SOCKET_URL = 'https://068c-61-0-49-136.ngrok-free.app';
+// ✅ Public server IP with backend API
+// export const BASE_URL = 'http://13.235.76.211:3000/api/admin';
+// export const SOCKET_URL = 'http://13.235.76.211:3000';
 
-// ✅ Active Google Maps API Key
 export const GOOGLE_MAP_API = 'AIzaSyDWWgXk0R4O2um_lDSjw6xYfHwfHM2H1r0';
-
-// ✅ Current Branch ID
 export const BRANCH_ID = '681854c3722ca802c3a1d592';

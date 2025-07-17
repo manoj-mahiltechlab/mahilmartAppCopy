@@ -4,13 +4,12 @@ import {
   StyleSheet,
   SafeAreaView,
   Image,
-  Keyboard,
   Alert,
   TouchableOpacity,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
-import {GestureHandlerRootView, ScrollView} from 'react-native-gesture-handler';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   withTiming,
@@ -25,7 +24,6 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import ProductSlider from '@components/login/ProductSlider';
 import CustomText from '@components/ui/CustomText';
@@ -33,8 +31,8 @@ import CustomInput from '@components/ui/CustomInput';
 import CustomButton from '@components/ui/CustomButton';
 import {Fonts, lightColors} from '@utils/Constants';
 import {RootStackParamList} from '@navigation/Navigation';
-import {customerLogin} from '@service/authService';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
+import {sendCustomerOtp} from '@service/authService';
 
 const bottomColors = [...lightColors].reverse();
 
@@ -96,26 +94,30 @@ const CustomerLogin = () => {
   const isPhoneValid =
     phoneNumber.trim().length === 10 && /^\d{10}$/.test(phoneNumber);
 
+  // CustomerLogin.tsx
   const handleAuth = async () => {
-    Keyboard.dismiss();
-
     if (!isPhoneValid) {
-      Alert.alert(
-        'Invalid Input',
-        'Please enter a valid 10-digit phone number.',
-      );
+      Alert.alert('Invalid Input', 'Enter a valid 10-digit number.');
       return;
     }
 
     setLoading(true);
+
     try {
-      await customerLogin(phoneNumber);
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'BottomTabs'}],
-      });
-    } catch (error) {
-      Alert.alert('Login Failed', 'Please try again.');
+      const response = await sendCustomerOtp(phoneNumber);
+      console.log('📲 OTP response:', response);
+
+      if (response?.success) {
+        navigation.navigate('VerifyOtp', {phoneNumber});
+      } else {
+        Alert.alert('OTP Failed', response?.message || 'Please try again.');
+      }
+    } catch (err: any) {
+      console.log('❌ OTP Send Error:', err?.response?.data || err.message);
+      Alert.alert(
+        'Failed to send OTP',
+        'Please check the number or your network.',
+      );
     } finally {
       setLoading(false);
     }

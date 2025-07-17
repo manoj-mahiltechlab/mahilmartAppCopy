@@ -17,7 +17,8 @@ import {screenHeight, screenWidth} from '@utils/Scaling';
 import Geolocation from '@react-native-community/geolocation';
 import {useAuthStore} from '@state/authStore';
 import {mmkvStorage} from '@state/storage';
-import jwtDecode from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
+
 import {refetchUser, refresh_Tokens} from '@service/authService';
 import {resetAndNavigate} from '@utils/NavigationUtils';
 import {
@@ -54,7 +55,9 @@ const SplashScreen: FC = () => {
 
   const clearCache = async () => {
     try {
-      await mmkvStorage.clearAll();
+      mmkvStorage.delete('accessToken');
+      mmkvStorage.delete('refreshToken');
+      mmkvStorage.delete('user');
     } catch (error) {
       console.log('Error clearing cache:', error);
     }
@@ -62,16 +65,16 @@ const SplashScreen: FC = () => {
 
   const navigateBasedOnRole = useCallback(() => {
     if (user?.role === 'Customer') {
-      resetAndNavigate('ProductDashboard');
+      resetAndNavigate('BottomTabs', {screen: 'Home'});
     } else {
-      resetAndNavigate('DeliveryDashboard');
+      resetAndNavigate('BottomTabs', {screen: 'DeliveryDashboard'});
     }
   }, [user]);
 
   const validateTokens = useCallback(async () => {
     try {
-      const accessToken = mmkvStorage.getString('accessToken');
-      const refreshToken = mmkvStorage.getString('refreshToken');
+      const accessToken = mmkvStorage.getItem('accessToken');
+      const refreshToken = mmkvStorage.getItem('refreshToken');
 
       if (!accessToken || !refreshToken) {
         resetAndNavigate('CustomerLogin');
@@ -191,7 +194,6 @@ const SplashScreen: FC = () => {
         return;
       }
 
-      await clearCache();
       await validateTokens();
     } catch (error) {
       console.log('Error checking location:', error);
@@ -220,6 +222,18 @@ const SplashScreen: FC = () => {
 
     return () => subscription.remove();
   }, [checkLocationAndPermission]);
+
+  useEffect(() => {
+    const backAction = () => {
+      BackHandler.exitApp();
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+    return () => backHandler.remove();
+  }, []);
 
   useEffect(() => {
     if (isFocused) {

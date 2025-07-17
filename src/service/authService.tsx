@@ -1,10 +1,11 @@
 import axios from 'axios';
 import {BASE_URL} from './config';
-import {tokenStorage} from '@state/storage';
+import {mmkvStorage, tokenStorage} from '@state/storage';
 import {useAuthStore} from '@state/authStore';
 
 import {appAxios} from './apiInterceptors';
 import {resetAndNavigate} from '@utils/NavigationUtils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const customerLogin = async (phone: string) => {
   try {
@@ -38,13 +39,18 @@ export const deliveryLogin = async (email: string, password: string) => {
       email,
       password,
     });
+
     const {accessToken, refreshToken, deliveryPartner} = response.data;
     tokenStorage.set('accessToken', accessToken);
     tokenStorage.set('refreshToken', refreshToken);
+
     const {setUser} = useAuthStore.getState();
     setUser(deliveryPartner);
+
+    return {success: true}; // ✅ <-- this was missing
   } catch (error) {
     console.log('Login Error', error);
+    return {success: false}; // ✅ Return failure status too
   }
 };
 
@@ -89,4 +95,46 @@ export const updateUserLocation = async (data: any, setUser: any) => {
   } catch (error) {
     console.log('update User Location Error', error);
   }
+};
+export const sendCustomerOtp = async (phone: string) => {
+  const res = await axios.post(`${BASE_URL}/customer/send-otp`, {phone});
+
+  console.log('✅ OTP Sent:', res.data);
+
+  if (res.data.otpToken) {
+    await AsyncStorage.setItem('otpToken', res.data.otpToken);
+  }
+
+  return res.data;
+};
+
+// ✅ Step 2: Verify OTP
+export const verifyCustomerOtp = async (
+  phone: string,
+  otp: string,
+  otpToken: string,
+) => {
+  const res = await axios.post(`${BASE_URL}/customer/verify-otp`, {
+    phone,
+    otp,
+    otpToken,
+  });
+
+  const {accessToken, refreshToken, customer} = res.data;
+
+  tokenStorage.set('accessToken', accessToken);
+  tokenStorage.set('refreshToken', refreshToken);
+
+  const {setUser} = useAuthStore.getState();
+  setUser({
+    ...customer,
+    token: accessToken,
+  });
+
+  return {
+    success: true,
+    accessToken,
+    refreshToken,
+    customer,
+  };
 };

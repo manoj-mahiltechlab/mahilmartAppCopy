@@ -87,10 +87,15 @@ export const getProductsBySubcategoryId = async (subcategoryId: string) => {
 export const getSubcategoriesByCategoryId = async (categoryId: string) => {
   try {
     const url = `${BASE_URL}/subcategories/category/${categoryId}`;
-    console.log('Fetching subcategories by category from:', url);
+    console.log('📡 Fetching subcategories from:', url);
 
     const response = await axios.get(url);
     const data = response.data;
+
+    if (!Array.isArray(data)) {
+      console.warn('⚠️ Unexpected subcategory response:', data);
+      return []; // Safe fallback
+    }
 
     return data.map((sub: any) => ({
       id: sub._id || sub.id,
@@ -101,7 +106,7 @@ export const getSubcategoriesByCategoryId = async (categoryId: string) => {
       },
     }));
   } catch (error) {
-    console.log('Error fetching subcategories by category:', error);
+    console.error('❌ Error fetching subcategories by category:', error);
     return [];
   }
 };
