@@ -13,10 +13,19 @@ import LogoutScreen from '@features/auth/LogoutScreen';
 import DeliveryMap from '@features/delivery/DeliveryMap';
 import PaymentScreen from '@features/order/PaymentScreen';
 import VerifyOtp from '../screens/VerifyOtp';
+import ProductOrder from '@features/order/ProductOrder';
+import SearchScreen from '../screens/SearchScreen';
+import {CustomerStackParamList} from './CustomerStack';
+import EditAddressScreen from '@features/order/EditAddressScreen';
 
 export type RootStackParamList = {
   SplashScreen: undefined;
-  BottomTabs: undefined;
+  BottomTabs:
+    | undefined
+    | {
+        screen: keyof CustomerStackParamList;
+        params?: CustomerStackParamList[keyof CustomerStackParamList];
+      };
   DeliveryDashboard: undefined;
   DeliveryLogin: undefined;
   CustomerLogin: undefined;
@@ -28,6 +37,7 @@ export type RootStackParamList = {
     deliveryAddress: string;
     addressType: string;
   };
+  SearchScreen: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,6 +57,9 @@ const Navigation: FC = () => {
         <Stack.Screen name="DeliveryMap" component={DeliveryMap} />
         <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
         <Stack.Screen name="BottomTabs" component={BottomTabNavigator} />
+        <Stack.Screen name="ProductOrder" component={ProductOrder} />
+        <Stack.Screen name="SearchScreen" component={SearchScreen} />
+        <Stack.Screen name="EditAddressScreen" component={EditAddressScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

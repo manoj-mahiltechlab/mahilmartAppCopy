@@ -21,7 +21,7 @@ const CartAnimationWrapper: FC<CartAnimationWrapperProps> = ({
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
-        setHasAnimated(true);
+        requestAnimationFrame(() => setHasAnimated(true)); // ✅ fixed
       });
     } else if (cartCount === 0 && hasAnimated) {
       Animated.timing(slideAnim, {
@@ -29,7 +29,7 @@ const CartAnimationWrapper: FC<CartAnimationWrapperProps> = ({
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
-        setHasAnimated(false);
+        requestAnimationFrame(() => setHasAnimated(false)); // ✅ fixed
       });
     }
   }, [cartCount, hasAnimated, slideAnim]);

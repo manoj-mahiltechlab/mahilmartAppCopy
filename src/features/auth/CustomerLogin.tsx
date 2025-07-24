@@ -24,6 +24,7 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import ProductSlider from '@components/login/ProductSlider';
 import CustomText from '@components/ui/CustomText';
@@ -42,14 +43,19 @@ const CustomerLogin = () => {
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
+  const [autoLoginTriggered, setAutoLoginTriggered] = useState(false);
+
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
 
   const floating = useSharedValue(0);
   const animatedValue = useSharedValue(0);
   const animationDuration = 3000;
-
   const progress = useSharedValue(0);
 
+  const isPhoneValid =
+    phoneNumber.trim().length === 10 && /^\d{10}$/.test(phoneNumber);
+
+  // Trigger animation
   useEffect(() => {
     progress.value = withRepeat(
       withSequence(
@@ -76,6 +82,7 @@ const CustomerLogin = () => {
     );
   }, []);
 
+  // Keyboard animation
   useDerivedValue(() => {
     animatedValue.value = withTiming(
       keyboardOffsetHeight === 0 ? 0 : -keyboardOffsetHeight * 0.9,
@@ -91,10 +98,36 @@ const CustomerLogin = () => {
     transform: [{translateY: floating.value}],
   }));
 
-  const isPhoneValid =
-    phoneNumber.trim().length === 10 && /^\d{10}$/.test(phoneNumber);
+  // Auto OTP Trigger
+  useEffect(() => {
+    const autoLogin = async () => {
+      if (isPhoneValid && !autoLoginTriggered) {
+        setAutoLoginTriggered(true);
+        setLoading(true);
+        try {
+          const response = await sendCustomerOtp(phoneNumber);
+          console.log('📲 OTP response:', response);
+          if (response?.success) {
+            navigation.navigate('VerifyOtp', {phoneNumber});
+          } else {
+            Alert.alert('OTP Failed', response?.message || 'Please try again.');
+            setAutoLoginTriggered(false);
+          }
+        } catch (err: any) {
+          console.log('❌ OTP Send Error:', err?.response?.data || err.message);
+          Alert.alert(
+            'Failed to send OTP',
+            'Please check the number or your network.',
+          );
+          setAutoLoginTriggered(false);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    autoLogin();
+  }, [phoneNumber]);
 
-  // CustomerLogin.tsx
   const handleAuth = async () => {
     if (!isPhoneValid) {
       Alert.alert('Invalid Input', 'Enter a valid 10-digit number.');
@@ -102,11 +135,9 @@ const CustomerLogin = () => {
     }
 
     setLoading(true);
-
     try {
       const response = await sendCustomerOtp(phoneNumber);
       console.log('📲 OTP response:', response);
-
       if (response?.success) {
         navigation.navigate('VerifyOtp', {phoneNumber});
       } else {
@@ -156,8 +187,14 @@ const CustomerLogin = () => {
                 </CustomText>
 
                 <CustomInput
-                  onChangeText={text => setPhoneNumber(text.slice(0, 10))}
-                  onClear={() => setPhoneNumber('')}
+                  onChangeText={text => {
+                    setPhoneNumber(text.slice(0, 10));
+                    setAutoLoginTriggered(false); // Reset auto-login on edit
+                  }}
+                  onClear={() => {
+                    setPhoneNumber('');
+                    setAutoLoginTriggered(false);
+                  }}
                   value={phoneNumber}
                   placeholder="Enter mobile number"
                   inputMode="numeric"
@@ -203,12 +240,8 @@ const CustomerLogin = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  phoneText: {
-    marginLeft: 15,
-  },
+  container: {flex: 1},
+  phoneText: {marginLeft: 15},
   absoluteSwitch: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 40 : 20,

@@ -56,10 +56,6 @@ const ProductDashboard = () => {
     noticePosition.value = withTiming(NOTICE_HEIGHT, {duration: 1300});
   };
 
-  // const slideDown = () => {
-  //   noticePosition.value = withTiming(0, {duration: 1000});
-  // };
-
   useEffect(() => {
     const updateUser = () => {
       Geolocation.getCurrentPosition(
@@ -70,7 +66,7 @@ const ProductDashboard = () => {
         err => console.log(err),
         {
           enableHighAccuracy: false,
-          timeout: 1500,
+          timeout: 1000,
         },
       );
     };

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {BASE_URL} from './config';
+import {Alert} from 'react-native';
 
 export const getAllCategories = async () => {
   try {
@@ -47,40 +48,33 @@ export const getAllSubcategories = async () => {
 export const getProductsBySubcategoryId = async (subcategoryId: string) => {
   try {
     const url = `${BASE_URL}/products/subcategory/${subcategoryId}`;
-
     const response = await axios.get(url);
 
     if (!Array.isArray(response.data)) {
-      console.warn('Unexpected response format:', response.data);
-      return [];
+      console.warn(
+        '❌ Subcategory not found or invalid format:',
+        response.data,
+      );
+      return {success: false, products: []};
     }
 
-    return response.data.map((product: any) => ({
-      id: product._id || product.id,
-      name: product.name,
-      price: product.price,
-      discountPrice: product.discountPrice || null,
-      quantity: product.quantity,
-      image: {
-        uri: product.image || '',
-      },
-      description: product.description || '',
-      subImages: product.subImages || [],
-    }));
+    return {
+      success: true,
+      products: response.data.map((product: any) => ({
+        id: product._id || product.id,
+        name: product.name,
+        price: product.price,
+        discountPrice: product.discountPrice || null,
+        quantity: product.quantity,
+        image: {
+          uri: product.image || '',
+        },
+        description: product.description || '',
+        subImages: product.subImages || [],
+      })),
+    };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error(
-        'Axios error fetching products by subcategory:',
-        error.response?.status,
-        error.response?.data,
-      );
-    } else {
-      console.error(
-        'Unexpected error fetching products by subcategory:',
-        error,
-      );
-    }
-    return [];
+    return {success: false, products: []};
   }
 };
 
@@ -94,7 +88,7 @@ export const getSubcategoriesByCategoryId = async (categoryId: string) => {
 
     if (!Array.isArray(data)) {
       console.warn('⚠️ Unexpected subcategory response:', data);
-      return []; // Safe fallback
+      return [];
     }
 
     return data.map((sub: any) => ({
@@ -105,8 +99,16 @@ export const getSubcategoriesByCategoryId = async (categoryId: string) => {
         uri: sub.image || '',
       },
     }));
-  } catch (error) {
-    console.error('❌ Error fetching subcategories by category:', error);
+  } catch (error: any) {
+    //console.error('❌ Error fetching subcategories by category:', error);
+
+    // 🔔 Show alert on network/server error
+    Alert.alert(
+      'Server Problem',
+      'Unable to connect to the server. Please check your internet connection and try again.',
+      [{text: 'OK'}],
+    );
+
     return [];
   }
 };

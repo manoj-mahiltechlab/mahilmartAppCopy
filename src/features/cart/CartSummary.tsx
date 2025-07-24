@@ -25,14 +25,10 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
           }
           style={styles.image}
         />
+
         <CustomText fontFamily={Fonts.SemiBold}>
           {cartCount} ITEM{cartCount > 1 ? 'S' : ''}
         </CustomText>
-        <Icon
-          name="arrow-drop-up"
-          color={Colors.secondary}
-          size={RFValue(25)}
-        />
       </View>
 
       {cartCount > 0 && (
@@ -49,6 +45,7 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     justifyContent: 'space-between',

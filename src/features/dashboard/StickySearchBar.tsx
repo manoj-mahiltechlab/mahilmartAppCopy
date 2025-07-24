@@ -1,4 +1,4 @@
-import {StyleSheet} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import React from 'react';
 import {
   StickyView,
@@ -7,9 +7,11 @@ import {
 import Animated, {interpolate, useAnimatedStyle} from 'react-native-reanimated';
 import SearchBar from '@components/dashboard/SearchBar';
 import {Colors} from '@utils/Constants';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const StickySearchBar = () => {
   const {scrollY} = useCollapsibleContext();
+  const insets = useSafeAreaInsets();
 
   const animatedShadow = useAnimatedStyle(() => {
     const opacity = interpolate(scrollY.value, [0, 140], [0, 1]);
@@ -22,8 +24,10 @@ const StickySearchBar = () => {
   });
 
   return (
-    <StickyView style={backgroundColorChanges}>
-      <SearchBar />
+    <StickyView style={[backgroundColorChanges, {paddingTop: insets.top}]}>
+      <View style={styles.searchContainer}>
+        <SearchBar />
+      </View>
       <Animated.View style={[styles.shadow, animatedShadow]} />
     </StickyView>
   );
@@ -31,10 +35,13 @@ const StickySearchBar = () => {
 
 const styles = StyleSheet.create({
   shadow: {
-    height: 15,
+    height: 0,
     width: '100%',
     borderBottomWidth: 1,
     borderColor: Colors.border,
+  },
+  searchContainer: {
+    paddingHorizontal: 10,
   },
 });
 

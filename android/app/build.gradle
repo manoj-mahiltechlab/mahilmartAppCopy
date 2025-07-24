@@ -7,12 +7,10 @@ react {
         iconFontNames: ['MaterialCommunityIcons.ttf', 'MaterialIcons.ttf', 'Ionicons.ttf']
     ]
     apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
-
     autolinkLibrariesWithApp()
 }
 
 def enableProguardInReleaseBuilds = true
-
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 android {
@@ -41,6 +39,13 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+
+        release {
+            storeFile file('my-key.keystore')
+            storePassword 'mahilmartapp@raja'
+            keyAlias 'my-key-alias'
+            keyPassword 'mahilmartapp@raja'
+        }
     }
 
     buildTypes {
@@ -48,11 +53,10 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // ⚠️ Replace with your real keystore for production builds
-            signingConfig signingConfigs.debug
-            minifyEnabled enableProguardInReleaseBuilds
+            signingConfig signingConfigs.release
+            minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
 }
@@ -60,9 +64,17 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android")
 
+    // ✅ Location services to fix FusedLocationProviderClient crash
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+
+    // ✅ AndroidX Startup and WorkManager
+    implementation 'androidx.startup:startup-runtime:1.1.1'
+    implementation 'androidx.work:work-runtime:2.9.0'
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
     }
 }
+

@@ -10,7 +10,7 @@ import {
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {getSubcategoriesByCategoryId} from '@service/ProductService';
 import CustomText from '@components/ui/CustomText';
-import Icon from 'react-native-vector-icons/Ionicons';
+import CustomHeader from '@components/ui/CustomHeader';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {Fonts} from '@utils/Constants';
 
@@ -51,20 +51,13 @@ const CategoryOrSubcategory = () => {
     const fetchSubcategories = async () => {
       try {
         setLoading(true);
-        console.log('Fetching subcategories for categoryId:', categoryId);
-
         const allSubcategories = await getSubcategoriesByCategoryId(categoryId);
-
-        console.log('All fetched subcategories:', allSubcategories);
 
         const matched = allSubcategories.filter(
           (sub: SubcategoryType) => sub.category === categoryId,
         );
 
         if (matched.length === 0) {
-          console.warn(
-            'No subcategories found, redirecting to ProductCategories...',
-          );
           navigation.replace('ProductCategories', {
             selectedCategory: {
               _id: categoryId,
@@ -74,7 +67,6 @@ const CategoryOrSubcategory = () => {
             categoryName: categoryName || '',
           });
         } else {
-          console.log('Matched subcategories:', matched);
           setSubcategories(matched);
         }
       } catch (error) {
@@ -88,7 +80,6 @@ const CategoryOrSubcategory = () => {
   }, [categoryId, navigation, categoryName]);
 
   const handleSubcategoryPress = (subcategory: SubcategoryType) => {
-    console.log('👉 Subcategory Pressed:', subcategory);
     navigation.navigate('ProductCategories', {
       selectedCategory: {
         _id: categoryId,
@@ -114,9 +105,7 @@ const CategoryOrSubcategory = () => {
             source={{uri: imageUri}}
             style={styles.image}
             onError={() =>
-              console.error(
-                `❌ Image load error for subcategory [${item.id}] → URI: ${imageUri}`,
-              )
+              console.error(`❌ Image error for ${item.id} → ${imageUri}`)
             }
           />
         </View>
@@ -141,27 +130,16 @@ const CategoryOrSubcategory = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Icon name="arrow-back" size={26} color="#000" />
-        </TouchableOpacity>
-        <View style={styles.titleContainer}>
-          <CustomText style={styles.headerTitle} numberOfLines={2}>
-            {categoryName || 'Category'}
-          </CustomText>
-        </View>
-        <View style={{width: 26}} />
-      </View>
+      <CustomHeader title={categoryName || 'Category'} />
 
       <FlatList
         data={subcategories}
         keyExtractor={item => String(item.id)}
         renderItem={renderItem}
         numColumns={4}
-        contentContainerStyle={styles.flatListContent}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.flatListContent}
+        columnWrapperStyle={{justifyContent: 'space-between'}}
       />
     </View>
   );
@@ -172,45 +150,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAFAFA',
     paddingHorizontal: 12,
-    paddingTop: 10,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-    padding: 8,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 2},
-    shadowRadius: 4,
-  },
-  backButton: {
-    padding: 6,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
-    textAlign: 'center',
   },
   flatListContent: {
     paddingBottom: 20,
-    gap: 8,
+    paddingTop: 12,
   },
   item: {
-    flexBasis: '23%',
+    width: '23%',
     alignItems: 'center',
-    margin: 6,
+    marginBottom: 16,
   },
   imageContainer: {
     width: '100%',

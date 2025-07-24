@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     marginBottom: 10,
-    color: Colors.textDark,
+    color: 'Dark',
   },
   input: {
     backgroundColor: '#fff',

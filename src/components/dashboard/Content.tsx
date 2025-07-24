@@ -69,7 +69,7 @@ const Content: FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 19,
+    paddingHorizontal: 15,
   },
 });
 

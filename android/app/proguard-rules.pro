@@ -33,3 +33,14 @@
 # ========== Keep all Activities ==========
 -keep class * extends android.app.Activity
 -keep class * extends androidx.appcompat.app.AppCompatActivity
+# ===== Google Play Services Location (FusedLocationProviderClient) =====
+-keep class com.google.android.gms.location.** { *; }
+-dontwarn com.google.android.gms.location.**
+
+# ===== AndroidX WorkManager =====
+-keep class androidx.work.impl.** { *; }
+-dontwarn androidx.work.**
+
+# ===== AndroidX App Startup (used by WorkManager) =====
+-keep class androidx.startup.** { *; }
+-dontwarn androidx.startup.**

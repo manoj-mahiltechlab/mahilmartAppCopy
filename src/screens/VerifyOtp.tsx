@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FF6B00',
     fontSize: 16,
     letterSpacing: 1,
   },

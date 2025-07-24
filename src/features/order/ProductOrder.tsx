@@ -25,12 +25,17 @@ import {createOrder} from '@service/orderService';
 import {navigate} from '@utils/NavigationUtils';
 import {useRoute, useNavigation} from '@react-navigation/native';
 import {updateSelectedAddressType} from '@service/customerService';
+import {RFPercentage} from 'react-native-responsive-fontsize';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 
 const ProductOrder = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const {getTotalPrice, cart, clearCart} = useCartStore();
-  const {user, setCurrentOrder, currentOrder, setUser} = useAuthStore();
+  const {getTotalPrice, cart} = useCartStore();
+  const {user, currentOrder} = useAuthStore();
   const totalItemPrice = getTotalPrice();
   const [loading, setLoading] = useState(false);
   const [activeAddressType, setActiveAddressType] = useState('primary');
@@ -170,19 +175,20 @@ const ProductOrder = () => {
     <View style={styles.container}>
       <CustomHeader title="Checkout" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* call OrderList component to display cart items */}
         <OrderList />
 
         <TouchableOpacity style={styles.flexRowBetween}>
           <View style={styles.flexRow}>
             <Image
               source={require('@assets/icons/coupon.png')}
-              style={{width: 25, height: 25}}
+              style={{width: wp(6), height: wp(6)}}
             />
             <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
               Use Coupons
             </CustomText>
           </View>
-          <Icon name="chevron-right" size={RFValue(16)} color={Colors.text} />
+          <Icon name="chevron-right" size={RFValue(14)} color={Colors.text} />
         </TouchableOpacity>
 
         <BillDetails totalItemPrice={totalItemPrice} />
@@ -207,7 +213,7 @@ const ProductOrder = () => {
         <View style={styles.absoluteContainer}>
           <View style={styles.addressContainer}>
             <View style={{flex: 1}}>
-              <View style={{flexDirection: 'row', marginBottom: 10}}>
+              <View style={{flexDirection: 'row', marginBottom: 1.5}}>
                 <TouchableOpacity
                   onPress={() => setActiveAddressType('primary')}
                   style={{marginRight: 10}}>
@@ -293,55 +299,58 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     backgroundColor: Colors.backgroundSecondary,
-    padding: 10,
-    paddingBottom: 250,
+    paddingHorizontal: wp(4),
+    paddingTop: hp(2),
+    paddingBottom: hp(30), // Enough space for bottom content
   },
   cancelText: {
-    marginTop: 4,
+    marginTop: hp(0.5),
     opacity: 0.6,
+    fontSize: RFValue(10),
   },
   flexRowBetween: {
-    padding: 10,
+    padding: wp(4),
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-    borderRadius: 15,
-    marginVertical: 10,
+    borderRadius: wp(3),
+    marginVertical: hp(1),
   },
   flexRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 20,
+    gap: wp(5),
   },
   paymentGateway: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingLeft: 14,
-    paddingTop: 20,
+    paddingLeft: wp(4),
+    paddingTop: hp(0),
   },
   addressContainer: {
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
-    paddingHorizontal: 10,
-    paddingBottom: 20,
+    paddingHorizontal: wp(4),
+    paddingBottom: hp(2),
     borderBottomWidth: 0.7,
     borderColor: Colors.border,
   },
   absoluteContainer: {
-    marginVertical: 15,
-    marginBottom: Platform.OS === 'ios' ? 30 : 10,
+    marginVertical: hp(2),
+    marginBottom: Platform.OS === 'ios' ? hp(5) : hp(2),
   },
   changeAddressButton: {
-    padding: 5,
+    padding: wp(2),
     justifyContent: 'center',
     alignItems: 'flex-end',
   },
   changeAddressText: {
     color: Colors.secondary,
     textAlign: 'center',
+    fontSize: RFValue(12),
   },
 });
 

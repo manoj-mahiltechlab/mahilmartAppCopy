@@ -2,12 +2,10 @@ import {Platform} from 'react-native';
 
 export const BASE_URL =
   Platform.OS === 'android'
-    ? 'http://192.168.1.144:3000/api'
-    : 'http://192.168.1.144:3000/api';
+    ? 'http://13.60.32.71/api'
+    : 'http://13.60.32.71/api';
 export const SOCKET_URL =
-  Platform.OS === 'android'
-    ? 'http://192.168.1.144:3000'
-    : 'http://192.168.1.144:3000';
+  Platform.OS === 'android' ? 'http://13.60.32.71' : 'http://13.60.32.71';
 
 // // export const BASE_URL = 'https://d1b2-61-0-63-192.ngrok-free.app/api';
 // // export const SOCKET_URL = 'https://d1b2-61-0-63-192.ngrok-free.app';

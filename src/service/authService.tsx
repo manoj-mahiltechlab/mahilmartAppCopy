@@ -138,3 +138,25 @@ export const verifyCustomerOtp = async (
     customer,
   };
 };
+
+export const searchProducts = async (query: string) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/api/products/search`, {
+      params: {q: query},
+    });
+    return response.data;
+  } catch (error) {
+    console.log('Search Product Error:', error);
+    return [];
+  }
+};
+
+export const getSupportInfo = async () => {
+  try {
+    const res = await axios.get(`${BASE_URL}/support`);
+    return res.data.data; // This returns { email, phone, whatsapp, createdAt, updatedAt }
+  } catch (error) {
+    console.log('Fetch Support Info Error:', error);
+    return null;
+  }
+};

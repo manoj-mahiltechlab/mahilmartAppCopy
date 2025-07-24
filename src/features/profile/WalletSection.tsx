@@ -3,8 +3,19 @@ import React from 'react';
 import {View, StyleSheet, Alert, Linking} from 'react-native';
 import WalletItem from './WalletItem';
 import {Colors} from '@utils/Constants';
+import {CompositeNavigationProp, useNavigation} from '@react-navigation/native';
+import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
+import {RootStackParamList} from '@navigation/Navigation';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+
+type NavigationType = CompositeNavigationProp<
+  BottomTabNavigationProp<RootStackParamList, 'BottomTabs'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const WalletSection = () => {
+  const navigation = useNavigation<NavigationType>();
+
   return (
     <View style={styles.WalletItemContainer}>
       <WalletItem
@@ -14,13 +25,20 @@ const WalletSection = () => {
           Alert.alert('Wallet', 'Wallet Pressed');
         }}
       />
+
       <WalletItem
         icon="chatbubble-ellipses-outline"
         label="Support"
         onPress={() => {
-          Alert.alert('Support', 'Support Pressed');
+          navigation.navigate('BottomTabs', {
+            screen: 'Home', // the name of your tab that holds CustomerStack
+            params: {
+              screen: 'Support', // the screen inside CustomerStack
+            },
+          });
         }}
       />
+
       <WalletItem
         icon="card-outline"
         label="Payments"

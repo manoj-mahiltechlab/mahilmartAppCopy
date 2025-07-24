@@ -15,12 +15,12 @@ const withCart = <P extends object>(
     return (
       <View style={styles.container}>
         <WrappedComponent {...props} />
-        <CartAnimationWrapper cartCount={cartCount}>
+        {/* <CartAnimationWrapper cartCount={cartCount}>
           <CartSummary
             cartCount={cartCount}
             cartImage={cart![0]?.item?.image || null}
           />
-        </CartAnimationWrapper>
+        </CartAnimationWrapper> */}
       </View>
     );
   };
