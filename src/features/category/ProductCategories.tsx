@@ -273,7 +273,11 @@ const ProductCategories = () => {
         price: item.price,
         discountPrice: item.discountPrice || '',
         description: item.description || '',
-        subcategory: item.subcategory || item.subcategoryId,
+        subcategory:
+          item.subcategory?._id ||
+          item.subcategoryId ||
+          item.subcategory ||
+          selectedSubId,
       };
 
       return (
@@ -293,17 +297,17 @@ const ProductCategories = () => {
             navigation.navigate('ProductDetails', {
               product: transformedItem,
               touchedSubcategoryId:
-                searchResults?.length > 0 ? null : selectedSubId,
+                searchResults?.length > 0
+                  ? transformedItem.subcategory || selectedSubId
+                  : selectedSubId,
               fromSearch: !!searchResults?.length,
-              relatedProducts: searchResults?.length
-                ? searchResults
-                : undefined,
+              relatedProducts: searchResults ? searchResults : undefined,
             });
           }}
         />
       );
     },
-    [navigation, selectedSubId],
+    [navigation, selectedSubId, searchResults],
   );
 
   return (
@@ -314,38 +318,29 @@ const ProductCategories = () => {
         // customSearchBar={<SearchBar />}
       />
 
-      {categoriesLoading && !overrideProducts.length ? (
-        <ActivityIndicator
-          size="small"
-          color={Colors.border}
-          style={styles.center}
-        />
-      ) : (
-        <FlatList
-          data={overrideProducts.length > 0 ? overrideProducts : products}
-          keyExtractor={(item, index) =>
-            String(item._id || item.id || item.name || index)
-          }
-          renderItem={renderItem}
-          numColumns={2}
-          ListHeaderComponent={renderSubcategory}
-          ListFooterComponent={
-            productsLoading ? (
-              <ActivityIndicator
-                size="small"
-                color={Colors.border}
-                style={{marginVertical: 10}}
-              />
-            ) : showNoProductMessage && products.length === 0 ? (
-              <View style={styles.center}>
-                <CustomText>No products found.</CustomText>
-              </View>
-            ) : null
-          }
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-        />
-      )}
+      <FlatList
+        data={overrideProducts.length > 0 ? overrideProducts : products}
+        keyExtractor={(item, index) =>
+          String(item._id || item.id || item.name || index)
+        }
+        renderItem={renderItem}
+        numColumns={2}
+        ListFooterComponent={
+          productsLoading ? (
+            <ActivityIndicator
+              size="small"
+              color={Colors.border}
+              style={{marginVertical: 10}}
+            />
+          ) : showNoProductMessage && products.length === 0 ? (
+            <View style={styles.center}>
+              <CustomText>No products found.</CustomText>
+            </View>
+          ) : null
+        }
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      />
     </View>
   );
 };

@@ -24,7 +24,7 @@ const UniversalAdd: FC<{item: any}> = ({item}) => {
       ]}>
       {count === 0 ? (
         <TouchableOpacity
-          onPressOut={() => addItem({...item, _id: item._id || item.id})}
+          onPress={() => addItem({...item, _id: item._id || item.id})}
           style={styles.add}>
           <CustomText
             variant="h9"

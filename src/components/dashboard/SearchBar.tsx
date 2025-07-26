@@ -49,13 +49,13 @@ const SearchBar = () => {
     setLoading(true);
 
     try {
-      // ✅ FIXED: added /api prefix to match backend
+      //  FIXED: added /api prefix to match backend
       const res = await axios.get(`${BASE_URL}/products/search`, {
         params: {q: searchQuery},
       });
 
       const results = res.data;
-      console.log('✅ Search results received:', results);
+      console.log(' Search results received:', results);
 
       if (Array.isArray(results) && results.length > 0) {
         navigation.navigate('ProductCategories', {searchResults: results});
@@ -65,7 +65,7 @@ const SearchBar = () => {
         setSearchQuery('');
       }
     } catch (err: any) {
-      console.log('❌ Search error:', err.message);
+      console.log(' Search error:', err.message);
       Alert.alert('Search Error', 'Something went wrong while searching.');
     } finally {
       setLoading(false);

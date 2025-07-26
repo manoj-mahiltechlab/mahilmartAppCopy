@@ -45,6 +45,8 @@ const CategoryOrSubcategory = () => {
   const [subcategories, setSubcategories] = useState<SubcategoryType[]>([]);
   const [loading, setLoading] = useState(true);
 
+  console.log('Subcategory :', subcategories);
+
   useEffect(() => {
     if (!categoryId) return;
 
@@ -58,6 +60,18 @@ const CategoryOrSubcategory = () => {
         );
 
         if (matched.length === 0) {
+          console.log(
+            '[Navigation] No subcategories matched. Navigating to ProductCategories with:',
+          );
+          console.log({
+            selectedCategory: {
+              _id: categoryId,
+              name: categoryName || '',
+            },
+            subcategoryId: categoryId,
+            categoryName: categoryName || '',
+          });
+
           navigation.replace('ProductCategories', {
             selectedCategory: {
               _id: categoryId,
@@ -67,6 +81,7 @@ const CategoryOrSubcategory = () => {
             categoryName: categoryName || '',
           });
         } else {
+          console.log('[Subcategories] Matched subcategories:', matched);
           setSubcategories(matched);
         }
       } catch (error) {
@@ -101,13 +116,7 @@ const CategoryOrSubcategory = () => {
         style={styles.item}
         onPress={() => handleSubcategoryPress(item)}>
         <View style={styles.imageContainer}>
-          <Image
-            source={{uri: imageUri}}
-            style={styles.image}
-            onError={() =>
-              console.error(`❌ Image error for ${item.id} → ${imageUri}`)
-            }
-          />
+          <Image source={{uri: imageUri}} style={styles.image} />
         </View>
         <CustomText
           style={styles.text}

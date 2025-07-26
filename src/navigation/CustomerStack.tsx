@@ -5,7 +5,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import ProductDashboard from '@features/dashboard/ProductDashboard';
 import ProductCategories from '@features/category/ProductCategories';
 import ProductDetails from '@features/category/ProductDetails';
-import ProductSubDetails from '@features/category/ProductSubDetails';
+
 import ProductOrder from '@features/order/ProductOrder';
 import OrderSuccess from '@features/order/OrderSuccess';
 import EditAddressScreen from '@features/order/EditAddressScreen';
@@ -44,7 +44,7 @@ const CustomerStack = () => {
       <Stack.Screen name="ProductDashboard" component={ProductDashboard} />
       <Stack.Screen name="ProductCategories" component={ProductCategories} />
       <Stack.Screen name="ProductDetails" component={ProductDetails} />
-      <Stack.Screen name="ProductSubDetails" component={ProductSubDetails} />
+
       <Stack.Screen
         name="CategoryOrSubcategory"
         component={CategoryOrSubcategory}

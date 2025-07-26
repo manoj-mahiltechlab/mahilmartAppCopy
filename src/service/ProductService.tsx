@@ -22,6 +22,7 @@ export const getProductsByCategory = async (id: string) => {
     return [];
   }
 };
+
 export const getAllSubcategories = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/subcategories`);
@@ -100,9 +101,6 @@ export const getSubcategoriesByCategoryId = async (categoryId: string) => {
       },
     }));
   } catch (error: any) {
-    //console.error('❌ Error fetching subcategories by category:', error);
-
-    // 🔔 Show alert on network/server error
     Alert.alert(
       'Server Problem',
       'Unable to connect to the server. Please check your internet connection and try again.',

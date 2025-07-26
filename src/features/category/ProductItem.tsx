@@ -24,6 +24,7 @@ type ProductItemProps = {
 
 const fallbackImage =
   'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749819426/uxxb1eun3m48lkt6bgkb.png';
+
 const logWarning = (msg: string) => {
   if (__DEV__) {
     console.warn(msg);
@@ -45,11 +46,32 @@ const getImageSource = (img: ImageType): {uri: string} => {
 const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
   const isSecondColumn = index % 2 !== 0;
 
+  const originalPrice = Number(item.price);
+  const discountPrice = Number(item.discountPrice);
+  const hasValidDiscount =
+    item.discountPrice &&
+    !isNaN(originalPrice) &&
+    !isNaN(discountPrice) &&
+    discountPrice > originalPrice;
+
+  const discountPercent = hasValidDiscount
+    ? Math.round(((discountPrice - originalPrice) / discountPrice) * 100)
+    : 0;
+
   return (
     <View style={[styles.container, {marginRight: isSecondColumn ? 8 : 2}]}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
         <View style={styles.imageContainer}>
           <Image source={getImageSource(item?.image)} style={styles.image} />
+
+          {/* Discount Badge */}
+          {hasValidDiscount && (
+            <View style={styles.discountBadge}>
+              <CustomText style={styles.discountText}>
+                {discountPercent}% OFF
+              </CustomText>
+            </View>
+          )}
         </View>
 
         <View style={styles.subImagesContainer}>
@@ -96,14 +118,14 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
 
         <View style={styles.priceContainer}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-            {item.discountPrice && (
+            {hasValidDiscount && (
               <CustomText
                 style={{
                   textDecorationLine: 'line-through',
                   color: '#777',
                   fontSize: RFValue(10),
                 }}>
-                ₹{item.discountPrice}
+                ₹{discountPrice}
               </CustomText>
             )}
             <CustomText
@@ -112,7 +134,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
                 fontSize: RFValue(12),
                 fontWeight: 'bold',
               }}>
-              ₹{item.discountPrice ? item.price : ''}
+              ₹{originalPrice}
             </CustomText>
           </View>
           <UniversalAdd item={item} />
@@ -134,6 +156,21 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 2},
     shadowRadius: 4,
     overflow: 'hidden',
+  },
+  discountBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#068110ff',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    zIndex: 10,
+  },
+  discountText: {
+    color: '#fff',
+    fontSize: RFValue(9),
+    fontWeight: 'bold',
   },
   imageContainer: {
     height: screenHeight * 0.18,

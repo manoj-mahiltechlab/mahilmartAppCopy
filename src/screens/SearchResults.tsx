@@ -1,6 +1,5 @@
 import React from 'react';
 import {FlatList, View, StyleSheet} from 'react-native';
-
 import CustomHeader from '@components/ui/CustomHeader';
 import {
   RouteProp,
@@ -8,23 +7,35 @@ import {
   NavigationProp,
   useNavigation,
 } from '@react-navigation/native';
+import ProductItem from '@features/category/ProductItem';
 
 const fallbackImage =
   'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749819426/uxxb1eun3m48lkt6bgkb.png';
 
-type SearchResultsRouteProp = RouteProp<
-  Record<string, {searchResults: any[]}>,
-  string
->;
+type RootStackParamList = {
+  SearchResults: {searchResults: any[]};
+  ProductDetails: {
+    product: any;
+    touchedSubcategoryId?: string;
+    fromSearch?: boolean;
+    relatedProducts?: any[];
+  };
+};
+
+type SearchResultsRouteProp = RouteProp<RootStackParamList, 'SearchResults'>;
 
 const SearchResults = () => {
   const route = useRoute<SearchResultsRouteProp>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const {searchResults = []} = route.params || {};
 
   const renderItem = ({item, index}: {item: any; index: number}) => {
     const imageUri =
-      typeof item.image === 'string' ? item.image : fallbackImage;
+      typeof item.image === 'string'
+        ? item.image
+        : item.image?.uri || fallbackImage;
+
+    const subcategory = item?.subcategory || item?.subcategoryId || null;
 
     const transformedItem = {
       _id: item._id || item.id || '',
@@ -34,6 +45,7 @@ const SearchResults = () => {
       price: item.price,
       discountPrice: item.discountPrice || '',
       description: item.description || '',
+      subcategory: subcategory,
     };
 
     return (
@@ -43,6 +55,10 @@ const SearchResults = () => {
         onPress={() =>
           navigation.navigate('ProductDetails', {
             product: transformedItem,
+            touchedSubcategoryId:
+              transformedItem.subcategory || transformedItem.subcategoryId,
+            fromSearch: true,
+            passedRelated: searchResults, //match what ProductDetails expects
           })
         }
       />

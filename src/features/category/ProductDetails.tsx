@@ -22,12 +22,12 @@ import UniversalAdd from '@components/ui/UniversalAdd';
 import ProductItem from '@features/category/ProductItem';
 import {getProductsBySubcategoryId} from '@service/ProductService';
 import withCart from '@features/cart/WithCart';
+import ImageViewing from 'react-native-image-viewing';
 
 const {width} = Dimensions.get('window');
 const fallbackImage =
   'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749819426/uxxb1eun3m48lkt6bgkb.png';
 
-// 👇 Define Product and Navigation Param Types
 type Product = {
   _id?: string;
   id?: string;
@@ -38,6 +38,7 @@ type Product = {
   discountPrice?: number;
   description?: string;
   subcategory?: string;
+  subcategoryId?: string;
 };
 
 type RootStackParamList = {
@@ -58,17 +59,29 @@ type RootStackParamList = {
 const ProductDetails = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'ProductDetails'>>();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+
   const {
-    product,
+    product: initialProduct,
     touchedSubcategoryId,
     fromSearch,
     relatedProducts: passedRelated,
   } = route.params;
 
+  const [product, setProduct] = useState<Product>(() => {
+    if (!initialProduct.subcategory && touchedSubcategoryId) {
+      console.warn('[Init Patch] Adding touchedSubcategoryId to product');
+      return {...initialProduct, subcategory: touchedSubcategoryId};
+    }
+    return initialProduct;
+  });
+
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const flatListRef = useRef<FlatList<string>>(null);
+  const flatListRef = useRef<FlatList<any>>(null);
+
+  const [isImageViewerVisible, setImageViewerVisible] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
 
   const images = useMemo(() => {
     const mainImage =
@@ -77,58 +90,34 @@ const ProductDetails = () => {
   }, [product]);
 
   useEffect(() => {
-    console.log('[ProductDetails] route.params:', {
-      product,
-      touchedSubcategoryId,
-      fromSearch,
-      passedRelated,
-    });
-  }, []);
-
-  useEffect(() => {
     const fetchOrSetRelatedProducts = async () => {
-      console.log('[ProductDetails] Fetching related products...');
+      const subcategoryId =
+        touchedSubcategoryId || product.subcategory || product.subcategoryId;
+
+      if (!subcategoryId && !fromSearch) {
+        console.warn('[RelatedProducts] subcategoryId missing');
+        setRelatedProducts([]);
+        return;
+      }
 
       setLoadingRelated(true);
 
       try {
         if (fromSearch && Array.isArray(passedRelated)) {
-          console.log(
-            '[ProductDetails] Using passed relatedProducts (fromSearch)',
-          );
           const filtered = passedRelated.filter(
             p => (p._id || p.id) !== (product._id || product.id),
           );
-          console.log(
-            '[ProductDetails] Filtered related products (fromSearch):',
-            filtered,
-          );
           setRelatedProducts(filtered);
-        } else if (touchedSubcategoryId) {
-          console.log(
-            '[ProductDetails] Fetching products by touchedSubcategoryId:',
-            touchedSubcategoryId,
-          );
-          const response = await getProductsBySubcategoryId(
-            touchedSubcategoryId,
-          );
-          const products = response?.products || [];
-
-          const filtered = products.filter(
+        } else if (subcategoryId) {
+          const res = await getProductsBySubcategoryId(subcategoryId);
+          const fetched = res?.products || [];
+          const filtered = fetched.filter(
             p => (p._id || p.id) !== (product._id || product.id),
           );
-          console.log(
-            '[ProductDetails] Filtered related products (subcategory):',
-            filtered,
-          );
           setRelatedProducts(filtered);
-        } else {
-          console.log(
-            '[ProductDetails] No subcategory or related products to fetch',
-          );
         }
-      } catch (error) {
-        console.error('[❗ Related Products Fetch Error]:', error);
+      } catch (err) {
+        console.error('[RelatedProducts] Fetch error:', err);
         setRelatedProducts([]);
       } finally {
         setLoadingRelated(false);
@@ -136,21 +125,21 @@ const ProductDetails = () => {
     };
 
     fetchOrSetRelatedProducts();
-  }, [product, touchedSubcategoryId, fromSearch]);
+  }, [product, touchedSubcategoryId, fromSearch, passedRelated]);
 
   const onShare = async () => {
     try {
-      console.log('[ProductDetails] Sharing product:', product.name);
       await Share.share({
         message: `Check out this product: ${product.name}`,
       });
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error('Share failed:', error);
     }
   };
 
   const renderHeader = () => (
     <View style={{paddingBottom: 10}}>
+      {/* Image Carousel */}
       <View style={styles.carouselContainer}>
         <FlatList
           ref={flatListRef}
@@ -158,24 +147,32 @@ const ProductDetails = () => {
           horizontal
           pagingEnabled
           keyExtractor={(_, index) => index.toString()}
-          renderItem={({item}) => (
-            <Image
-              source={{uri: item || fallbackImage}}
-              style={styles.image}
-              resizeMode="cover"
-            />
+          renderItem={({item, index}) => (
+            <TouchableOpacity
+              onPress={() => {
+                setImageIndex(index);
+                setImageViewerVisible(true);
+              }}>
+              <Image
+                source={{uri: item || fallbackImage}}
+                style={styles.image}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
           )}
         />
+        {/* Share & Like */}
         <View style={styles.iconContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={onShare}>
             <Icon name="share-variant" size={20} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
+          <TouchableOpacity style={styles.iconButton}>
             <Icon name="heart-outline" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Sub Images */}
       {product.subImages?.length > 0 && (
         <FlatList
           data={images}
@@ -188,37 +185,45 @@ const ProductDetails = () => {
               onPress={() =>
                 flatListRef.current?.scrollToIndex({index, animated: true})
               }>
-              <Image source={{uri: item}} style={styles.subImage} />
+              <Image
+                source={{uri: item || fallbackImage}}
+                style={styles.subImage}
+              />
             </TouchableOpacity>
           )}
         />
       )}
 
+      {/* Product Info */}
       <View style={styles.detailsContainer}>
         <CustomText style={styles.name}>{product.name}</CustomText>
 
         <View style={styles.priceContainer1}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <CustomText
-              style={{
-                color: '#777',
-                fontSize: 14,
-                textDecorationLine: 'line-through',
-              }}>
-              ₹{product.discountPrice || product.price}
-            </CustomText>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
             {product.discountPrice && (
+              <>
+                <CustomText
+                  style={{
+                    color: '#777',
+                    fontSize: 14,
+                    textDecorationLine: 'line-through',
+                  }}>
+                  ₹{product.discountPrice}
+                </CustomText>
+                <CustomText
+                  style={{fontSize: 16, fontWeight: 'bold', color: '#222'}}>
+                  ₹{product.price}
+                </CustomText>
+              </>
+            )}
+            {!product.discountPrice && (
               <CustomText
-                style={{
-                  color: '#2e7d32',
-                  fontSize: 20,
-                  marginLeft: 10,
-                  fontWeight: 'bold',
-                }}>
+                style={{fontSize: 16, fontWeight: 'bold', color: '#222'}}>
                 ₹{product.price}
               </CustomText>
             )}
           </View>
+
           <UniversalAdd item={product} />
         </View>
 
@@ -227,7 +232,7 @@ const ProductDetails = () => {
           style={styles.description}
           numberOfLines={showFullDescription ? undefined : 3}>
           {product.description ||
-            'Get this product to experience quality and value. Suitable for daily use, made with care, and designed to meet your needs.'}
+            'Get this product to experience quality and value.'}
         </CustomText>
         <TouchableOpacity
           onPress={() => setShowFullDescription(!showFullDescription)}
@@ -249,13 +254,19 @@ const ProductDetails = () => {
   return (
     <View style={styles.container}>
       <CustomHeader title="Product Details" />
+      <ImageViewing
+        images={images.map(uri => ({uri}))}
+        imageIndex={imageIndex}
+        visible={isImageViewerVisible}
+        onRequestClose={() => setImageViewerVisible(false)}
+      />
       {loadingRelated ? (
         <ActivityIndicator style={{marginTop: 20}} />
       ) : (
         <FlatList
           data={relatedProducts}
-          keyExtractor={item =>
-            (item._id || item.id)?.toString() || Math.random().toString()
+          keyExtractor={(item, index) =>
+            `${item._id || item.id || 'product'}-${index}`
           }
           numColumns={2}
           contentContainerStyle={{paddingHorizontal: 10, paddingBottom: 30}}
@@ -281,26 +292,20 @@ const ProductDetails = () => {
               price: item.price,
               discountPrice: item.discountPrice,
               description: item.description,
-              subcategory: item.subcategory || item.subcategoryId,
+              subcategory:
+                item.subcategory || item.subcategoryId || touchedSubcategoryId,
             };
-
-            console.log(
-              '[ProductDetails] Navigating to ProductDetails of:',
-              transformedItem,
-            );
 
             return (
               <ProductItem
                 item={transformedItem}
                 index={index}
                 onPress={() =>
-                  navigation.push('ProductDetails', {
+                  navigation.replace('ProductDetails', {
                     product: transformedItem,
                     touchedSubcategoryId: transformedItem.subcategory,
-                    fromSearch,
-                    relatedProducts: fromSearch
-                      ? [product, ...relatedProducts]
-                      : undefined,
+                    fromSearch: true,
+                    relatedProducts: [product, ...relatedProducts],
                   })
                 }
               />
@@ -314,7 +319,6 @@ const ProductDetails = () => {
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#fff'},
-  center: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   carouselContainer: {
     width,
     height: 350,
