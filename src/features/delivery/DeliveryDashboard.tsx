@@ -37,7 +37,7 @@ const DeliveryDashboard = () => {
         reverseGeocode(latitude, longitude, setUser);
       },
       err => console.log(err),
-      {enableHighAccuracy: false, timeout: 15000},
+      {enableHighAccuracy: false, timeout: 1000},
     );
   };
 

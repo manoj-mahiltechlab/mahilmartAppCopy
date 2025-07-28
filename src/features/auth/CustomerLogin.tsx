@@ -37,6 +37,8 @@ import {sendCustomerOtp} from '@service/authService';
 
 const bottomColors = [...lightColors].reverse();
 
+// ...all imports remain same
+
 const CustomerLogin = () => {
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamList, 'CustomerLogin'>>();
@@ -49,29 +51,12 @@ const CustomerLogin = () => {
 
   const floating = useSharedValue(0);
   const animatedValue = useSharedValue(0);
-  const animationDuration = 3000;
-  const progress = useSharedValue(0);
+  const rotate = useSharedValue(0);
 
-  const isPhoneValid =
-    phoneNumber.trim().length === 10 && /^\d{10}$/.test(phoneNumber);
+  const isPhoneValid = /^\d{10}$/.test(phoneNumber);
 
-  // Trigger animation
+  // 🚀 Animations
   useEffect(() => {
-    progress.value = withRepeat(
-      withSequence(
-        withTiming(1, {
-          duration: animationDuration,
-          easing: Easing.inOut(Easing.ease),
-        }),
-        withTiming(0, {
-          duration: animationDuration,
-          easing: Easing.inOut(Easing.ease),
-        }),
-      ),
-      -1,
-      false,
-    );
-
     floating.value = withRepeat(
       withSequence(
         withTiming(-10, {duration: 1000}),
@@ -80,9 +65,17 @@ const CustomerLogin = () => {
       -1,
       true,
     );
+
+    rotate.value = withRepeat(
+      withSequence(
+        withTiming(-2, {duration: 1000}),
+        withTiming(2, {duration: 1000}),
+      ),
+      -1,
+      true,
+    );
   }, []);
 
-  // Keyboard animation
   useDerivedValue(() => {
     animatedValue.value = withTiming(
       keyboardOffsetHeight === 0 ? 0 : -keyboardOffsetHeight * 0.9,
@@ -94,46 +87,21 @@ const CustomerLogin = () => {
     transform: [{translateY: animatedValue.value}],
   }));
 
-  const floatingLogoStyle = useAnimatedStyle(() => ({
-    transform: [{translateY: floating.value}],
-  }));
+  const floatingLogoStyle = useAnimatedStyle(() => {
+    const scale = 1.05 + Math.sin(Date.now() / 1000) * 0.05;
 
-  // Auto OTP Trigger
-  useEffect(() => {
-    const autoLogin = async () => {
-      if (isPhoneValid && !autoLoginTriggered) {
-        setAutoLoginTriggered(true);
-        setLoading(true);
-        try {
-          const response = await sendCustomerOtp(phoneNumber);
-          console.log('📲 OTP response:', response);
-          if (response?.success) {
-            navigation.navigate('VerifyOtp', {phoneNumber});
-          } else {
-            Alert.alert('OTP Failed', response?.message || 'Please try again.');
-            setAutoLoginTriggered(false);
-          }
-        } catch (err: any) {
-          console.log('❌ OTP Send Error:', err?.response?.data || err.message);
-          Alert.alert(
-            'Failed to send OTP',
-            'Please check the number or your network.',
-          );
-          setAutoLoginTriggered(false);
-        } finally {
-          setLoading(false);
-        }
-      }
+    return {
+      transform: [
+        {translateY: floating.value},
+        {scale},
+        {rotate: `${rotate.value}deg`},
+      ],
+      opacity: withTiming(0.95 + Math.sin(Date.now() / 500) * 0.05),
     };
-    autoLogin();
-  }, [phoneNumber]);
+  });
 
-  const handleAuth = async () => {
-    if (!isPhoneValid) {
-      Alert.alert('Invalid Input', 'Enter a valid 10-digit number.');
-      return;
-    }
-
+  // 📲 Send OTP Handler
+  const sendOtp = async () => {
     setLoading(true);
     try {
       const response = await sendCustomerOtp(phoneNumber);
@@ -145,13 +113,26 @@ const CustomerLogin = () => {
       }
     } catch (err: any) {
       console.log('❌ OTP Send Error:', err?.response?.data || err.message);
-      Alert.alert(
-        'Failed to send OTP',
-        'Please check the number or your network.',
-      );
+      Alert.alert('Failed to send OTP', 'Please check your network.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Auto login on valid phone number (one-time)
+  useEffect(() => {
+    if (isPhoneValid && !autoLoginTriggered) {
+      setAutoLoginTriggered(true);
+      sendOtp();
+    }
+  }, [isPhoneValid]);
+
+  const handleAuth = () => {
+    if (!isPhoneValid) {
+      Alert.alert('Invalid Input', 'Enter a valid 10-digit number.');
+      return;
+    }
+    sendOtp();
   };
 
   return (
@@ -176,6 +157,7 @@ const CustomerLogin = () => {
                     accessibilityLabel="App Logo"
                   />
                 </Animated.View>
+
                 <CustomText variant="h2" fontFamily={Fonts.Bold}>
                   MahilMart Shop
                 </CustomText>
@@ -189,7 +171,7 @@ const CustomerLogin = () => {
                 <CustomInput
                   onChangeText={text => {
                     setPhoneNumber(text.slice(0, 10));
-                    setAutoLoginTriggered(false); // Reset auto-login on edit
+                    setAutoLoginTriggered(false);
                   }}
                   onClear={() => {
                     setPhoneNumber('');
@@ -268,12 +250,19 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   logoWrapper: {
-    height: 110,
-    width: 110,
-    borderRadius: 20,
+    height: 125,
+    width: 125,
+    borderRadius: 100,
     marginVertical: 10,
     alignSelf: 'center',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: {width: 2, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 12,
   },
+
   logoImage: {
     width: '100%',
     height: '100%',

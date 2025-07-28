@@ -130,7 +130,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
             )}
             <CustomText
               style={{
-                color: '#2e7d32',
+                color: '#2e7231ff',
                 fontSize: RFValue(12),
                 fontWeight: 'bold',
               }}>
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#068110ff',
+    backgroundColor: '#319639ff',
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 6,

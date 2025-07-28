@@ -4,7 +4,7 @@ import {NoticeHeight} from '@utils/Scaling';
 import Notice from '@components/dashboard/Notice';
 import Animated, {useAnimatedStyle, interpolate} from 'react-native-reanimated';
 
-const NOTICE_HEIGHT = -(NoticeHeight + 20);
+const NOTICE_HEIGHT = -(NoticeHeight + 0);
 
 const NoticeAnimation: FC<{
   noticePosition: any; // SharedValue<number>
@@ -18,7 +18,7 @@ const NoticeAnimation: FC<{
     paddingTop: interpolate(
       noticePosition.value,
       [NOTICE_HEIGHT, 0],
-      [0, NoticeHeight + 15],
+      [0, NoticeHeight + 0],
     ),
   }));
 

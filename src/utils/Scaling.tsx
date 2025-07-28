@@ -4,4 +4,4 @@ export const screenWidth: number = Dimensions.get('window').width;
 export const screenHeight: number = Dimensions.get('window').height;
 
 export const NoticeHeight =
-  Platform.OS === 'ios' ? screenHeight * 0.12 : screenHeight * 0.08;
+  Platform.OS === 'ios' ? screenHeight * 0.12 : screenHeight * 0.0;

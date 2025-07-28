@@ -40,6 +40,7 @@ const SplashScreen: FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [locationAlertShown, setLocationAlertShown] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   const locationPermissions =
     Platform.OS === 'android'
@@ -147,7 +148,7 @@ const SplashScreen: FC = () => {
           },
           {
             enableHighAccuracy: true,
-            timeout: 5000,
+            timeout: 2000,
             maximumAge: 0,
           },
         );
@@ -208,6 +209,11 @@ const SplashScreen: FC = () => {
     }
   }, [validateTokens, locationAlertShown]);
 
+  if (!hasNavigated) {
+    setHasNavigated(true);
+    navigateBasedOnRole();
+  }
+
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (
@@ -237,7 +243,9 @@ const SplashScreen: FC = () => {
 
   useEffect(() => {
     if (isFocused) {
-      checkLocationAndPermission();
+      setTimeout(() => {
+        checkLocationAndPermission();
+      }, 100);
     }
   }, [isFocused, checkLocationAndPermission]);
 

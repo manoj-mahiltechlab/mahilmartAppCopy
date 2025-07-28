@@ -203,7 +203,7 @@ const ProductCategories = () => {
             'Unable to connect to the server. Please check your internet connection and try again.',
             [{text: 'OK'}],
           );
-        }, 2000);
+        }, 1000);
       }
     };
 

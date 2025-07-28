@@ -194,10 +194,10 @@ export const homeLifeStyle = [
     },
   },
   {
-    id: '68345183b071144469a8a8a9',
+    id: '68871188032e3ab3cef4566a',
     name: 'Sweet Tea And Camp',
     image: {
-      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748435050/wcdhuxfcrmvhdjmlnkdf.png',
+      uri: 'https://res.cloudinary.com/duvnlj6m2/image/upload/v1748440947/wcdhuxfcrmvhdjmlnkdf.png',
     },
   },
 ];

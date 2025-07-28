@@ -1,5 +1,4 @@
-import {NoticeHeight} from '@utils/Scaling';
-import {useEffect, useRef} from 'react';
+import React, {useEffect} from 'react';
 import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {
   CollapsibleHeaderContainer,
@@ -12,7 +11,7 @@ import Geolocation from '@react-native-community/geolocation';
 import {useAuthStore} from '@state/authStore';
 import NoticeAnimation from './NoticeAnimation';
 import Visuals from './Visuals';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
@@ -24,23 +23,17 @@ import Animated, {
   useAnimatedReaction,
 } from 'react-native-reanimated';
 import AnimatedHeader from './AnimaterHeader';
-import React from 'react';
 import Content from '@components/dashboard/Content';
 import withCart from '@features/cart/WithCart';
 import {reverseGeocode} from '@service/mapService';
 import withLiveStatus from '@features/map/withLiveStatus';
-import StickySearchBar from './StickySearchBar';
-
-const NOTICE_HEIGHT = -(NoticeHeight + 50);
 
 const ProductDashboard = () => {
-  const {user, setUser} = useAuthStore();
+  const {setUser} = useAuthStore();
   const insets = useSafeAreaInsets();
   const noticePosition = useSharedValue(0);
   const showBackToTop = useSharedValue(false);
-
   const {scrollY, expand} = useCollapsibleContext();
-  const previousScroll = useRef<number>(0);
 
   useAnimatedReaction(
     () => scrollY?.value,
@@ -52,53 +45,37 @@ const ProductDashboard = () => {
     [scrollY],
   );
 
-  const slideUp = () => {
-    noticePosition.value = withTiming(NOTICE_HEIGHT, {duration: 1300});
-  };
-
   useEffect(() => {
-    const updateUser = () => {
-      Geolocation.getCurrentPosition(
-        position => {
-          const {latitude, longitude} = position.coords;
-          reverseGeocode(latitude, longitude, setUser);
-        },
-        err => console.log(err),
-        {
-          enableHighAccuracy: false,
-          timeout: 1000,
-        },
-      );
-    };
-
-    updateUser();
+    Geolocation.getCurrentPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        reverseGeocode(latitude, longitude, setUser);
+      },
+      err => console.log(err),
+      {
+        enableHighAccuracy: false,
+        timeout: 500,
+      },
+    );
   }, []);
 
   const backToTopStyle = useAnimatedStyle(() => {
-    const opacity = withTiming(showBackToTop.value ? 1 : 0, {duration: 500});
-    const translateY = withTiming(showBackToTop.value ? 0 : 10, {
-      duration: 500,
-    });
     return {
-      opacity,
-      transform: [{translateY}],
+      opacity: withTiming(showBackToTop.value ? 1 : 0, {duration: 500}),
+      transform: [
+        {
+          translateY: withTiming(showBackToTop.value ? 0 : 10, {
+            duration: 500,
+          }),
+        },
+      ],
     };
   });
-
-  useEffect(() => {
-    slideUp();
-    // slideDown();
-    const timeoutId = setTimeout(() => {
-      slideUp();
-    }, 3500);
-    return () => clearTimeout(timeoutId);
-  }, []);
 
   return (
     <NoticeAnimation noticePosition={noticePosition}>
       <>
         <Visuals />
-        <SafeAreaView />
 
         <Animated.View style={[backToTopStyle, styles.backToTopButton]}>
           <TouchableOpacity
@@ -106,7 +83,7 @@ const ProductDashboard = () => {
               scrollY.value = 0;
               expand();
             }}
-            style={{flexDirection: 'row', alignItems: 'center', gap: 1}}>
+            style={styles.backToTopTouchable}>
             <Icon
               name="arrow-up-circle-outline"
               color="white"
@@ -114,7 +91,7 @@ const ProductDashboard = () => {
             />
             <CustomText
               variant="h9"
-              style={{color: 'white'}}
+              style={styles.backToTopText}
               fontFamily={Fonts.SemiBold}>
               Back to top
             </CustomText>
@@ -123,15 +100,7 @@ const ProductDashboard = () => {
 
         <CollapsibleContainer style={styles.panelContainer}>
           <CollapsibleHeaderContainer containerStyle={styles.transparent}>
-            <AnimatedHeader // Navigate to header page
-              showNotice={() => {
-                // slideDown();
-                const timeoutId = setTimeout(() => {
-                  slideUp();
-                }, 3500);
-                return () => clearTimeout(timeoutId);
-              }}
-            />
+            <AnimatedHeader showNotice={() => {}} />
           </CollapsibleHeaderContainer>
 
           <CollapsibleScrollView
@@ -139,9 +108,6 @@ const ProductDashboard = () => {
             style={styles.panelContainer}
             showsVerticalScrollIndicator={false}>
             <Content />
-            <View style={{backgroundColor: 'white', padding: 20}}>
-              <></>
-            </View>
           </CollapsibleScrollView>
         </CollapsibleContainer>
       </>
@@ -170,7 +136,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  backToTopTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backToTopText: {
+    color: 'white',
+    marginLeft: 4,
+  },
 });
+
 export default withLiveStatus(
   withCart(withCollapsibleContext(ProductDashboard)),
 );

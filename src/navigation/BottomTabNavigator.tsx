@@ -10,7 +10,7 @@ import {useCartStore} from '@state/CartStore';
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
-  const cartItems = useCartStore(state => state.cart); // ✅ Moved inside
+  const cartItems = useCartStore(state => state.cart);
   const totalItems = cartItems.reduce((sum, item) => sum + item.count, 0);
 
   return (
@@ -42,7 +42,7 @@ const BottomTabNavigator = () => {
         component={CartList}
         options={{
           tabBarLabel: 'Cart',
-          tabBarBadge: totalItems > 0 ? totalItems : undefined, // ✅ Badge logic
+          tabBarBadge: totalItems > 0 ? totalItems : undefined,
           tabBarIcon: ({focused, color, size}) => (
             <Icon
               name={focused ? 'basket' : 'basket-outline'}
