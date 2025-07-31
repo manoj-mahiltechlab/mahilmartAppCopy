@@ -17,6 +17,7 @@ import ProductOrder from '@features/order/ProductOrder';
 import SearchScreen from '../screens/SearchScreen';
 import {CustomerStackParamList} from './CustomerStack';
 import EditAddressScreen from '@features/order/EditAddressScreen';
+import ProductDashboard from '@features/dashboard/ProductDashboard';
 
 export type RootStackParamList = {
   SplashScreen: undefined;
@@ -60,6 +61,7 @@ const Navigation: FC = () => {
         <Stack.Screen name="ProductOrder" component={ProductOrder} />
         <Stack.Screen name="SearchScreen" component={SearchScreen} />
         <Stack.Screen name="EditAddressScreen" component={EditAddressScreen} />
+        <Stack.Screen name="ProductDashboard" component={ProductDashboard} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -160,3 +160,24 @@ export const getSupportInfo = async () => {
     return null;
   }
 };
+export const getAdImages = async (title: string) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/adData/get?title=${title}`);
+    // console.log('All fetched images:', response.data);
+    return response.data.images; // ✅ RETURN the images
+  } catch (error) {
+    console.error('Error fetching ad images:', error.message);
+    return []; // return empty array on error
+  }
+};
+
+export const getAllSections = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/sections`);
+    console.log('📦 All sections fetched:', response.data);
+    return response.data.sections || [];
+  } catch (error) {
+    console.error('❌ Failed to fetch all sections:', error);
+    return [];
+  }
+};

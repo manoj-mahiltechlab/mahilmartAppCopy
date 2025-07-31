@@ -1,35 +1,36 @@
-import {View, StyleSheet, Image} from 'react-native';
-import React, {FC} from 'react';
-import Carousal from 'react-native-reanimated-carousel';
-import {screenWidth} from '@utils/Scaling';
-import ScalePress from '@components/ui/ScallPress';
+import React from 'react';
+import {View, StyleSheet, Image, Dimensions, Text} from 'react-native';
+import Carousel from 'react-native-reanimated-carousel';
 
-const AdCarousal: FC<{adData: any}> = ({adData}) => {
-  const baseOptions = {
-    vertical: false,
-    width: screenWidth, // ✅ use full screen width
-    height: screenWidth * 0.6,
-  };
+const screenWidth = Dimensions.get('window').width;
+const customWidth = screenWidth + 20;
+
+const AdCarousal = ({adData = []}: {adData: string[]}) => {
+  if (!adData || adData.length === 0) {
+    return <Text style={styles.noAds}>No Ads Available</Text>;
+  }
+
+  const isSingle = adData.length === 1;
 
   return (
     <View style={styles.wrapper}>
-      <Carousal
-        {...baseOptions}
-        loop
-        pagingEnabled
-        snapEnabled
-        autoPlay
-        autoPlayInterval={2000}
-        mode="parallax"
+      <Carousel
+        width={customWidth}
+        height={245}
         data={adData}
+        autoPlay={!isSingle}
+        autoPlayInterval={3000}
+        loop={!isSingle}
+        scrollAnimationDuration={800}
+        mode="parallax"
         modeConfig={{
-          parallaxScrollingOffset: 0,
-          parallaxScrollingScale: 0.93,
+          parallaxScrollingScale: 0.9,
+          parallaxScrollingOffset: 40,
         }}
-        renderItem={({item}: any) => (
-          <ScalePress style={styles.imageContainer}>
-            <Image source={item} style={styles.img} />
-          </ScalePress>
+        renderItem={({item}) => (
+          <View style={styles.imageContainer}>
+            <Image source={{uri: item}} style={styles.image} />
+          </View>
         )}
       />
     </View>
@@ -38,18 +39,26 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginVertical: 15,
+    marginVertical: 10,
     alignSelf: 'center',
   },
   imageContainer: {
     width: '100%',
     height: '100%',
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: '#eee',
   },
-  img: {
+  image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    borderRadius: 20,
+  },
+  noAds: {
+    textAlign: 'center',
+    padding: 20,
+    fontSize: 16,
+    color: 'gray',
   },
 });
 

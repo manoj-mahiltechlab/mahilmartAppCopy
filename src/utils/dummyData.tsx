@@ -17,14 +17,6 @@ export const imageData = [
   require('../assets/products/16.png'),
 ];
 
-export const adData = [
-  require('../assets/products/c1.jpg'),
-  require('../assets/products/c2.jpg'),
-  require('../assets/products/c3.jpg'),
-  require('../assets/products/c4.jpg'),
-  require('../assets/products/c5.jpg'),
-];
-
 export const HomeKitchen = [
   {
     id: '683aec71e5702432c0c61c7d',

@@ -12,14 +12,16 @@ import {useCartStore} from '@state/CartStore';
 import OrderItem from '@features/order/OrderItem';
 import CustomHeader from '@components/ui/CustomHeader';
 import {CustomerStackParamList} from '@navigation/CustomerStack';
+import {RootStackParamList} from '@navigation/Navigation';
 
 type NavigationProp = NativeStackNavigationProp<
   CustomerStackParamList,
   'CartList'
 >;
-
 const CartList = () => {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // const navigation = useNavigation<NavigationProp>();
   const cartItems = useCartStore(state => state.cart);
   const totalItems = cartItems?.reduce((acc, item) => acc + item.count, 0);
   const hasItems = cartItems && cartItems.length > 0;
@@ -36,21 +38,23 @@ const CartList = () => {
         ) : (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>🛒 Your cart is empty</Text>
-            <Text style={styles.subText}>Start adding items to your cart!</Text>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => {
+                navigation.navigate('BottomTabs', {
+                  screen: 'Home', // important: this is the name of the tab
+                  params: {
+                    screen: 'ProductDashboard', // this is the nested stack screen
+                  },
+                });
+              }}>
+              <Text style={styles.emptyButtonText}>
+                Start adding items to your cart!
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
-
-      {hasItems && (
-        <View style={styles.footer}>
-          <View style={styles.totalContainer} />
-          <TouchableOpacity
-            style={styles.checkoutButton}
-            onPress={() => navigation.navigate('ProductOrder')}>
-            <Text style={styles.checkoutText}>Proceed to Checkout</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 };
@@ -73,6 +77,13 @@ const styles = StyleSheet.create({
     shadowRadius: 1.5,
     paddingBottom: 10,
   },
+  startShoppingButton: {
+    marginTop: 16,
+    color: '#007BFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -83,6 +94,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#888',
   },
+  emptyButton: {
+    marginTop: 12,
+    backgroundColor: '#007BFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  emptyButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
   subText: {
     marginTop: 6,
     fontSize: 14,

@@ -1,4 +1,4 @@
-import React, {useRef, useEffect, useMemo, useState} from 'react';
+import React, {useRef, useEffect, useMemo, useState, useCallback} from 'react';
 import {
   View,
   Image,
@@ -14,6 +14,7 @@ import {
   RouteProp,
   useNavigation,
   NavigationProp,
+  useFocusEffect,
 } from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
@@ -69,7 +70,6 @@ const ProductDetails = () => {
 
   const [product, setProduct] = useState<Product>(() => {
     if (!initialProduct.subcategory && touchedSubcategoryId) {
-      console.warn('[Init Patch] Adding touchedSubcategoryId to product');
       return {...initialProduct, subcategory: touchedSubcategoryId};
     }
     return initialProduct;
@@ -82,6 +82,9 @@ const ProductDetails = () => {
 
   const [isImageViewerVisible, setImageViewerVisible] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
+  const [loadingProduct, setLoadingProduct] = useState(false);
+
+  const originalRelatedProductsRef = useRef<Product[]>([]);
 
   const images = useMemo(() => {
     const mainImage =
@@ -89,49 +92,55 @@ const ProductDetails = () => {
     return [mainImage, ...(product.subImages || [])].filter(Boolean);
   }, [product]);
 
-  useEffect(() => {
-    const fetchOrSetRelatedProducts = async () => {
-      const subcategoryId =
-        touchedSubcategoryId || product.subcategory || product.subcategoryId;
+  useFocusEffect(
+    useCallback(() => {
+      setLoadingProduct(false);
+    }, []),
+  );
 
-      if (!subcategoryId && !fromSearch) {
-        console.warn('[RelatedProducts] subcategoryId missing');
-        setRelatedProducts([]);
-        return;
+  useEffect(() => {
+    const hasPassedRelated =
+      Array.isArray(passedRelated) && passedRelated.length > 0;
+
+    if (hasPassedRelated) {
+      if (originalRelatedProductsRef.current.length === 0) {
+        originalRelatedProductsRef.current = passedRelated; // store full list once
       }
 
-      setLoadingRelated(true);
+      const filtered = passedRelated.filter(
+        p => (p._id || p.id) !== (product._id || product.id),
+      );
 
-      try {
-        if (fromSearch && Array.isArray(passedRelated)) {
-          const filtered = passedRelated.filter(
-            p => (p._id || p.id) !== (product._id || product.id),
-          );
-          setRelatedProducts(filtered);
-        } else if (subcategoryId) {
-          const res = await getProductsBySubcategoryId(subcategoryId);
+      setRelatedProducts(filtered);
+    } else {
+      const subcategoryId =
+        touchedSubcategoryId ||
+        (typeof product.subcategory === 'object'
+          ? product.subcategory?._id
+          : product.subcategory) ||
+        product.subcategoryId;
+
+      if (!subcategoryId) return;
+
+      setLoadingRelated(true);
+      getProductsBySubcategoryId(subcategoryId)
+        .then(res => {
           const fetched = res?.products || [];
           const filtered = fetched.filter(
             p => (p._id || p.id) !== (product._id || product.id),
           );
           setRelatedProducts(filtered);
-        }
-      } catch (err) {
-        console.error('[RelatedProducts] Fetch error:', err);
-        setRelatedProducts([]);
-      } finally {
-        setLoadingRelated(false);
-      }
-    };
-
-    fetchOrSetRelatedProducts();
-  }, [product, touchedSubcategoryId, fromSearch, passedRelated]);
+        })
+        .catch(err => {
+          console.error('Fetch related error:', err);
+        })
+        .finally(() => setLoadingRelated(false));
+    }
+  }, [product, touchedSubcategoryId]);
 
   const onShare = async () => {
     try {
-      await Share.share({
-        message: `Check out this product: ${product.name}`,
-      });
+      await Share.share({message: `Check out this product: ${product.name}`});
     } catch (error) {
       console.error('Share failed:', error);
     }
@@ -139,7 +148,6 @@ const ProductDetails = () => {
 
   const renderHeader = () => (
     <View style={{paddingBottom: 10}}>
-      {/* Image Carousel */}
       <View style={styles.carouselContainer}>
         <FlatList
           ref={flatListRef}
@@ -161,7 +169,6 @@ const ProductDetails = () => {
             </TouchableOpacity>
           )}
         />
-        {/* Share & Like */}
         <View style={styles.iconContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={onShare}>
             <Icon name="share-variant" size={20} color="#fff" />
@@ -172,7 +179,6 @@ const ProductDetails = () => {
         </View>
       </View>
 
-      {/* Sub Images */}
       {product.subImages?.length > 0 && (
         <FlatList
           data={images}
@@ -194,7 +200,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Product Info */}
       <View style={styles.detailsContainer}>
         <CustomText style={styles.name}>{product.name}</CustomText>
 
@@ -203,27 +208,20 @@ const ProductDetails = () => {
             {product.discountPrice && (
               <>
                 <CustomText
-                  style={{
-                    color: '#777',
-                    fontSize: 14,
-                    textDecorationLine: 'line-through',
-                  }}>
+                  style={{color: '#777', textDecorationLine: 'line-through'}}>
                   ₹{product.discountPrice}
                 </CustomText>
-                <CustomText
-                  style={{fontSize: 16, fontWeight: 'bold', color: '#222'}}>
+                <CustomText style={{fontWeight: 'bold', color: '#222'}}>
                   ₹{product.price}
                 </CustomText>
               </>
             )}
             {!product.discountPrice && (
-              <CustomText
-                style={{fontSize: 16, fontWeight: 'bold', color: '#222'}}>
+              <CustomText style={{fontWeight: 'bold', color: '#222'}}>
                 ₹{product.price}
               </CustomText>
             )}
           </View>
-
           <UniversalAdd item={product} />
         </View>
 
@@ -231,12 +229,10 @@ const ProductDetails = () => {
         <CustomText
           style={styles.description}
           numberOfLines={showFullDescription ? undefined : 3}>
-          {product.description ||
-            'Get this product to experience quality and value.'}
+          {product.description || 'No description provided.'}
         </CustomText>
         <TouchableOpacity
-          onPress={() => setShowFullDescription(!showFullDescription)}
-          style={{marginTop: 5}}>
+          onPress={() => setShowFullDescription(!showFullDescription)}>
           <CustomText style={styles.toggleMore}>
             {showFullDescription ? 'Less' : 'More...'}
           </CustomText>
@@ -276,11 +272,13 @@ const ProductDetails = () => {
           }}
           ListHeaderComponent={renderHeader}
           ListEmptyComponent={
-            !fromSearch && (
-              <View style={{alignItems: 'center', marginVertical: 20}}>
-                <CustomText>No related products found.</CustomText>
-              </View>
-            )
+            <View style={{alignItems: 'center', marginVertical: 20}}>
+              <CustomText>
+                {fromSearch
+                  ? 'No other products found in search.'
+                  : 'No related products found.'}
+              </CustomText>
+            </View>
           }
           renderItem={({item, index}) => {
             const transformedItem = {
@@ -300,14 +298,21 @@ const ProductDetails = () => {
               <ProductItem
                 item={transformedItem}
                 index={index}
-                onPress={() =>
-                  navigation.replace('ProductDetails', {
+                onPress={() => {
+                  const subcategoryId =
+                    typeof transformedItem.subcategory === 'object'
+                      ? transformedItem.subcategory?._id
+                      : transformedItem.subcategory;
+
+                  navigation.push('ProductDetails', {
                     product: transformedItem,
-                    touchedSubcategoryId: transformedItem.subcategory,
-                    fromSearch: true,
-                    relatedProducts: [product, ...relatedProducts],
-                  })
-                }
+                    touchedSubcategoryId: subcategoryId,
+                    fromSearch,
+                    relatedProducts: fromSearch
+                      ? originalRelatedProductsRef.current
+                      : undefined,
+                  });
+                }}
               />
             );
           }}
@@ -324,7 +329,6 @@ const styles = StyleSheet.create({
     height: 350,
     backgroundColor: '#fafafa',
     position: 'relative',
-    elevation: 3,
   },
   image: {width, height: 350},
   iconContainer: {

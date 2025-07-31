@@ -59,8 +59,8 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
     : 0;
 
   return (
-    <View style={[styles.container, {marginRight: isSecondColumn ? 8 : 2}]}>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+    <View style={[styles.container, {marginRight: isSecondColumn ? 1 : 0}]}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.3}>
         <View style={styles.imageContainer}>
           <Image source={getImageSource(item?.image)} style={styles.image} />
 
@@ -95,51 +95,51 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
             <CustomText style={styles.noImageText}></CustomText>
           )}
         </View>
-      </TouchableOpacity>
 
-      <View style={styles.content}>
-        <View style={styles.timeContainer}>
-          <Image
-            source={require('@assets/icons/clock.png')}
-            style={styles.clockIcon}
-          />
-          <CustomText fontSize={RFValue(7)} fontFamily={Fonts.Medium}>
-            16 MINS
-          </CustomText>
-        </View>
-
-        <CustomText
-          fontFamily={Fonts.Medium}
-          variant="h8"
-          numberOfLines={2}
-          style={styles.title}>
-          {item.name}
-        </CustomText>
-
-        <View style={styles.priceContainer}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-            {hasValidDiscount && (
-              <CustomText
-                style={{
-                  textDecorationLine: 'line-through',
-                  color: '#777',
-                  fontSize: RFValue(10),
-                }}>
-                ₹{discountPrice}
-              </CustomText>
-            )}
-            <CustomText
-              style={{
-                color: '#2e7231ff',
-                fontSize: RFValue(12),
-                fontWeight: 'bold',
-              }}>
-              ₹{originalPrice}
+        <View style={styles.content}>
+          <View style={styles.timeContainer}>
+            <Image
+              source={require('@assets/icons/clock.png')}
+              style={styles.clockIcon}
+            />
+            <CustomText fontSize={RFValue(7)} fontFamily={Fonts.Medium}>
+              16 MINS
             </CustomText>
           </View>
-          <UniversalAdd item={item} />
+
+          <CustomText
+            fontFamily={Fonts.Medium}
+            variant="h8"
+            numberOfLines={2}
+            style={styles.title}>
+            {item.name}
+          </CustomText>
+
+          <View style={styles.priceContainer}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              {hasValidDiscount && (
+                <CustomText
+                  style={{
+                    textDecorationLine: 'line-through',
+                    color: '#777',
+                    fontSize: RFValue(10),
+                  }}>
+                  ₹{discountPrice}
+                </CustomText>
+              )}
+              <CustomText
+                style={{
+                  color: '#2e7231ff',
+                  fontSize: RFValue(12),
+                  fontWeight: 'bold',
+                }}>
+                ₹{originalPrice}
+              </CustomText>
+            </View>
+            <UniversalAdd item={item} />
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     </View>
   );
 };

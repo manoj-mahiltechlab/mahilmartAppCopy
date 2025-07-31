@@ -52,6 +52,7 @@ const ProductCategories = () => {
 
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'ProductCategories'>>();
+  const [loadingProduct, setLoadingProduct] = useState(false);
 
   const {categoryId, subcategoryId, categoryName, searchResults} =
     route.params || {};
@@ -82,7 +83,7 @@ const ProductCategories = () => {
         error,
       );
       setProducts([]);
-      setTimeout(() => setShowNoProductMessage(true), 3000);
+      setTimeout(() => setShowNoProductMessage(true), 500);
     } finally {
       setProductsLoading(false);
     }
@@ -285,23 +286,19 @@ const ProductCategories = () => {
           item={transformedItem}
           index={index}
           onPress={() => {
-            console.log(
-              '[renderItem > onPress] Navigating to ProductDetails with:',
-              {
-                transformedItem,
-                selectedSubId,
-                searchResultsLength: searchResults?.length ?? 0,
-              },
-            );
+            const touchedSubcategoryId =
+              searchResults?.length > 0
+                ? transformedItem.subcategory || selectedSubId
+                : selectedSubId;
+
+            const relatedProducts =
+              overrideProducts.length > 0 ? overrideProducts : products;
 
             navigation.navigate('ProductDetails', {
               product: transformedItem,
-              touchedSubcategoryId:
-                searchResults?.length > 0
-                  ? transformedItem.subcategory || selectedSubId
-                  : selectedSubId,
+              touchedSubcategoryId,
               fromSearch: !!searchResults?.length,
-              relatedProducts: searchResults ? searchResults : undefined,
+              relatedProducts, // Pass related products from memory
             });
           }}
         />
