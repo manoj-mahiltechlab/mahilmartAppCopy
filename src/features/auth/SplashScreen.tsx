@@ -37,6 +37,7 @@ const SplashScreen: FC = () => {
   const {user, setUser} = useAuthStore();
   const isFocused = useIsFocused();
   const appState = useRef<AppStateStatus>(AppState.currentState);
+  const hasCheckedPermissions = useRef(false);
 
   const [loading, setLoading] = useState(false);
   const [locationAlertShown, setLocationAlertShown] = useState(false);
@@ -209,17 +210,21 @@ const SplashScreen: FC = () => {
     }
   }, [validateTokens, locationAlertShown]);
 
-  if (!hasNavigated) {
-    setHasNavigated(true);
-    navigateBasedOnRole();
-  }
+  useEffect(() => {
+    if (user && !hasNavigated) {
+      setHasNavigated(true);
+      navigateBasedOnRole();
+    }
+  }, [user, hasNavigated, navigateBasedOnRole]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (
         appState.current?.match(/inactive|background/) &&
-        nextAppState === 'active'
+        nextAppState === 'active' &&
+        locationAlertShown
       ) {
+        hasCheckedPermissions.current = false; // 👈 add this line
         setLocationAlertShown(false);
         checkLocationAndPermission();
       }
@@ -227,7 +232,7 @@ const SplashScreen: FC = () => {
     });
 
     return () => subscription.remove();
-  }, [checkLocationAndPermission]);
+  }, [checkLocationAndPermission, locationAlertShown]);
 
   useEffect(() => {
     const backAction = () => {
@@ -242,7 +247,10 @@ const SplashScreen: FC = () => {
   }, []);
 
   useEffect(() => {
-    if (isFocused) {
+    console.log('🔁 SplashScreen useEffect triggered, isFocused:', isFocused);
+    if (isFocused && !hasCheckedPermissions.current) {
+      hasCheckedPermissions.current = true;
+      console.log('✅ Running checkLocationAndPermission');
       setTimeout(() => {
         checkLocationAndPermission();
       }, 100);

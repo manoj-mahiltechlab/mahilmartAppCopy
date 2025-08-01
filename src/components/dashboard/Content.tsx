@@ -2,7 +2,7 @@ import {View, StyleSheet} from 'react-native';
 import React, {FC, useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import type {StackNavigationProp} from '@react-navigation/stack';
-import {GroceryItems, HomeKitchen, homeLifeStyle} from '@utils/dummyData';
+import {GroceryItems, homeLifeStyle} from '@utils/dummyData';
 import AdCarousal from './AdCarousal';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
@@ -25,12 +25,20 @@ type DashboardStackParamList = {
   DeliveryDashboard: undefined;
 };
 
+type CategoryType = {
+  id: string;
+  name: string;
+  image: {uri: string};
+};
+
 const Content: FC = () => {
   const navigation =
     useNavigation<StackNavigationProp<DashboardStackParamList>>();
-  const [adData, setAdData] = useState<string[]>([]);
 
-  const [homeKitchenCategories, setHomeKitchenCategories] = useState([]);
+  const [adData, setAdData] = useState<string[]>([]);
+  const [homeKitchenCategories, setHomeKitchenCategories] = useState<
+    CategoryType[]
+  >([]);
 
   const handleCategoryPress = (categoryItem: {id: string; name: string}) => {
     navigation.navigate('CategoryOrSubcategory', {
@@ -38,49 +46,63 @@ const Content: FC = () => {
       categoryName: categoryItem.name,
     });
   };
+
   useEffect(() => {
     const fetchAds = async () => {
-      const images = await getAdImages('Home');
-      setAdData(images);
+      try {
+        const images = await getAdImages('Home');
+        setAdData(images);
+      } catch (error) {
+        console.error('❌ Failed to fetch ad images:', error);
+      }
     };
 
-    fetchAds(); // initial
-
-    const interval = setInterval(() => {
-      fetchAds(); // re-fetch every 30 seconds
-    }, 10000);
-
+    fetchAds();
+    const interval = setInterval(fetchAds, 10000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const categories = await getCategoriesBySection('Home & Kitchen');
-      setHomeKitchenCategories(categories);
+      try {
+        const sectionData = await getAllSections();
+
+        const homeKitchenSection = sectionData?.sections?.find(
+          (s: any) => s.name === 'Home & Kitchen',
+        );
+
+        if (homeKitchenSection?._id) {
+          const categories = await getCategoriesBySection(
+            homeKitchenSection._id,
+          );
+          setHomeKitchenCategories(categories);
+          console.log('✅ Home & Kitchen categories:', categories);
+        } else {
+          console.warn('⚠️ "Home & Kitchen" section not found');
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch Home & Kitchen categories:', error);
+      }
     };
 
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    const fetchAllSections = async () => {
-      const sections = await getAllSections();
-      console.log('🔥 Sections available in backend:', sections);
-    };
-
-    fetchAllSections();
-  }, []);
-
   return (
     <View style={styles.container}>
       <AdCarousal adData={adData} />
-      <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-        Home & Kitchen
-      </CustomText>
-      <CategoryContainer
-        data={HomeKitchen}
-        onCategoryPress={handleCategoryPress}
-      />
+
+      {homeKitchenCategories.length > 0 && (
+        <>
+          <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
+            Home & Kitchen
+          </CustomText>
+          <CategoryContainer
+            data={homeKitchenCategories}
+            onCategoryPress={handleCategoryPress}
+          />
+        </>
+      )}
 
       <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
         Grocery

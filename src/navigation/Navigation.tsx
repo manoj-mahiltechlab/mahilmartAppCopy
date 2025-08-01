@@ -19,6 +19,22 @@ import {CustomerStackParamList} from './CustomerStack';
 import EditAddressScreen from '@features/order/EditAddressScreen';
 import ProductDashboard from '@features/dashboard/ProductDashboard';
 
+console.log('Screens loaded:', {
+  SplashScreen,
+  DeliveryLogin,
+  CustomerLogin,
+  DeliveryDashboard,
+  BottomTabNavigator,
+  LogoutScreen,
+  DeliveryMap,
+  PaymentScreen,
+  VerifyOtp,
+  ProductOrder,
+  SearchScreen,
+  EditAddressScreen,
+  ProductDashboard,
+});
+
 export type RootStackParamList = {
   SplashScreen: undefined;
   BottomTabs:

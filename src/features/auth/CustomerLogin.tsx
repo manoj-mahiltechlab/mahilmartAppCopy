@@ -112,8 +112,12 @@ const CustomerLogin = () => {
         Alert.alert('OTP Failed', response?.message || 'Please try again.');
       }
     } catch (err: any) {
-      console.log('❌ OTP Send Error:', err?.response?.data || err.message);
-      Alert.alert('Failed to send OTP', 'Please check your network.');
+      const errorMessage =
+        err?.response?.data?.message || err?.message || 'Something went wrong';
+
+      console.log('❌ OTP Send Error:', errorMessage);
+
+      Alert.alert('OTP Failed', errorMessage);
     } finally {
       setLoading(false);
     }
