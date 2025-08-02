@@ -193,34 +193,9 @@ export const getAllSections = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/sections`);
     console.log('📦 All sections fetched:', response.data);
-    return response.data.sections || [];
+    return response.data; // ✅ Not response.data.sections
   } catch (error) {
     console.error('❌ Failed to fetch all sections:', error);
-    return [];
-  }
-};
-export const getCategoriesBySection = async (sectionId: string) => {
-  try {
-    const url = `${BASE_URL}/categories/section/${sectionId}`;
-
-    console.log('📡 Fetching categories by section ID:', url);
-
-    const response = await axios.get(url);
-
-    console.log('✅ Categories fetched:', response.data);
-    return response.data;
-  } catch (error: any) {
-    if (error.response) {
-      console.error('❌ API Error:', {
-        url: error.config?.url,
-        status: error.response.status,
-        message: error.response.data?.message || 'Unknown error',
-      });
-    } else if (error.request) {
-      console.error('❌ No response received:', error.request);
-    } else {
-      console.error('❌ Unexpected error:', error.message);
-    }
-    return [];
+    return {success: false, sections: []};
   }
 };

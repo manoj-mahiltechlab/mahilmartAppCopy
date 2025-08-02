@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   },
   backToTopButton: {
     position: 'absolute',
-    bottom: 200,
+    bottom: 50,
     right: 10,
     height: '5%',
     backgroundColor: 'black',

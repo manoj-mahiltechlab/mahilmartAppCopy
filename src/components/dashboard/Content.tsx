@@ -1,17 +1,13 @@
-import {View, StyleSheet} from 'react-native';
-import React, {FC, useEffect, useState} from 'react';
-import {useNavigation} from '@react-navigation/native';
+import {View, StyleSheet, ScrollView, RefreshControl} from 'react-native';
+import React, {FC, useEffect, useState, useCallback} from 'react';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import type {StackNavigationProp} from '@react-navigation/stack';
-import {GroceryItems, homeLifeStyle} from '@utils/dummyData';
+
 import AdCarousal from './AdCarousal';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
 import CategoryContainer from './CategoryContainer';
-import {
-  getAdImages,
-  getAllSections,
-  getCategoriesBySection,
-} from '@service/authService';
+import {getAdImages, getAllSections} from '@service/authService';
 
 type DashboardStackParamList = {
   CategoryOrSubcategory: {categoryId: string; categoryName: string};
@@ -25,20 +21,13 @@ type DashboardStackParamList = {
   DeliveryDashboard: undefined;
 };
 
-type CategoryType = {
-  id: string;
-  name: string;
-  image: {uri: string};
-};
-
 const Content: FC = () => {
   const navigation =
     useNavigation<StackNavigationProp<DashboardStackParamList>>();
-
   const [adData, setAdData] = useState<string[]>([]);
-  const [homeKitchenCategories, setHomeKitchenCategories] = useState<
-    CategoryType[]
-  >([]);
+  const [allSections, setAllSections] = useState<any[]>([]);
+  const isFocused = useIsFocused();
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleCategoryPress = (categoryItem: {id: string; name: string}) => {
     navigation.navigate('CategoryOrSubcategory', {
@@ -47,10 +36,45 @@ const Content: FC = () => {
     });
   };
 
+  // Reusable fetch function
+  const fetchSections = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const sectionData = await getAllSections();
+      if (sectionData?.success && Array.isArray(sectionData.sections)) {
+        setAllSections(sectionData.sections);
+        console.log('✅ Sections updated:', sectionData.sections);
+      } else {
+        setAllSections([]);
+        console.warn('⚠️ No sections found');
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch sections:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  // Fetch on screen focus
+  useEffect(() => {
+    if (isFocused) {
+      fetchSections();
+    }
+  }, [isFocused, fetchSections]);
+  // Auto-polling every 15 sec
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchSections();
+    }, 15000); // 15 sec
+    return () => clearInterval(interval);
+  }, [fetchSections]);
+
+  //Fetch Ads (every 10 seconds)
   useEffect(() => {
     const fetchAds = async () => {
       try {
         const images = await getAdImages('Home');
+
         setAdData(images);
       } catch (error) {
         console.error('❌ Failed to fetch ad images:', error);
@@ -58,74 +82,45 @@ const Content: FC = () => {
     };
 
     fetchAds();
-    const interval = setInterval(fetchAds, 10000);
+    const interval = setInterval(fetchAds, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const sectionData = await getAllSections();
-
-        const homeKitchenSection = sectionData?.sections?.find(
-          (s: any) => s.name === 'Home & Kitchen',
-        );
-
-        if (homeKitchenSection?._id) {
-          const categories = await getCategoriesBySection(
-            homeKitchenSection._id,
-          );
-          setHomeKitchenCategories(categories);
-          console.log('✅ Home & Kitchen categories:', categories);
-        } else {
-          console.warn('⚠️ "Home & Kitchen" section not found');
-        }
-      } catch (error) {
-        console.error('❌ Failed to fetch Home & Kitchen categories:', error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={fetchSections} />
+      }>
       <AdCarousal adData={adData} />
 
-      {homeKitchenCategories.length > 0 && (
-        <>
-          <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-            Home & Kitchen
-          </CustomText>
+      {allSections.map(section => (
+        <View key={section.id}>
+          <View style={styles.sectionHeader}>
+            <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
+              {section.name}
+            </CustomText>
+          </View>
+
           <CategoryContainer
-            data={homeKitchenCategories}
+            data={section.categories}
             onCategoryPress={handleCategoryPress}
           />
-        </>
-      )}
-
-      <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-        Grocery
-      </CustomText>
-      <CategoryContainer
-        data={GroceryItems}
-        onCategoryPress={handleCategoryPress}
-      />
-
-      <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-        Home & Lifestyle
-      </CustomText>
-      <CategoryContainer
-        data={homeLifeStyle}
-        onCategoryPress={handleCategoryPress}
-      />
-    </View>
+        </View>
+      ))}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 15,
+    flex: 1,
+  },
+  sectionHeader: {
+    paddingHorizontal: 12,
+    paddingTop: 20,
+    paddingBottom: 30, // gap between name and grid
   },
 });
 

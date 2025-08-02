@@ -1,10 +1,10 @@
-import {ViewStyle, TouchableOpacity, Animated} from 'react-native';
+import {ViewStyle, TouchableOpacity, Animated, StyleProp} from 'react-native';
 import React, {FC} from 'react';
 
 interface ScalePressProps {
   onPress?: () => void;
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 const ScalePress: FC<ScalePressProps> = ({onPress, children, style}) => {
