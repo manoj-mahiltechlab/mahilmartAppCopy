@@ -1,5 +1,12 @@
 import React from 'react';
-import {View, StyleSheet, Image, Dimensions, Text} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Dimensions,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
 const screenWidth = Dimensions.get('window').width;
@@ -11,6 +18,8 @@ const AdCarousal = ({adData = []}: {adData: string[]}) => {
   }
 
   const isSingle = adData.length === 1;
+
+  //console.log('Data :', adData);
 
   return (
     <View style={styles.wrapper}>
@@ -28,9 +37,13 @@ const AdCarousal = ({adData = []}: {adData: string[]}) => {
           parallaxScrollingOffset: 40,
         }}
         renderItem={({item}) => (
-          <View style={styles.imageContainer}>
-            <Image source={{uri: item}} style={styles.image} />
-          </View>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => console.log('Touched Image:', item)}>
+            <View style={styles.imageContainer}>
+              <Image source={{uri: item}} style={styles.image} />
+            </View>
+          </TouchableOpacity>
         )}
       />
     </View>

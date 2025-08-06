@@ -17,6 +17,7 @@ type ProductItemProps = {
     price: string | number;
     discountPrice?: string | number | null;
     description?: string;
+    stocks?: number;
   };
   index: number;
   onPress?: () => void;
@@ -24,12 +25,6 @@ type ProductItemProps = {
 
 const fallbackImage =
   'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749819426/uxxb1eun3m48lkt6bgkb.png';
-
-const logWarning = (msg: string) => {
-  if (__DEV__) {
-    console.warn(msg);
-  }
-};
 
 const getImageSource = (img: ImageType): {uri: string} => {
   if (typeof img === 'string' && img.startsWith('http')) return {uri: img};
@@ -47,24 +42,24 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
   const isSecondColumn = index % 2 !== 0;
 
   const originalPrice = Number(item.price);
-  const discountPrice = Number(item.discountPrice);
+  const discountPrice = Number(item.discountPrice ?? 0);
   const hasValidDiscount =
-    item.discountPrice &&
+    !!item.discountPrice &&
     !isNaN(originalPrice) &&
     !isNaN(discountPrice) &&
     discountPrice > originalPrice;
-
+  // console.log('Stocks Details : ', item);
   const discountPercent = hasValidDiscount
     ? Math.round(((discountPrice - originalPrice) / discountPrice) * 100)
     : 0;
+
+  const stockText = item.stocks !== undefined ? item.stocks : 'N/A';
 
   return (
     <View style={[styles.container, {marginRight: isSecondColumn ? 1 : 0}]}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.3}>
         <View style={styles.imageContainer}>
           <Image source={getImageSource(item?.image)} style={styles.image} />
-
-          {/* Discount Badge */}
           {hasValidDiscount && (
             <View style={styles.discountBadge}>
               <CustomText style={styles.discountText}>
@@ -84,11 +79,6 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
                   source={getImageSource(subImg)}
                   style={styles.subImageThumb}
                   resizeMode="cover"
-                  onError={() =>
-                    logWarning(
-                      `[ProductItem] Sub-image load failed (index ${idx})`,
-                    )
-                  }
                 />
               ))
           ) : (
@@ -107,6 +97,27 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
             </CustomText>
           </View>
 
+          {item.stocks !== undefined &&
+            (item.stocks === 0 ? (
+              <CustomText
+                style={{
+                  color: '#d9534f',
+                  fontSize: RFValue(8),
+                  marginTop: 2,
+                }}>
+                Out of stock
+              </CustomText>
+            ) : item.stocks < 11 ? (
+              <CustomText
+                style={{
+                  color: '#d9534f',
+                  fontSize: RFValue(8),
+                  marginTop: 2,
+                }}>
+                Only {item.stocks} left in stock!
+              </CustomText>
+            ) : null)}
+
           <CustomText
             fontFamily={Fonts.Medium}
             variant="h8"
@@ -116,25 +127,28 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
           </CustomText>
 
           <View style={styles.priceContainer}>
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-              {hasValidDiscount && (
+            <View>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                {hasValidDiscount && (
+                  <CustomText
+                    style={{
+                      textDecorationLine: 'line-through',
+                      color: '#777',
+                      fontSize: RFValue(10),
+                    }}>
+                    ₹{discountPrice}
+                  </CustomText>
+                )}
                 <CustomText
                   style={{
-                    textDecorationLine: 'line-through',
-                    color: '#777',
-                    fontSize: RFValue(10),
+                    color: '#2e7231ff',
+                    fontSize: RFValue(12),
+                    fontWeight: 'bold',
                   }}>
-                  ₹{discountPrice}
+                  ₹{originalPrice}
                 </CustomText>
-              )}
-              <CustomText
-                style={{
-                  color: '#2e7231ff',
-                  fontSize: RFValue(12),
-                  fontWeight: 'bold',
-                }}>
-                ₹{originalPrice}
-              </CustomText>
+              </View>
             </View>
             <UniversalAdd item={item} />
           </View>
@@ -146,14 +160,14 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '49%',
+    width: '50%',
     borderRadius: 12,
     backgroundColor: '#fff',
     marginBottom: 10,
     elevation: 3,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: {width: 0, height: 1},
     shadowRadius: 4,
     overflow: 'hidden',
   },

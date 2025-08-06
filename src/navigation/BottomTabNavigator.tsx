@@ -6,6 +6,7 @@ import Profile from '@features/profile/profile';
 import CustomerStack from './CustomerStack';
 import CartList from '@features/cart/CartList';
 import {useCartStore} from '@state/CartStore';
+import Sidebar from '@features/category/Sidebar';
 
 const Tab = createBottomTabNavigator();
 
@@ -28,6 +29,8 @@ const BottomTabNavigator = () => {
             iconName = focused ? 'basket' : 'basket-outline';
           } else if (route.name === 'Account') {
             iconName = focused ? 'account' : 'account-outline';
+          } else if (route.name === 'Menu') {
+            iconName = 'menu'; // same icon for focused and unfocused
           }
 
           return <Icon name={iconName} size={size} color={color} />;
@@ -43,15 +46,9 @@ const BottomTabNavigator = () => {
         options={{
           tabBarLabel: 'Cart',
           tabBarBadge: totalItems > 0 ? totalItems : undefined,
-          tabBarIcon: ({focused, color, size}) => (
-            <Icon
-              name={focused ? 'basket' : 'basket-outline'}
-              size={size}
-              color={color}
-            />
-          ),
         }}
       />
+      <Tab.Screen name="Menu" component={Sidebar} />
       <Tab.Screen name="Account" component={Profile} />
     </Tab.Navigator>
   );

@@ -197,7 +197,7 @@ const ProductCategories = () => {
       } catch (error) {
         console.error('[fetchSubcategories] Error:', error);
 
-        // ✅ Delay 6 seconds before showing alert
+        // ✅ Delay 1 seconds before showing alert
         setTimeout(() => {
           Alert.alert(
             'Server Problem',
@@ -224,40 +224,40 @@ const ProductCategories = () => {
     }
   };
 
-  const renderSubcategory = useMemo(
-    () =>
-      !overrideProducts.length && (
-        <View style={styles.subcategoryGrid}>
-          {subcategories.map(sub => {
-            const id = sub._id || sub.id;
-            const uri =
-              typeof sub?.image === 'string'
-                ? sub.image
-                : sub?.image?.uri || fallbackImage;
+  // const renderSubcategory = useMemo(
+  //   () =>
+  //     !overrideProducts.length && (
+  //       <View style={styles.subcategoryGrid}>
+  //         {subcategories.map(sub => {
+  //           const id = sub._id || sub.id;
+  //           const uri =
+  //             typeof sub?.image === 'string'
+  //               ? sub.image
+  //               : sub?.image?.uri || fallbackImage;
 
-            return (
-              <TouchableOpacity
-                key={id}
-                style={[
-                  styles.subcategoryCard,
-                  selectedSubId === id && styles.selectedSubcategoryCard,
-                ]}
-                onPress={() => handleSubcategoryPress(id)}>
-                <Image
-                  source={{uri}}
-                  style={styles.subcategoryImage}
-                  resizeMode="contain"
-                />
-                <CustomText style={styles.subcategoryName}>
-                  {sub.name}
-                </CustomText>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      ),
-    [subcategories, selectedSubId, overrideProducts],
-  );
+  //           return (
+  //             <TouchableOpacity
+  //               key={id}
+  //               style={[
+  //                 styles.subcategoryCard,
+  //                 selectedSubId === id && styles.selectedSubcategoryCard,
+  //               ]}
+  //               onPress={() => handleSubcategoryPress(id)}>
+  //               <Image
+  //                 source={{uri}}
+  //                 style={styles.subcategoryImage}
+  //                 resizeMode="contain"
+  //               />
+  //               <CustomText style={styles.subcategoryName}>
+  //                 {sub.name}
+  //               </CustomText>
+  //             </TouchableOpacity>
+  //           );
+  //         })}
+  //       </View>
+  //     ),
+  //   [subcategories, selectedSubId, overrideProducts],
+  // );
 
   const renderItem = useCallback(
     ({item, index}: {item: any; index: number}) => {
@@ -274,6 +274,7 @@ const ProductCategories = () => {
         price: item.price,
         discountPrice: item.discountPrice || '',
         description: item.description || '',
+        stocks: item.stocks ?? item.stock ?? 0,
         subcategory:
           item.subcategory?._id ||
           item.subcategoryId ||
@@ -290,7 +291,6 @@ const ProductCategories = () => {
               searchResults?.length > 0
                 ? transformedItem.subcategory || selectedSubId
                 : selectedSubId;
-
             const relatedProducts =
               overrideProducts.length > 0 ? overrideProducts : products;
 
@@ -344,7 +344,7 @@ const ProductCategories = () => {
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#fff'},
-  content: {paddingHorizontal: 10, paddingBottom: 50},
+  content: {paddingHorizontal: 6, paddingBottom: 50},
   subcategoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

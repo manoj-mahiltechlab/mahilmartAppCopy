@@ -1,35 +1,62 @@
-import {View, StyleSheet, Pressable} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ToastAndroid,
+  Alert,
+} from 'react-native';
 import React, {FC} from 'react';
 import {useCartStore} from '@state/CartStore';
 import CustomText from './CustomText';
 import {Fonts, Colors} from '@utils/Constants';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {TouchableOpacity} from 'react-native';
 
 const UniversalAdd: FC<{item: any}> = ({item}) => {
   const count = useCartStore(
     state => state.cart.find(i => i._id === (item._id || item.id))?.count || 0,
   );
-
   const {addItem, removeItem} = useCartStore();
+  const isOutOfStock = item?.stocks === 0;
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: count === 0 ? '#fff' : Colors.secondary,
+          backgroundColor:
+            isOutOfStock || count === 0 ? '#fff' : Colors.secondary,
+          borderColor: isOutOfStock ? '#ccc' : Colors.secondary,
         },
       ]}>
-      {count === 0 ? (
+      {isOutOfStock ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.fullButton}
+          onPress={() => {
+            Alert.alert(
+              'Out of Stock',
+              `Is currently out of stock.\nYou will be notified when it's available.`,
+              [{text: 'OK'}],
+            );
+          }}>
+          <CustomText
+            style={{
+              fontSize: RFValue(11),
+              color: Colors.secondary,
+              fontFamily: Fonts.SemiBold,
+            }}>
+            Notify Me
+          </CustomText>
+        </TouchableOpacity>
+      ) : count === 0 ? (
         <TouchableOpacity
           onPress={() => addItem({...item, _id: item._id || item.id})}
-          style={styles.add}>
+          style={styles.fullButton}>
           <CustomText
-            variant="h9"
             fontFamily={Fonts.SemiBold}
-            style={styles.addText}>
+            style={styles.addText}
+            variant="h9">
             ADD
           </CustomText>
         </TouchableOpacity>
@@ -45,6 +72,7 @@ const UniversalAdd: FC<{item: any}> = ({item}) => {
             variant="h6">
             {count}
           </CustomText>
+
           <TouchableOpacity
             onPressOut={() => addItem({...item, _id: item._id || item.id})}>
             <Icon name="plus" color="#fff" size={RFValue(15)} />
@@ -57,17 +85,18 @@ const UniversalAdd: FC<{item: any}> = ({item}) => {
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.secondary,
+    height: 34,
     width: 75,
     borderRadius: 8,
-    zIndex: 10,
+    borderWidth: 1,
     elevation: 5,
-    overflow: 'visible',
+    zIndex: 10,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  add: {
+  fullButton: {
+    flex: 1,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
@@ -76,14 +105,13 @@ const styles = StyleSheet.create({
   },
   addText: {
     color: Colors.secondary,
-    fontSize: 11,
+    fontSize: RFValue(11),
   },
   counterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 4,
-    paddingVertical: 6,
     justifyContent: 'space-between',
   },
   text: {

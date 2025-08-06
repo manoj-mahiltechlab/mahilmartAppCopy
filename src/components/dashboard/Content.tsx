@@ -43,7 +43,7 @@ const Content: FC = () => {
       const sectionData = await getAllSections();
       if (sectionData?.success && Array.isArray(sectionData.sections)) {
         setAllSections(sectionData.sections);
-        console.log('✅ Sections updated:', sectionData.sections);
+        //    console.log('✅ Sections updated:', sectionData.sections);
       } else {
         setAllSections([]);
         console.warn('⚠️ No sections found');
@@ -114,12 +114,12 @@ const Content: FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 5,
     flex: 1,
   },
   sectionHeader: {
     paddingHorizontal: 12,
-    paddingTop: 20,
+    paddingTop: 1,
     paddingBottom: 30, // gap between name and grid
   },
 });

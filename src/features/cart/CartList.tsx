@@ -14,14 +14,10 @@ import CustomHeader from '@components/ui/CustomHeader';
 import {CustomerStackParamList} from '@navigation/CustomerStack';
 import {RootStackParamList} from '@navigation/Navigation';
 
-type NavigationProp = NativeStackNavigationProp<
-  CustomerStackParamList,
-  'CartList'
->;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'CartList'>;
+
 const CartList = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  // const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<NavigationProp>();
   const cartItems = useCartStore(state => state.cart);
   const totalItems = cartItems?.reduce((acc, item) => acc + item.count, 0);
   const hasItems = cartItems && cartItems.length > 0;
@@ -42,9 +38,9 @@ const CartList = () => {
               style={styles.emptyButton}
               onPress={() => {
                 navigation.navigate('BottomTabs', {
-                  screen: 'Home', // important: this is the name of the tab
+                  screen: 'Home',
                   params: {
-                    screen: 'ProductDashboard', // this is the nested stack screen
+                    screen: 'ProductDashboard',
                   },
                 });
               }}>
@@ -55,6 +51,16 @@ const CartList = () => {
           </View>
         )}
       </ScrollView>
+
+      {hasItems && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.checkoutButton}
+            onPress={() => navigation.navigate('ProductOrder')}>
+            <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -77,13 +83,6 @@ const styles = StyleSheet.create({
     shadowRadius: 1.5,
     paddingBottom: 10,
   },
-  startShoppingButton: {
-    marginTop: 16,
-    color: '#007BFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -93,9 +92,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#888',
+    marginBottom: 10,
   },
   emptyButton: {
-    marginTop: 12,
     backgroundColor: '#007BFF',
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -111,23 +110,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-
-  subText: {
-    marginTop: 6,
-    fontSize: 14,
-    color: '#aaa',
-  },
   footer: {
     backgroundColor: '#fff',
     padding: 16,
     borderTopWidth: 1,
     borderColor: '#ddd',
     elevation: 10,
-  },
-  totalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 0,
   },
   checkoutButton: {
     backgroundColor: '#007BFF',

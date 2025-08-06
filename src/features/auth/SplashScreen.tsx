@@ -247,7 +247,7 @@ const SplashScreen: FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('🔁 SplashScreen useEffect triggered, isFocused:', isFocused);
+    //  console.log('🔁 SplashScreen useEffect triggered, isFocused:', isFocused);
     if (isFocused && !hasCheckedPermissions.current) {
       hasCheckedPermissions.current = true;
       console.log('✅ Running checkLocationAndPermission');

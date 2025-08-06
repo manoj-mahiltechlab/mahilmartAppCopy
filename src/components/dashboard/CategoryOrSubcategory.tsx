@@ -45,7 +45,7 @@ const CategoryOrSubcategory = () => {
   const [subcategories, setSubcategories] = useState<SubcategoryType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  console.log('Subcategory :', subcategories);
+  //console.log('Subcategory :', subcategories);
 
   useEffect(() => {
     if (!categoryId) return;
@@ -122,7 +122,7 @@ const CategoryOrSubcategory = () => {
           style={styles.text}
           variant="h8"
           fontFamily={Fonts.Medium}
-          numberOfLines={2}>
+          numberOfLines={5}>
           {item.name}
         </CustomText>
       </TouchableOpacity>

@@ -66,7 +66,7 @@ export const getProductsBySubcategoryId = async (subcategoryId: string) => {
         name: product.name,
         price: product.price,
         discountPrice: product.discountPrice || null,
-        quantity: product.quantity,
+        stocks: product.stocks,
         image: {
           uri: product.image || '',
         },

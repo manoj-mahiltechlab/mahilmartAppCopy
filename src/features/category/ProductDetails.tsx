@@ -40,6 +40,7 @@ type Product = {
   description?: string;
   subcategory?: string;
   subcategoryId?: string;
+  stocks?: number;
 };
 
 type RootStackParamList = {
@@ -290,6 +291,7 @@ const ProductDetails = () => {
               price: item.price,
               discountPrice: item.discountPrice,
               description: item.description,
+              stocks: item.stocks ?? item.stock ?? 0,
               subcategory:
                 item.subcategory || item.subcategoryId || touchedSubcategoryId,
             };

@@ -58,7 +58,7 @@ const SearchResults = () => {
             touchedSubcategoryId:
               transformedItem.subcategory || transformedItem.subcategoryId,
             fromSearch: true,
-            passedRelated: searchResults, //match what ProductDetails expects
+            passedRelated: searchResults,
           })
         }
       />

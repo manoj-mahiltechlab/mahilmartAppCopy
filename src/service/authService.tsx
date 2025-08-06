@@ -7,32 +7,6 @@ import {appAxios} from './apiInterceptors';
 import {resetAndNavigate} from '@utils/NavigationUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// export const customerLogin = async (phone: string) => {
-//   try {
-//     console.log('customerLogin phone', phone);
-//     const response = await axios.post(`${BASE_URL}/customer/login`, {phone});
-//     const {accessToken, refreshToken, customer} = response.data;
-//     console.log('accessToken', accessToken);
-//     console.log('refreshToken', refreshToken);
-//     console.log('customer', customer);
-
-//     tokenStorage.set('accessToken', accessToken);
-//     tokenStorage.set('refreshToken', refreshToken);
-
-//     const {setUser} = useAuthStore.getState();
-
-//     // ✅ Add token to Zustand user object
-//     setUser({
-//       ...customer,
-//       token: accessToken, // ✅ Store token here
-//     });
-
-//     console.log(`"customer Details": `, customer);
-//   } catch (error) {
-//     console.log('Login Error', error);
-//   }
-// };
-
 export const customerLogin = async (phone: string) => {
   try {
     const response = await axios.post(`${BASE_URL}/customer/login`, {phone});
@@ -192,7 +166,7 @@ export const getAdImages = async (title: string) => {
 export const getAllSections = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/sections`);
-    console.log('📦 All sections fetched:', response.data);
+    // console.log('📦 All sections fetched:', response.data);
     return response.data; // ✅ Not response.data.sections
   } catch (error) {
     console.error('❌ Failed to fetch all sections:', error);
