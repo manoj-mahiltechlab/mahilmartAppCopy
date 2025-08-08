@@ -122,13 +122,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5F3F3',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 6,
+    padding: 4,
     marginBottom: 6,
   },
   image: {
     width: '100%',
-    height: '100%',
+    aspectRatio: 1, // ensures square shape
+    borderRadius: 18,
+    resizeMode: 'contain',
+    overflow: 'hidden',
   },
+
   subImagesContainer: {
     flexDirection: 'row',
     justifyContent: 'center',

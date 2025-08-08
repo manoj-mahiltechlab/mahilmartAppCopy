@@ -89,15 +89,20 @@ export const updateUserLocation = async (data: any, setUser: any) => {
   }
 };
 export const sendCustomerOtp = async (phone: string) => {
-  const res = await axios.post(`${BASE_URL}/customer/send-otp`, {phone});
-
-  console.log('✅ OTP Sent:', res.data);
-
-  if (res.data.otpToken) {
-    await AsyncStorage.setItem('otpToken', res.data.otpToken);
+  try {
+    const response = await axios.post(`${BASE_URL}/customer/send-otp`, {
+      phone,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      '❌ OTP Send Error:',
+      error?.response?.data || error.message,
+      '\nStatus:',
+      error?.response?.status,
+    );
+    throw error;
   }
-
-  return res.data;
 };
 
 // ✅ Step 2: Verify OTP
@@ -136,6 +141,7 @@ export const searchProducts = async (query: string) => {
     const response = await axios.get(`${BASE_URL}/api/products/search`, {
       params: {q: query},
     });
+    console.log('data :', response);
     return response.data;
   } catch (error) {
     console.log('Search Product Error:', error);
@@ -171,5 +177,28 @@ export const getAllSections = async () => {
   } catch (error) {
     console.error('❌ Failed to fetch all sections:', error);
     return {success: false, sections: []};
+  }
+};
+
+export const fetchProductByUnitId = async unitId => {
+  try {
+    const response = await axios.get(`${BASE_URL}/product/unit/${unitId}`);
+    console.log('response data in touched units :: ', response.data);
+    return response.data; // The product object
+  } catch (error) {
+    console.error('Error fetching product by unit id:', error);
+    return null;
+  }
+};
+export const fetchProductByProductId = async productId => {
+  try {
+    const url = `${BASE_URL}/product/${productId}`;
+    console.log('Request URL:', url);
+    const response = await axios.get(url);
+    console.log('Fetched product by productRef:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching product by productRef:', error);
+    return null;
   }
 };

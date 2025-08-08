@@ -34,6 +34,7 @@ import {Fonts, lightColors} from '@utils/Constants';
 import {RootStackParamList} from '@navigation/Navigation';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import {sendCustomerOtp} from '@service/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const bottomColors = [...lightColors].reverse();
 
@@ -106,7 +107,11 @@ const CustomerLogin = () => {
     try {
       const response = await sendCustomerOtp(phoneNumber);
       console.log('📲 OTP response:', response);
+
       if (response?.success) {
+        // ✅ Save the OTP token to storage for later use
+        await AsyncStorage.setItem('otpToken', response.otpToken);
+
         navigation.navigate('VerifyOtp', {phoneNumber});
       } else {
         Alert.alert('OTP Failed', response?.message || 'Please try again.');

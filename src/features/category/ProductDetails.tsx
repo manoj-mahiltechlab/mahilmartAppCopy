@@ -8,6 +8,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Share,
+  ScrollView,
 } from 'react-native';
 import {
   useRoute,
@@ -24,10 +25,17 @@ import ProductItem from '@features/category/ProductItem';
 import {getProductsBySubcategoryId} from '@service/ProductService';
 import withCart from '@features/cart/WithCart';
 import ImageViewing from 'react-native-image-viewing';
+import {fetchProductByProductId} from '@service/authService';
 
 const {width} = Dimensions.get('window');
 const fallbackImage =
   'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749819426/uxxb1eun3m48lkt6bgkb.png';
+
+type Unit = {
+  gram: number;
+  price: number;
+  _id: string;
+};
 
 type Product = {
   _id?: string;
@@ -41,6 +49,7 @@ type Product = {
   subcategory?: string;
   subcategoryId?: string;
   stocks?: number;
+  units?: Unit[]; // added units here
 };
 
 type RootStackParamList = {
@@ -61,7 +70,6 @@ type RootStackParamList = {
 const ProductDetails = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'ProductDetails'>>();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-
   const {
     product: initialProduct,
     touchedSubcategoryId,
@@ -85,7 +93,19 @@ const ProductDetails = () => {
   const [imageIndex, setImageIndex] = useState(0);
   const [loadingProduct, setLoadingProduct] = useState(false);
 
+  // State to track selected unit index
+  const [selectedUnitIndex, setSelectedUnitIndex] = useState(0);
+  const selectedUnit = product.units?.[selectedUnitIndex];
+
   const originalRelatedProductsRef = useRef<Product[]>([]);
+
+  // Calculate displayed price based on selected unit (if any)
+  const displayedPrice =
+    product.units && product.units.length > 0
+      ? product.units[selectedUnitIndex].price
+      : product.price;
+
+  const displayedDiscountPrice = product.discountPrice;
 
   const images = useMemo(() => {
     const mainImage =
@@ -98,6 +118,9 @@ const ProductDetails = () => {
       setLoadingProduct(false);
     }, []),
   );
+  useEffect(() => {
+    setSelectedUnitIndex(0);
+  }, [product]);
 
   useEffect(() => {
     const hasPassedRelated =
@@ -204,9 +227,17 @@ const ProductDetails = () => {
       <View style={styles.detailsContainer}>
         <CustomText style={styles.name}>{product.name}</CustomText>
 
+        {/* Price and units container */}
         <View style={styles.priceContainer1}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-            {product.discountPrice && (
+            {selectedUnit ? (
+              <>
+                {/* If you have discount per unit, replace below accordingly */}
+                <CustomText style={{fontWeight: 'bold', color: '#222'}}>
+                  ₹{selectedUnit.price.toFixed(2)}
+                </CustomText>
+              </>
+            ) : product.discountPrice ? (
               <>
                 <CustomText
                   style={{color: '#777', textDecorationLine: 'line-through'}}>
@@ -216,15 +247,103 @@ const ProductDetails = () => {
                   ₹{product.price}
                 </CustomText>
               </>
-            )}
-            {!product.discountPrice && (
+            ) : (
               <CustomText style={{fontWeight: 'bold', color: '#222'}}>
                 ₹{product.price}
               </CustomText>
             )}
           </View>
-          <UniversalAdd item={product} />
+
+          {/* Pass the selected unit if UniversalAdd supports it */}
+          <UniversalAdd
+            item={{
+              ...product,
+              price: selectedUnit ? selectedUnit.price : product.price,
+              unit: selectedUnit, // optional: you can pass the selected unit for cart
+            }}
+          />
         </View>
+
+        {/* Units buttons */}
+        {product.units && product.units.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.unitsContainer}
+            contentContainerStyle={{paddingHorizontal: 10}}>
+            {product.units.map((unit, index) => {
+              const isSelected = index === selectedUnitIndex;
+              return (
+                <TouchableOpacity
+                  key={unit._id}
+                  style={[
+                    styles.unitButton,
+                    isSelected
+                      ? styles.unitButtonSelected
+                      : styles.unitButtonUnselected,
+                    index !== product.units.length - 1 && {marginRight: 10},
+                  ]}
+                  onPress={async () => {
+                    const productRefId = unit.productRef; // get the referenced product ID
+                    console.log('Selected unit:', unit);
+                    console.log('Referenced product ID:', productRefId);
+
+                    if (!productRefId) {
+                      console.warn('No referenced product found for this unit');
+                      alert('No referenced product found for this unit');
+                      return;
+                    }
+
+                    setLoadingProduct(true); // optional, show loading
+                    console.log('Fetching product by productRefId...');
+
+                    try {
+                      const productData = await fetchProductByProductId(
+                        productRefId,
+                      );
+                      console.log('Fetched product data:', productData);
+
+                      if (productData) {
+                        setProduct(productData);
+                        setSelectedUnitIndex(0);
+                        console.log(
+                          'Product updated with selected unit product',
+                        );
+                      } else {
+                        console.warn(
+                          'Product not found for productRefId:',
+                          productRefId,
+                        );
+                        alert('Product not found');
+                      }
+                    } catch (err) {
+                      console.error('Error fetching product:', err);
+                      alert('Error fetching product');
+                    } finally {
+                      setLoadingProduct(false);
+                    }
+                  }}>
+                  <CustomText
+                    style={
+                      isSelected
+                        ? styles.unitTextSelected
+                        : styles.unitTextUnselected
+                    }>
+                    {unit.gram}g
+                  </CustomText>
+                  <CustomText
+                    style={
+                      isSelected
+                        ? styles.unitTextSelected
+                        : styles.unitTextUnselected
+                    }>
+                    ₹{unit.price.toFixed(2)}
+                  </CustomText>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
 
         <CustomText style={styles.sectionTitle}>Description</CustomText>
         <CustomText
@@ -367,6 +486,36 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginVertical: 8,
     color: '#333',
+  },
+  unitsContainer: {
+    flexDirection: 'row',
+    marginVertical: 8,
+  },
+  unitButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    minWidth: 125,
+  },
+  unitButtonSelected: {
+    borderColor: '#00bfa5',
+    backgroundColor: '#b2dfdb',
+  },
+  unitButtonUnselected: {
+    borderColor: '#ccc',
+    backgroundColor: '#f7f7f7',
+  },
+  unitTextSelected: {
+    color: '#00796b',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  unitTextUnselected: {
+    color: '#555',
+    fontWeight: '500',
+    fontSize: 14,
   },
   toggleMore: {color: '#007BFF', fontSize: 13, fontWeight: '500'},
 });

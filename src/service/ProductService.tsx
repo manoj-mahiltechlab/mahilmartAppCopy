@@ -58,6 +58,7 @@ export const getProductsBySubcategoryId = async (subcategoryId: string) => {
       );
       return {success: false, products: []};
     }
+    console.log('products in subcategory related:: ', response.data);
 
     return {
       success: true,
@@ -72,6 +73,7 @@ export const getProductsBySubcategoryId = async (subcategoryId: string) => {
         },
         description: product.description || '',
         subImages: product.subImages || [],
+        units: product.units || [],
       })),
     };
   } catch (error) {

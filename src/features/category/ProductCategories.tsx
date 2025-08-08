@@ -275,6 +275,7 @@ const ProductCategories = () => {
         discountPrice: item.discountPrice || '',
         description: item.description || '',
         stocks: item.stocks ?? item.stock ?? 0,
+        units: Array.isArray(item.units) ? item.units : [],
         subcategory:
           item.subcategory?._id ||
           item.subcategoryId ||
@@ -300,6 +301,7 @@ const ProductCategories = () => {
               fromSearch: !!searchResults?.length,
               relatedProducts, // Pass related products from memory
             });
+            console.log('transformedItem ::', transformedItem);
           }}
         />
       );

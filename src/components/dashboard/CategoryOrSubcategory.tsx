@@ -148,7 +148,7 @@ const CategoryOrSubcategory = () => {
         numColumns={4}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.flatListContent}
-        columnWrapperStyle={{justifyContent: 'space-between'}}
+        columnWrapperStyle={styles.row} // <-- change here
       />
     </View>
   );
@@ -159,26 +159,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAFAFA',
     paddingHorizontal: 12,
+    justifyContent: 'flex-start',
   },
   flatListContent: {
     paddingBottom: 20,
     paddingTop: 12,
   },
   item: {
-    width: '23%',
+    flexBasis: '23%', // use flexBasis instead of width
     alignItems: 'center',
     marginBottom: 16,
+    marginRight: '2%', // optional: add gap between columns
   },
+
   imageContainer: {
     width: '100%',
     height: 100,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    padding: 9,
+    padding: 4,
     backgroundColor: '#E5F3F3',
     marginBottom: 8,
   },
+  row: {
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+
   image: {
     width: '100%',
     height: '100%',

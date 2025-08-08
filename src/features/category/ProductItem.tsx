@@ -18,6 +18,7 @@ type ProductItemProps = {
     discountPrice?: string | number | null;
     description?: string;
     stocks?: number;
+    units?: UnitType[];
   };
   index: number;
   onPress?: () => void;
@@ -47,10 +48,11 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
     !!item.discountPrice &&
     !isNaN(originalPrice) &&
     !isNaN(discountPrice) &&
-    discountPrice > originalPrice;
+    discountPrice < originalPrice;
+
   // console.log('Stocks Details : ', item);
   const discountPercent = hasValidDiscount
-    ? Math.round(((discountPrice - originalPrice) / discountPrice) * 100)
+    ? Math.round(((originalPrice - discountPrice) / originalPrice) * 100)
     : 0;
 
   const stockText = item.stocks !== undefined ? item.stocks : 'N/A';
@@ -137,7 +139,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
                       color: '#777',
                       fontSize: RFValue(10),
                     }}>
-                    ₹{discountPrice}
+                    ₹{originalPrice}
                   </CustomText>
                 )}
                 <CustomText
@@ -146,7 +148,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
                     fontSize: RFValue(12),
                     fontWeight: 'bold',
                   }}>
-                  ₹{originalPrice}
+                  ₹{discountPrice}
                 </CustomText>
               </View>
             </View>
