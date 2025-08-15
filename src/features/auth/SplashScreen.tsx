@@ -139,17 +139,26 @@ const SplashScreen: FC = () => {
         Geolocation.getCurrentPosition(
           () => resolve(true),
           error => {
-            console.log('Geolocation error:', error);
-
-            if (error.code === 1) {
+            if (
+              error.code === 1 || // Permission denied
+              error.code === 2 // Position unavailable
+            ) {
               resolve(false);
+            } else if (error.code === 3) {
+              // Timeout
+              // Retry with less accuracy as a fallback
+              Geolocation.getCurrentPosition(
+                () => resolve(true),
+                () => resolve(false),
+                {enableHighAccuracy: false, timeout: 3000, maximumAge: 0},
+              );
             } else {
-              resolve(true);
+              resolve(false);
             }
           },
           {
             enableHighAccuracy: true,
-            timeout: 2000,
+            timeout: 1000,
             maximumAge: 0,
           },
         );
@@ -253,7 +262,7 @@ const SplashScreen: FC = () => {
       console.log('✅ Running checkLocationAndPermission');
       setTimeout(() => {
         checkLocationAndPermission();
-      }, 100);
+      }, 1000);
     }
   }, [isFocused, checkLocationAndPermission]);
 

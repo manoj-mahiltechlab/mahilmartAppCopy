@@ -75,7 +75,7 @@ const ProductCategories = () => {
       setProducts(productsArray);
 
       if (!success || productsArray.length === 0) {
-        setTimeout(() => setShowNoProductMessage(true), 500);
+        setTimeout(() => setShowNoProductMessage(true), 50);
       }
     } catch (error) {
       console.error(
@@ -83,7 +83,7 @@ const ProductCategories = () => {
         error,
       );
       setProducts([]);
-      setTimeout(() => setShowNoProductMessage(true), 500);
+      setTimeout(() => setShowNoProductMessage(true), 50);
     } finally {
       setProductsLoading(false);
     }
@@ -101,6 +101,18 @@ const ProductCategories = () => {
       setOverrideProducts([]);
     }
   }, [searchResults]);
+
+  useEffect(() => {
+    if (selectedSubId) {
+      getProductsBySubcategoryId(selectedSubId).then(result => {
+        if (result.success) {
+          setProducts(result.products);
+        } else {
+          setProducts([]);
+        }
+      });
+    }
+  }, [selectedSubId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -204,7 +216,7 @@ const ProductCategories = () => {
             'Unable to connect to the server. Please check your internet connection and try again.',
             [{text: 'OK'}],
           );
-        }, 1000);
+        }, 100);
       }
     };
 

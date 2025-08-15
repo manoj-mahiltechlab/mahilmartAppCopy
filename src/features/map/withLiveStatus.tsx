@@ -23,7 +23,9 @@ const withLiveStatus = <P extends object>(
       if (!currentOrder?._id) return;
       try {
         const data = await getOrderById(currentOrder._id);
-        setCurrentOrder(data);
+        if (data) {
+          setCurrentOrder(data);
+        }
       } catch (err) {
         console.error('Failed to fetch order details', err);
       }
@@ -48,7 +50,25 @@ const withLiveStatus = <P extends object>(
     return (
       <View style={styles.container}>
         <WrappedComponent {...props} />
-        {currentOrder &&
+
+        {/* No active order placeholder */}
+        {!currentOrder?._id && routeName === 'ProductDashboard' && (
+          <View
+            style={[
+              hocStyles.cartContainer,
+              {alignItems: 'center', justifyContent: 'center'},
+            ]}>
+            <CustomText
+              variant="h7"
+              fontFamily={Fonts.Medium}
+              style={{color: Colors.disabled}}>
+              No active order
+            </CustomText>
+          </View>
+        )}
+
+        {/* Active order status bar */}
+        {currentOrder?._id &&
           currentOrder.status !== 'delivered' &&
           routeName === 'ProductDashboard' && (
             <View

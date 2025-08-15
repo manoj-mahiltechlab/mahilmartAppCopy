@@ -49,19 +49,42 @@ export const deliveryLogin = async (email: string, password: string) => {
 export const refresh_Tokens = async () => {
   try {
     const refreshToken = tokenStorage.getString('refreshToken');
+
+    if (!refreshToken) {
+      console.warn('⚠ No refresh token available. Logging out.');
+      tokenStorage.clearAll();
+      resetAndNavigate('CustomerLogin');
+      return null;
+    }
+
     const response = await axios.post(`${BASE_URL}/refresh-token`, {
       refreshToken,
     });
-    const new_access_token = response.data.accessToken;
-    const new_refresh_token = response.data.refreshToken;
 
-    tokenStorage.set('accessToken', new_access_token);
-    tokenStorage.set('refreshToken', new_refresh_token);
-    return new_access_token;
-  } catch (error) {
-    console.log('REFRESH TOKEN ERROR : ', error);
+    if (!response?.data?.accessToken) {
+      throw new Error(response.data?.message || 'No access token in response');
+    }
+
+    const newAccessToken = response.data.accessToken;
+    const newRefreshToken = response.data.refreshToken || refreshToken; // fallback to old if not returned
+
+    // Store updated tokens
+    tokenStorage.set('accessToken', newAccessToken);
+    tokenStorage.set('refreshToken', newRefreshToken);
+
+    console.log('✅ Token refreshed successfully');
+
+    return newAccessToken;
+  } catch (error: any) {
+    console.error(
+      '❌ REFRESH TOKEN ERROR:',
+      error?.response?.data || error.message,
+    );
+
+    // Cleanup & redirect
     tokenStorage.clearAll();
     resetAndNavigate('CustomerLogin');
+    return null;
   }
 };
 

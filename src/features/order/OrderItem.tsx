@@ -49,7 +49,7 @@ const OrderItem: FC<{item: any}> = ({item}) => {
           variant="h8"
           fontFamily={Fonts.Medium}
           style={{alignSelf: 'flex-end', marginTop: 4}}>
-          ₹{item.count * product?.price}
+          ₹{item.count * item.price} {/* discounted price */}
         </CustomText>
       </View>
     </View>

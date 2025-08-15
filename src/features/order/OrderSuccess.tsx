@@ -19,15 +19,17 @@ const OrderSuccess: FC = () => {
   } = route.params || {};
 
   useEffect(() => {
+    if (!route.params?.orderId) {
+      console.error('❌ No orderId passed to OrderSuccess');
+      return;
+    }
     const timeoutId = setTimeout(() => {
       replace('LiveTracking', {
-        addressType,
-        deliveryAddress,
+        orderId: route.params.orderId,
       });
-      console.log('delivery Address 🚚: ', deliveryAddress);
     }, 2300);
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [route.params?.orderId]);
 
   const formattedAddressType =
     addressType === 'primary'

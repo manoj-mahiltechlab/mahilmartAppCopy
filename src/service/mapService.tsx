@@ -12,7 +12,7 @@ export const reverseGeocode = async (
       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAP_API}`,
     );
 
-    //console.log('response.data : ', response.data);
+    console.log('response.data : ', response.data);
     if (response.data.status === 'OK') {
       const PrimaryAddress = response.data.results[1].formatted_address;
 

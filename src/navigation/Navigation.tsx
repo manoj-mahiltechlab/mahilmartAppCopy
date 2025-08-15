@@ -18,6 +18,8 @@ import SearchScreen from '../screens/SearchScreen';
 import {CustomerStackParamList} from './CustomerStack';
 import EditAddressScreen from '@features/order/EditAddressScreen';
 import ProductDashboard from '@features/dashboard/ProductDashboard';
+import OrderSuccess from '@features/order/OrderSuccess';
+import LiveTracking from '@features/map/LiveTracking';
 
 console.log('Screens loaded:', {
   SplashScreen,
@@ -55,6 +57,17 @@ export type RootStackParamList = {
     addressType: string;
   };
   SearchScreen: undefined;
+  OrderSuccess: {
+    cartData: any;
+    totalAmount: number;
+    deliveryAddress: string;
+    addressType: string;
+    userId: string;
+    liveLocation: {
+      latitude: number;
+      longitude: number;
+    };
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -78,6 +91,8 @@ const Navigation: FC = () => {
         <Stack.Screen name="SearchScreen" component={SearchScreen} />
         <Stack.Screen name="EditAddressScreen" component={EditAddressScreen} />
         <Stack.Screen name="ProductDashboard" component={ProductDashboard} />
+        <Stack.Screen name="OrderSuccess" component={OrderSuccess} />
+        <Stack.Screen name="LiveTracking" component={LiveTracking} />
       </Stack.Navigator>
     </NavigationContainer>
   );

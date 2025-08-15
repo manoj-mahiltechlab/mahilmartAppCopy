@@ -1,3 +1,4 @@
+// DeliveryDashboard.tsx
 import {
   View,
   StyleSheet,
@@ -30,64 +31,101 @@ const DeliveryDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
+  // Update user location
   const updateUser = () => {
     Geolocation.getCurrentPosition(
       position => {
         const {latitude, longitude} = position.coords;
-        reverseGeocode(latitude, longitude, setUser);
+        reverseGeocode(latitude, longitude, setUser)
+          .then(() => console.log('User location updated'))
+          .catch(err => console.log('Reverse geocode error:', err));
       },
-      err => console.log(err),
+      err => console.log('Geolocation error:', err),
       {enableHighAccuracy: false, timeout: 1000},
     );
   };
 
   useEffect(() => {
-    updateUser(); // Update user location on component mount
+    updateUser();
   }, []);
 
+  // Handle back press
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
         useAuthStore.getState().logout();
-
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'CustomerLogin'}],
-        });
-
+        navigation.reset({index: 0, routes: [{name: 'CustomerLogin'}]});
         return true;
       },
     );
-
     return () => backHandler.remove();
   }, []);
 
+  // Fetch orders
   const fetchData = async () => {
-    setData([]);
-    setRefreshing(true);
+    if (!user?.id || !user?.branch) {
+      console.log('User or branch not set');
+      return;
+    }
+
     setLoading(true);
-    const fetchedData = await fetchOrders(selectedTab, user?.id, user?.branch);
-    setData(fetchedData);
-    setRefreshing(false);
-    setLoading(false);
+    setRefreshing(true);
+    setData([]);
+
+    try {
+      const status = selectedTab === 'available' ? 'Pending' : 'Delivered';
+      const deliveryPartnerId = selectedTab === 'available' ? null : user.id;
+      const branchId =
+        typeof user.branch === 'object' ? user.branch._id : user.branch;
+
+      console.log(
+        'Fetching orders for branch:',
+        branchId,
+        'status:',
+        status,
+        'deliveryPartnerId:',
+        deliveryPartnerId,
+      );
+
+      const fetchedOrders = await fetchOrders(
+        status,
+        branchId,
+        deliveryPartnerId,
+      );
+
+      console.log('Fetched Orders:', fetchedOrders);
+
+      // Ensure we always have an array
+      if (Array.isArray(fetchedOrders)) setData(fetchedOrders);
+      else setData([]);
+    } catch (err) {
+      console.log('Fetch orders error:', err);
+      setData([]);
+    } finally {
+      setRefreshing(false);
+      setLoading(false);
+    }
   };
 
+  // Fetch on tab change
   useEffect(() => {
-    fetchData(); // Refetch data when the selectedTab changes
+    fetchData();
   }, [selectedTab]);
 
-  const renderOrderItem = ({item, index}: any) => {
-    return <DeliveryOrderItem index={index} item={item} />;
-  };
+  const renderOrderItem = ({item, index}: any) => (
+    <DeliveryOrderItem index={index} item={item} />
+  );
 
   return (
     <View style={styles.container}>
       <SafeAreaView>
         <DeliveryHeader name={user?.name} email={user?.email} />
       </SafeAreaView>
+
       <View style={styles.subContainer}>
         <TabBar selectedTab={selectedTab} onTabChange={setSelectedTab} />
+
         <FlatList
           data={data}
           refreshControl={
@@ -97,7 +135,7 @@ const DeliveryDashboard = () => {
             if (loading) {
               return (
                 <View style={styles.center}>
-                  <ActivityIndicator color={Colors.secondary} size={'small'} />
+                  <ActivityIndicator color={Colors.secondary} size="small" />
                 </View>
               );
             }
@@ -108,7 +146,9 @@ const DeliveryDashboard = () => {
             );
           }}
           renderItem={renderOrderItem}
-          keyExtractor={item => item.orderId}
+          keyExtractor={item =>
+            item._id || item.orderId || Math.random().toString()
+          }
           contentContainerStyle={styles.flatListContainer}
         />
       </View>

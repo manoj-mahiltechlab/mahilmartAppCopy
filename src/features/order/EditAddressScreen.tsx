@@ -21,6 +21,7 @@ import CustomText from '@components/ui/CustomText';
 import {Colors, Fonts} from '@utils/Constants';
 import {useAuthStore} from '@state/authStore';
 import axios from 'axios';
+import {BASE_URL} from '@service/config';
 
 type RootStackParamList = {
   EditAddressScreen: {
@@ -144,16 +145,17 @@ const EditAddressScreen = () => {
 
     try {
       setSaving(true);
-      const res = await axios.patch(
-        'http://192.168.1.144:3000/api/user',
-        payload,
-        {
-          headers: {Authorization: `Bearer ${user.token}`},
-        },
-      );
+
+      const res = await axios.patch(`${BASE_URL}/user`, payload, {
+        headers: {Authorization: `Bearer ${user.token}`},
+      });
 
       if (res.data?.user) {
-        setUser(res.data.user);
+        setUser({
+          ...res.data.user,
+          token: user.token,
+        });
+
         Alert.alert('Success', 'Address updated successfully!');
 
         if (fromPlaceOrder) {
