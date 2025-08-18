@@ -27,7 +27,7 @@ const CustomButton: FC<CustomButtonProps> = ({
 
   return (
     <TouchableOpacity
-      onPressOut={onPress}
+      onPress={onPress}
       disabled={disabled}
       activeOpacity={0.2}
       style={[styles.btn, getButtonStyle(disabled)]}>

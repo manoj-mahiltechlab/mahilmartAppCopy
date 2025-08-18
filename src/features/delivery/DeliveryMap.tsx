@@ -1,13 +1,18 @@
-import {View, StyleSheet, ScrollView, Alert} from 'react-native';
 import React, {useEffect, useState} from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import {useAuthStore} from '@state/authStore';
 import {
-  confirmOrder,
+  acceptOrder,
   getOrderById,
   sendLiveOrderUpdates,
 } from '@service/orderService';
 import {Colors, Fonts} from '@utils/Constants';
-
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
@@ -20,151 +25,338 @@ import Geolocation from '@react-native-community/geolocation';
 import CustomButton from '@components/ui/CustomButton';
 import {hocStyles} from '@styles/GlobleStyles';
 
+type OrderStatus =
+  | 'pending'
+  | 'available'
+  | 'processing'
+  | 'confirmed'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'cancelled';
+
+interface Order {
+  _id: string;
+  status: OrderStatus;
+  deliveryPartner?: {
+    _id: string;
+    name: string;
+  };
+  deliveryLocation: {
+    address: string;
+    lat?: number;
+    lng?: number;
+  };
+  deliveryPersonLocation?: {
+    lat: number;
+    lng: number;
+  };
+  pickupLocation?: {
+    address: string;
+    lat?: number;
+    lng?: number;
+  };
+  customer: {
+    name: string;
+    phone: string;
+    secondaryContact?: {
+      phone: string;
+    };
+  };
+  items: Array<{
+    product: {
+      name: string;
+    };
+    quantity: number;
+  }>;
+  createdAt: string;
+}
+
+const normalizeOrder = (order: any): Order => {
+  let status = order.status?.toLowerCase?.();
+  if (status === 'processing') status = 'confirmed';
+  return {
+    ...order,
+    status,
+  };
+};
+
 const DeliveryMap = () => {
   const user = useAuthStore(state => state.user);
-  const [orderData, setOrderData] = useState<any>(null);
-  const [myLocation, setMyLocation] = useState<any>(null);
+  const [orderData, setOrderData] = useState<Order | null>(null);
+  const [myLocation, setMyLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const route = useRoute();
-
-  const orderDetails = route?.params as Record<string, any>;
   const {setCurrentOrder} = useAuthStore();
+
+  const orderDetails = route.params as {_id: string};
+
   const fetchOrderDetails = async () => {
-    const data = await getOrderById(orderDetails?._id as any);
-    setOrderData(data);
+    setIsLoading(true);
+    try {
+      const data = await getOrderById(orderDetails._id);
+      console.log('Order data:', data);
+      setOrderData(normalizeOrder(data));
+    } catch (error) {
+      console.error('Failed to fetch order:', error);
+      Alert.alert('Error', 'Failed to load order details');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchOrderDetails();
-  }, []);
 
-  useEffect(() => {
     const watchId = Geolocation.watchPosition(
-      async position => {
+      position => {
         const {latitude, longitude} = position.coords;
         setMyLocation({latitude, longitude});
       },
-      err => console.log('Error Fetching GeoLocation', err),
+      error => {
+        console.error('Geolocation error:', error);
+        Alert.alert('Location Error', 'Please enable location services');
+      },
       {enableHighAccuracy: true, distanceFilter: 10},
     );
+
     return () => Geolocation.clearWatch(watchId);
   }, []);
 
-  const acceptOrder = async () => {
-    const data = await confirmOrder(orderData?._id, myLocation);
-    if (data) {
-      setCurrentOrder(data);
-      Alert.alert('Order Accepted, Grab your package');
-    } else {
-      Alert.alert('There was an error');
+  // Handle order acceptance
+  const handleAcceptOrder = async () => {
+    if (!user?._id) {
+      Alert.alert('Error', 'User not authenticated');
+      return;
     }
-    fetchOrderDetails();
-  };
 
-  const orderPickedUp = async () => {
-    const data = await sendLiveOrderUpdates(
-      orderData?._id,
-      myLocation,
-      'arriving',
-    );
-    if (data) {
-      setCurrentOrder(data);
-      Alert.alert("Let's deliver it as soon as possible");
-    } else {
-      Alert.alert('There was an error');
-    }
-    fetchOrderDetails();
-  };
+    setIsProcessing(true);
+    try {
+      const updatedOrder = await acceptOrder(orderDetails._id, user._id);
+      const normalized = normalizeOrder(updatedOrder);
 
-  const orderDelivered = async () => {
-    const data = await sendLiveOrderUpdates(
-      orderData?._id,
-      myLocation,
-      'delivered',
-    );
-    if (data) {
-      setCurrentOrder(null);
-      Alert.alert('WooHoo! You made it🎉');
-    } else {
-      Alert.alert('There was an error');
-    }
-    fetchOrderDetails();
-  };
+      console.log('Accept API Response:', updatedOrder);
 
-  let message = 'Start this order';
-
-  if (
-    orderData?.deliveryPartner?._id === user?._id &&
-    orderData?.status === 'confirmed'
-  ) {
-    message = 'Grab your order';
-  } else if (
-    orderData?.deliveryPartner?._id === user?._id &&
-    orderData?.status === 'arriving'
-  ) {
-    message = 'Complete your order';
-  } else if (
-    orderData?.deliveryPartner?._id === user?._id &&
-    orderData?.status === 'delivered'
-  ) {
-    message = 'Your milestone';
-  } else if (
-    orderData?.deliveryPartner?._id !== user?._id &&
-    orderData?.status !== 'available'
-  ) {
-    message = 'You missed it!';
-  }
-  useEffect(() => {
-    const sendLiveUpdates = async () => {
+      // 🔑 force status to confirmed if API didn’t update
       if (
-        orderData?.deliveryPartner?._id === user?._id &&
-        orderData?.status !== 'delivered' &&
-        orderData?.status !== 'cancelled'
+        normalized.status === 'available' ||
+        normalized.status === 'pending'
       ) {
-        await sendLiveOrderUpdates(
-          orderData._id,
-          myLocation,
-          orderData?.status,
-        );
-        fetchOrderDetails();
+        normalized.status = 'confirmed';
       }
-    };
-    sendLiveUpdates();
-  }, [myLocation]);
+
+      setOrderData(normalized);
+      setCurrentOrder(normalized);
+      Alert.alert('Success', 'Order accepted successfully!');
+    } catch (error: any) {
+      console.error('Accept order error:', error);
+      Alert.alert('Error', error.message || 'Failed to accept order');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle order pickup
+  const handleOrderPickup = async () => {
+    if (!myLocation) {
+      Alert.alert('Error', 'Cannot determine your current location');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const updatedOrder = await sendLiveOrderUpdates(
+        orderDetails._id,
+        myLocation,
+        'out_for_delivery',
+      );
+      const normalized = normalizeOrder(updatedOrder);
+      setOrderData(normalized);
+      setCurrentOrder(normalized);
+      Alert.alert('Success', "Let's deliver it as soon as possible!");
+    } catch (error) {
+      console.error('Pickup error:', error);
+      Alert.alert('Error', 'Failed to update order status');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle order delivery
+  const handleOrderDelivery = async () => {
+    if (!myLocation) {
+      Alert.alert('Error', 'Cannot determine your current location');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const updatedOrder = await sendLiveOrderUpdates(
+        orderDetails._id,
+        myLocation,
+        'delivered',
+      );
+      const normalized = normalizeOrder(updatedOrder);
+      setOrderData(normalized);
+      setCurrentOrder(null);
+      Alert.alert('Success', 'Order delivered successfully! 🎉');
+    } catch (error) {
+      console.error('Delivery error:', error);
+      Alert.alert('Error', 'Failed to mark order as delivered');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Send periodic location updates
+  useEffect(() => {
+    if (
+      orderData?.deliveryPartner?._id === user?._id &&
+      !['delivered', 'cancelled'].includes(orderData?.status) &&
+      myLocation
+    ) {
+      const interval = setInterval(async () => {
+        try {
+          await sendLiveOrderUpdates(
+            orderDetails._id,
+            myLocation,
+            orderData.status,
+          );
+        } catch (error) {
+          console.error('Live update failed:', error);
+        }
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [orderData, myLocation]);
+
+  const getStatusMessage = () => {
+    if (!orderData) return 'Loading order...';
+
+    switch (orderData.status) {
+      case 'pending':
+        return 'Order pending confirmation';
+      case 'available':
+        return 'Available for delivery';
+      case 'confirmed':
+        return 'Ready for pickup';
+      case 'out_for_delivery':
+        return 'Delivery in progress';
+      case 'delivered':
+        return 'Delivery completed';
+      case 'cancelled':
+        return 'Order cancelled';
+      default:
+        return 'Order status unknown';
+    }
+  };
+
+  const renderActionButton = () => {
+    if (isLoading) {
+      return <ActivityIndicator size="large" color={Colors.primary} />;
+    }
+
+    if (!orderData || ['delivered', 'cancelled'].includes(orderData.status)) {
+      return null;
+    }
+    console.log('DEBUG status:', orderData?.status);
+    console.log('DEBUG deliveryPartner:', orderData?.deliveryPartner);
+    console.log('DEBUG currentUser:', user?._id);
+
+    switch (orderData.status) {
+      case 'pending':
+      case 'available':
+        return (
+          <CustomButton
+            title="Accept Delivery"
+            onPress={handleAcceptOrder}
+            loading={isProcessing}
+            disabled={isProcessing}
+          />
+        );
+      case 'confirmed':
+        return orderData.deliveryPartner?._id === user?._id ? (
+          <CustomButton
+            title="Pick Up Order"
+            onPress={handleOrderPickup}
+            loading={isProcessing}
+            disabled={isProcessing}
+          />
+        ) : (
+          <CustomText style={styles.waitingText}>
+            Waiting for delivery partner...
+          </CustomText>
+        );
+      case 'out_for_delivery':
+        return orderData.deliveryPartner?._id === user?._id ? (
+          <CustomButton
+            title="Mark as Delivered"
+            onPress={handleOrderDelivery}
+            loading={isProcessing}
+            disabled={isProcessing}
+          />
+        ) : null;
+      default:
+        return null;
+    }
+  };
+
+  console.log('DEBUG Order Status:', orderData?.status);
+
+  if (isLoading && !orderData) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (!orderData) {
+    return (
+      <View style={styles.container}>
+        <CustomText>Failed to load order details</CustomText>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <LiveHeader
         type="Delivery"
-        title={message}
-        secondTitle="Delivery in 10 minutes"
+        title={getStatusMessage()}
+        secondTitle="Delivery details"
       />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
         <LiveMap
           deliveryPersonLocation={
-            orderData?.deliveryPersonLocation || myLocation
+            myLocation || orderData.deliveryPersonLocation
           }
-          deliveryLocation={orderData?.deliveryLocation || null}
-          hasAccepted={
-            orderData?.deliveryPartner?._id === user?._id &&
-            orderData?.status === 'confirmed'
-          }
-          hasPickedUp={orderData?.status === 'arriving'}
-          pickupLocation={orderData?.pickupLocation || null}
+          deliveryLocation={orderData.deliveryLocation}
+          hasAccepted={orderData.status === 'confirmed'}
+          hasPickedUp={orderData.status === 'out_for_delivery'}
+          pickupLocation={orderData.pickupLocation}
         />
+
         <DeliveryDetails
           details={{
-            address: orderData?.deliveryLocation?.address,
-            name: orderData?.customer?.name,
-            customerPhone: orderData?.customer?.phone,
-            receiverPhone: orderData?.customer?.secondaryContact?.phone,
+            address: orderData?.deliveryLocation?.address ?? 'No address',
+            name: orderData?.customer?.name ?? 'Unknown Customer',
+            customerPhone: orderData?.customer?.phone ?? 'N/A',
+            receiverPhone:
+              orderData?.customer?.secondaryContact?.phone ?? 'N/A',
           }}
         />
 
         <OrderSummary order={orderData} />
 
-        <View style={styles.flexRow}>
+        <View style={styles.feedbackContainer}>
           <View style={styles.iconContainer}>
             <Icon
               name="cards-heart-outline"
@@ -172,69 +364,40 @@ const DeliveryMap = () => {
               size={RFValue(20)}
             />
           </View>
-          <View style={{width: '80%'}}>
+          <View style={styles.feedbackText}>
             <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
               Do you like our app?
             </CustomText>
             <CustomText variant="h9" fontFamily={Fonts.Medium}>
-              Hit Like and subscribe button! If you're enjoying, comment your
-              excitement!
+              Rate your delivery experience!
             </CustomText>
           </View>
         </View>
-        <CustomText
-          fontFamily={Fonts.SemiBold}
-          variant="h7"
-          style={{opacity: 0.6, marginTop: 10}}>
-          "MahilMart – Trusted Quality. Seamless Shopping."
-        </CustomText>
       </ScrollView>
 
-      {orderData?.status !== 'delivered' &&
-        orderData?.status !== 'cancelled' && (
-          <View style={[hocStyles.cartContainer, styles.btnContainer]}>
-            {orderData?.status === 'available' && (
-              <CustomButton
-                disabled={false}
-                title="Accept Order"
-                onPress={acceptOrder}
-                loading={false}
-              />
-            )}
-            {orderData?.status === 'confirmed' &&
-              orderData?.deliveryPartner?._id === user?._id && (
-                <CustomButton
-                  disabled={false}
-                  title="Order Picked Up"
-                  onPress={orderPickedUp}
-                  loading={false}
-                />
-              )}
-            {orderData?.status === 'arriving' &&
-              orderData?.deliveryPartner?._id === user?._id && (
-                <CustomButton
-                  disabled={false}
-                  title="Delivered"
-                  onPress={orderDelivered}
-                  loading={false}
-                />
-              )}
-          </View>
-        )}
+      <View style={[hocStyles.cartContainer, styles.btnContainer]}>
+        {renderActionButton()}
+      </View>
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.secondary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollContent: {
     paddingBottom: 150,
     backgroundColor: Colors.backgroundSecondary,
     padding: 15,
   },
-  flexRow: {
+  feedbackContainer: {
     flexDirection: 'row',
     alignSelf: 'center',
     gap: 10,
@@ -247,6 +410,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.7,
     borderColor: Colors.border,
   },
+  feedbackText: {
+    width: '80%',
+  },
   iconContainer: {
     backgroundColor: Colors.backgroundSecondary,
     borderRadius: 100,
@@ -255,7 +421,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btnContainer: {
-    padding: 10,
+    padding: 35,
+  },
+  waitingText: {
+    textAlign: 'center',
+    color: Colors.textSecondary,
+    paddingVertical: 12,
   },
 });
 

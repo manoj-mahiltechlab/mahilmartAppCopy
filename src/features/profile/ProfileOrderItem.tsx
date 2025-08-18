@@ -1,80 +1,142 @@
-import {View, Text, StyleSheet} from 'react-native';
-import React, {FC} from 'react';
+import {View, StyleSheet, ScrollView} from 'react-native';
+import React from 'react';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
 import {formatISOToCustom} from '@utils/DateUtils';
 
-interface CartItem {
-  product: {
-    _id: string | number;
-    name: string;
-  };
-  count: number;
+interface Product {
   _id: string;
+  name: string;
+  price: number;
+  image?: string;
+}
+
+interface OrderItem {
+  _id: string;
+  productId: Product;
+  quantity: number;
+  price?: number;
 }
 
 interface Order {
-  orderId: string;
-  items: any[];
-  totalPrice: number;
+  _id: string;
+  items: OrderItem[];
+  totalAmount: number;
   createdAt: string;
-  status: 'conformed' | 'completed';
+  status: 'confirmed' | 'completed' | 'cancelled' | 'processing';
 }
 
-const ProfileOrderItem: FC<{item: Order; index: number}> = ({item, index}) => {
+const ProfileOrderItem = ({item, index}: {item: Order; index: number}) => {
+  // Calculate total items count
+  const totalItems = item.items.reduce((sum, i) => sum + i.quantity, 0);
+
   return (
     <View style={[styles.container, {borderTopWidth: index === 0 ? 0.7 : 0}]}>
-      <View style={styles.flexRowBetween}>
-        <CustomText variant="h8" fontFamily={Fonts.Medium}>
-          #{item.orderId}
+      <View style={styles.header}>
+        <CustomText variant="h7" fontFamily={Fonts.Medium}>
+          Order #{item._id.slice(-6).toUpperCase()}
         </CustomText>
-        <CustomText
-          variant="h8"
-          fontFamily={Fonts.Medium}
-          style={{textTransform: 'capitalize'}}>
-          {item.status}
-        </CustomText>
-      </View>
-      <View style={styles.flexRowBetween}>
-        <View style={{width: '50%'}}>
-          {item?.items?.map((i, idx) => {
-            if (!i?.product?.name) {
-              console.warn('Missing item.name in order', item.orderId, i);
-            }
-            const itemName = i?.product?.name ?? 'Unknown Item';
-
-            return (
-              <CustomText variant="h8" numberOfLines={1} key={idx}>
-                {i?.count}x{itemName}
-              </CustomText>
-            );
-          })}
-        </View>
-        <View style={{alignItems: 'flex-end'}}>
-          <CustomText
-            variant="h5"
-            fontFamily={Fonts.SemiBold}
-            style={{marginTop: 10}}>
-            ₹{item.totalPrice}
+        <View
+          style={[
+            styles.statusBadge,
+            {backgroundColor: getStatusColor(item.status)},
+          ]}>
+          <CustomText variant="h9" style={styles.statusText}>
+            {item.status.toUpperCase()}
           </CustomText>
-          <CustomText variant="h9">
-            {formatISOToCustom(item.createdAt)}
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.itemsContainer}
+        showsVerticalScrollIndicator={false}>
+        {item.items.map((i, idx) => (
+          <View key={`${item._id}-${idx}`} style={styles.itemRow}>
+            <CustomText variant="h8" numberOfLines={2} style={styles.itemName}>
+              {i.quantity}x {i.productId?.name || 'Unknown Product'}
+            </CustomText>
+            <CustomText variant="h8">
+              ₹{((i.price || i.productId.price) * i.quantity).toFixed(2)}
+            </CustomText>
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <CustomText variant="h9">
+          {totalItems} item{totalItems !== 1 ? 's' : ''} •{' '}
+          {formatISOToCustom(item.createdAt)}
+        </CustomText>
+        <View style={styles.totalContainer}>
+          <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
+            ₹{item.totalAmount.toFixed(2)}
           </CustomText>
         </View>
       </View>
     </View>
   );
 };
+
+// Helper function for status colors
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'completed':
+      return '#4CAF50';
+    case 'cancelled':
+      return '#F44336';
+    case 'processing':
+      return '#FFC107';
+    default:
+      return '#2196F3';
+  }
+};
+
 const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 0.7,
-    paddingVertical: 15,
-    opacity: 0.9,
+    borderColor: '#e0e0e0',
+    padding: 15,
+    backgroundColor: '#FFF',
+    marginBottom: 8,
   },
-  flexRowBetween: {
+  header: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: '#FFF',
+  },
+  itemsContainer: {
+    maxHeight: 150, // Limit height with scroll
+    marginBottom: 10,
+  },
+  itemRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#f0f0f0',
+  },
+  itemName: {
+    flex: 1,
+    marginRight: 10,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  totalContainer: {
+    alignItems: 'flex-end',
   },
 });
+
 export default ProfileOrderItem;

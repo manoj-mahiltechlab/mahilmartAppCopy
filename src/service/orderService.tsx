@@ -1,88 +1,106 @@
+import {Platform} from 'react-native';
 import {appAxios} from './apiInterceptors';
 import {BRANCH_ID} from './config';
 import {updateSelectedAddressType} from './customerService';
+
+const mapStatus = (status: string): string => {
+  if (!status) return 'pending';
+
+  switch (status.toLowerCase()) {
+    case 'pending':
+    case 'available':
+      return 'pending';
+
+    case 'processing':
+    case 'assigned':
+    case 'confirmed':
+      return 'confirmed';
+
+    case 'out_for_delivery':
+    case 'shipped':
+      return 'out_for_delivery';
+
+    case 'delivered':
+      return 'delivered';
+
+    case 'cancelled':
+      return 'cancelled';
+
+    default:
+      return 'pending';
+  }
+};
+
+// 🔑 Normalize order object (safe version)
+const normalizeOrder = (order: any) => {
+  if (!order) {
+    console.warn('normalizeOrder called with null/undefined order');
+    return {
+      status: 'unknown',
+      customer: {},
+    };
+  }
+
+  return {
+    ...order,
+    status: mapStatus(order?.status),
+    customer: order?.customer || {}, // fallback to avoid crashes
+  };
+};
 
 // ✅ Create Order
 export const createOrder = async (
   items: any[],
   totalPrice: number,
-  deliveryLocation: {
-    address: string;
-    latitude?: number;
-    longitude?: number;
-    lat?: number;
-    lng?: number;
-  },
+  deliveryLocation: {address: string; lat?: number; lng?: number},
   customerId: string,
   addressType: 'Primary' | 'Secondary',
 ) => {
   try {
-    console.log('Final order items:', items);
-
-    if (!BRANCH_ID || !Array.isArray(items) || items.length === 0) {
-      throw new Error('Invalid order data: Missing branch or items.');
+    // ✅ Validate essentials
+    if (!BRANCH_ID) {
+      throw new Error('Branch ID is missing.');
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new Error('Order must contain at least one item.');
     }
     if (isNaN(totalPrice) || totalPrice <= 0) {
       throw new Error('Invalid total price.');
     }
-
-    // DEBUG: Log raw items before mapping
-    if (__DEV__) {
-      console.log(
-        'Raw order items before processing:',
-        JSON.stringify(items, null, 2),
-      );
+    if (!deliveryLocation?.address) {
+      throw new Error('Delivery address is required.');
     }
 
-    const updatedItems = items.map((item: any, index: number) => {
+    // ✅ Convert cart items to backend format
+    const updatedItems = items.map((item: any) => {
       const productId =
-        item.productId || item.product?._id || item.product || item.id || null;
+        item.productId || item.product?._id || item.product || item.id;
 
       if (!productId) {
-        console.error(`❌ Missing productId for item at index ${index}`, item);
-        throw new Error(`Missing productId for item at index ${index}`);
-      }
-
-      const quantity = item.count ?? item.quantity ?? 1;
-      const price = item.price ?? item.product?.price ?? null;
-
-      if (!quantity || quantity <= 0) {
-        console.warn(
-          `⚠️ Invalid quantity for item at index ${index}, setting to 1`,
-          item,
+        throw new Error(
+          `Missing productId for cart item: ${JSON.stringify(item)}`,
         );
-      }
-
-      // ✅ Warn if price missing
-      if (price === null) {
-        console.warn(`⚠ Missing price for product ${productId}`);
       }
 
       return {
         productId,
-        quantity: quantity > 0 ? quantity : 1,
-        price, // ✅ include in payload
+        quantity: item.count ?? item.quantity ?? 1,
       };
     });
 
-    // DEBUG: Log processed items before sending
-    if (__DEV__) {
-      console.log(
-        'Processed order items:',
-        JSON.stringify(updatedItems, null, 2),
-      );
-    }
-
+    // ✅ Payload matching backend expectation
     const payload = {
       items: updatedItems,
       branch: BRANCH_ID,
       totalPrice,
       deliveryAddress: deliveryLocation.address,
       deliveryLocation: {
-        lat: deliveryLocation.latitude ?? deliveryLocation.lat ?? 0,
-        lng: deliveryLocation.longitude ?? deliveryLocation.lng ?? 0,
+        lat: deliveryLocation.lat ?? 0,
+        lng: deliveryLocation.lng ?? 0,
         address: deliveryLocation.address,
       },
+      paymentStatus: 'Pending',
+      platform: Platform.OS === 'ios' ? 'iOS' : 'Android',
     };
 
     if (__DEV__) {
@@ -94,16 +112,19 @@ export const createOrder = async (
 
     const response = await appAxios.post('/order', payload);
 
-    if (response?.data?.order) {
+    console.log('Order creation response:', response.data);
+
+    if (response?.data) {
       if (customerId && addressType) {
         await updateSelectedAddressType(customerId, addressType);
       }
-      return response.data.order;
-    } else {
-      throw new Error('Unexpected response format.');
+      return response.data;
     }
+
+    throw new Error('Unexpected response format from backend.');
   } catch (error: any) {
     const responseData = error?.response?.data;
+
     console.error('Create Order Error:', {
       message: responseData?.message || error.message,
       errorDetails: responseData?.error || null,
@@ -125,8 +146,6 @@ export const updateOrderStatus = async (
   orderId: string,
   status: string,
 ): Promise<any> => {
-  console.log(`Updating order ${orderId} to status ${status}`);
-
   try {
     const response = await appAxios.patch(`/order/${orderId}/status`, {
       status, // sending the status payload to backend
@@ -169,27 +188,22 @@ export const fetchCustomerOrders = async (userId: string) => {
   }
 };
 
-export const fetchOrders = async (status, branchId, deliveryPartnerId) => {
+// ✅ Fetch Orders for Delivery Partner or Branch
+export const fetchOrders = async (
+  status: string,
+  userId: string,
+  branchId: string,
+) => {
+  let uri = `/order?branchId=${branchId}`;
+  if (status) uri += `&status=${status}`;
+  if (userId) uri += `&deliveryPartnerId=${userId}`;
+
   try {
-    let uri = `/order?branch=${branchId}`;
-    if (status) uri += `&status=${status}`;
-
-    // Available orders = Pending & unassigned
-    if (status === 'Pending' && !deliveryPartnerId) {
-      uri += `&deliveryPartner=null`;
-    } else if (deliveryPartnerId) {
-      uri += `&deliveryPartner=${deliveryPartnerId}`;
-    }
-
     const response = await appAxios.get(uri);
-    console.log('Fetched Orders:', response.data);
     return response.data;
   } catch (error) {
-    console.log(
-      'Fetch Delivery Order Error:',
-      error.response?.data || error.message,
-    );
-    return [];
+    console.log('Fetch Delivery Order Error', error);
+    return null;
   }
 };
 
@@ -221,5 +235,20 @@ export const confirmOrder = async (id: string, location: any) => {
   } catch (error) {
     console.log('confirmOrder Error', error);
     return null;
+  }
+};
+// ✅ Accept Order
+export const acceptOrder = async (orderId: string, userId: string) => {
+  try {
+    const response = await appAxios.post(`/order/${orderId}/accept`, {
+      deliveryPartnerId: userId,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Accept Order Error:', {
+      message: error?.response?.data?.message || error.message,
+      status: error?.response?.status || 'Unknown',
+    });
+    throw error;
   }
 };

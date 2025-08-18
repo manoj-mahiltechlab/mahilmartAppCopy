@@ -3,7 +3,8 @@ import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
 import {useRoute, useNavigation} from '@react-navigation/native';
 import {useCartStore} from '@state/CartStore';
 import {useAuthStore} from '@state/authStore';
-import {createOrder, updateOrderStatus} from '@service/orderService';
+import {createOrder} from '@service/orderService';
+import {navigate} from '@utils/NavigationUtils';
 
 const PaymentScreen = () => {
   const route = useRoute();
@@ -16,70 +17,51 @@ const PaymentScreen = () => {
     totalAmount = 0,
     deliveryAddress = '',
     addressType = 'primary',
-    userId,
     liveLocation = {},
+    branchId,
   } = route.params || {};
 
   const handlePlaceOrder = async () => {
-    let hasMissingPrice = false;
-    cartData.forEach(item => {
-      if (item.price === undefined) {
-        console.warn(
-          '⚠ Missing price for product',
-          item.product || item.productId,
-        );
-        hasMissingPrice = true;
-      }
-    });
-
-    if (hasMissingPrice) {
-      Alert.alert(
-        'Missing Price',
-        'One or more products have no price information. Please update your cart and try again.',
-      );
-      return;
-    }
-
     try {
-      // Create order with paymentStatus already set
-      const order = await createOrder(
+      const res = await createOrder(
         cartData,
         totalAmount,
         {
           address: deliveryAddress,
-          latitude: liveLocation.latitude || 0,
-          longitude: liveLocation.longitude || 0,
+          lat: liveLocation.latitude || 0,
+          lng: liveLocation.longitude || 0,
         },
-        userId,
-        addressType === 'primary' ? 'Primary' : 'Secondary',
-        'Paid', // ✅ Pass payment status
+        branchId,
+        addressType,
       );
 
-      if (!order || !order._id) throw new Error('Order creation failed.');
+      const order = res?.order;
+
+      if (!order?._id) {
+        throw new Error('Order creation failed.');
+      }
+
+      console.log('Order created successfully:', order);
 
       setCurrentOrder(order);
       clearCart();
 
-      // Navigate to tracking
-      navigation.navigate('LiveTracking', {
-        order: {
-          id: createdOrder.id,
-          items: createdOrder.items,
-          totalPrice: createdOrder.totalPrice,
-          customerName: createdOrder.customer?.name,
-          address: createdOrder.deliveryLocation?.address,
-          status: createdOrder.status,
-        },
+      navigation.navigate('OrderSuccess', {
+        orderId: order._id,
+        deliveryAddress,
+        addressType,
+        name: order.customer?.name || '',
+        phone: order.customer?.phone || '',
       });
-    } catch (error) {
-      console.log('❌ Order Error:', error);
-      Alert.alert('Error', 'Failed to place the order. Please try again.');
+    } catch (error: any) {
+      Alert.alert('Order Failed', error.message || 'Please try again later.');
+      console.error('❌ Order creation error:', error.response?.data || error);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Proceed to pay ₹{totalAmount}</Text>
+      <Text style={styles.text}>Total: ₹{totalAmount}</Text>
       <TouchableOpacity style={styles.payButton} onPress={handlePlaceOrder}>
         <Text style={styles.buttonText}>Place Order</Text>
       </TouchableOpacity>

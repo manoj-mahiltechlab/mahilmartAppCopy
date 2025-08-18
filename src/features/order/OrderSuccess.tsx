@@ -5,13 +5,14 @@ import {screenWidth} from '@utils/Scaling';
 import LottieView from 'lottie-react-native';
 import CustomText from '@components/ui/CustomText';
 import {Colors, Fonts} from '@utils/Constants';
-import {replace} from '@utils/NavigationUtils';
+import {navigate, replace} from '@utils/NavigationUtils';
 import {useRoute} from '@react-navigation/native';
 
 const OrderSuccess: FC = () => {
   const route = useRoute();
 
   const {
+    orderId,
     deliveryAddress = 'No address information',
     addressType = 'unknown',
     name = 'Anonymous',
@@ -19,17 +20,21 @@ const OrderSuccess: FC = () => {
   } = route.params || {};
 
   useEffect(() => {
-    if (!route.params?.orderId) {
-      console.error('❌ No orderId passed to OrderSuccess');
+    if (!orderId) {
+      console.error('Order ID missing in OrderSuccess!');
       return;
     }
+
     const timeoutId = setTimeout(() => {
-      replace('LiveTracking', {
-        orderId: route.params.orderId,
+      navigate('LiveTracking', {
+        orderId, // now guaranteed to exist
+        addressType,
+        deliveryAddress,
       });
     }, 2300);
+
     return () => clearTimeout(timeoutId);
-  }, [route.params?.orderId]);
+  }, [orderId, addressType, deliveryAddress]);
 
   const formattedAddressType =
     addressType === 'primary'

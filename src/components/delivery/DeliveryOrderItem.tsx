@@ -31,6 +31,8 @@ function getStatusColor(status: string) {
       return '#17a2b8';
     case 'cancelled':
       return '#dc3545';
+    case 'pending':
+      return '#ffc107';
     default:
       return '#6c757d';
   }

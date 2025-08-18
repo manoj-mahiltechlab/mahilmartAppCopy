@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, ScrollView, ActivityIndicator} from 'react-native';
+import {View, StyleSheet, ScrollView} from 'react-native';
 import {useAuthStore} from '@state/authStore';
 import {getOrderById} from '@service/orderService';
 import {Colors, Fonts} from '@utils/Constants';
@@ -14,58 +14,36 @@ import {useRoute} from '@react-navigation/native';
 
 const LiveTracking = () => {
   const route = useRoute();
-  const {orderId: paramOrderId, order: paramOrder} = route.params || {};
-  const {setCurrentOrder, currentOrder} = useAuthStore();
+  const {orderId} = route.params || {};
 
-  const [orderData, setOrderData] = useState(paramOrder || null);
-  const [loading, setLoading] = useState(!paramOrder); // Only load if no paramOrder
+  const {setCurrentOrder} = useAuthStore();
+  const [orderData, setOrderData] = useState(null);
 
-  const effectiveOrderId = paramOrderId || paramOrder?._id || currentOrder?._id;
+  const fetchOrderDetails = async () => {
+    if (!orderId) return;
+    try {
+      const data = await getOrderById(orderId);
+      setOrderData(data);
+      setCurrentOrder(data); // Optional: in case you're using global state elsewhere
+    } catch (error) {
+      console.error('Failed to fetch order details:', error);
+    }
+  };
 
   useEffect(() => {
-    if (!orderData && effectiveOrderId) {
-      setLoading(true);
-      getOrderById(effectiveOrderId)
-        .then(data => {
-          setOrderData(data);
-          setCurrentOrder(data);
-        })
-        .catch(err => console.error('Failed to fetch order details:', err))
-        .finally(() => setLoading(false));
-    }
-  }, [effectiveOrderId]);
+    fetchOrderDetails();
+  }, [orderId]);
 
-  if (!effectiveOrderId) {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
-          Unable to load tracking — missing order ID
-        </CustomText>
-      </View>
-    );
+  if (!orderId) {
+    console.error('No orderId provided!');
+    return null;
   }
 
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  if (!orderData) return null;
 
-  if (!orderData) {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
-          Failed to load order details
-        </CustomText>
-      </View>
-    );
-  }
-
-  // Status message
   let msg = 'Packing your order';
   let time = 'Arriving in 10 minutes';
+
   if (orderData.status === 'confirmed') {
     msg = 'Arriving Soon';
     time = 'Arriving in 8 minutes';
@@ -80,44 +58,47 @@ const LiveTracking = () => {
   return (
     <View style={styles.container}>
       <LiveHeader type="Customer" title={msg} secondTitle={time} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
         <LiveMap
-          deliveryLocation={orderData.deliveryLocation}
-          pickupLocation={orderData.pickupLocation}
-          deliveryPersonLocation={orderData.deliveryPersonLocation}
-          hasAccepted={orderData.status === 'confirmed'}
-          hasPickedUp={orderData.status === 'arriving'}
+          deliveryLocation={orderData?.deliveryLocation}
+          pickupLocation={orderData?.pickupLocation}
+          deliveryPersonLocation={orderData?.deliveryPersonLocation}
+          hasAccepted={orderData?.status === 'confirmed'}
+          hasPickedUp={orderData?.status === 'arriving'}
         />
 
-        {/* Delivery partner info */}
         <View style={styles.flexRow}>
           <View style={styles.iconContainer}>
             <Icon
-              name={orderData.deliveryPartner ? 'phone' : 'shopping'}
+              name={orderData?.deliveryPartner ? 'phone' : 'shopping'}
               color={Colors.primary}
               size={RFValue(20)}
             />
           </View>
           <View style={{width: '80%'}}>
-            <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
-              {orderData.deliveryPartner?.name ||
+            <CustomText
+              numberOfLines={1}
+              variant="h7"
+              fontFamily={Fonts.SemiBold}>
+              {orderData?.deliveryPartner?.name ||
                 'We will soon assign delivery partner'}
             </CustomText>
-            {orderData.deliveryPartner?.phone && (
+            {orderData?.deliveryPartner && (
               <CustomText variant="h7" fontFamily={Fonts.Medium}>
-                {orderData.deliveryPartner.phone}
+                {orderData?.deliveryPartner?.phone}
               </CustomText>
             )}
             <CustomText variant="h9" fontFamily={Fonts.Medium}>
-              {orderData.deliveryPartner
+              {orderData?.deliveryPartner
                 ? 'For Delivery instructions you can contact here'
                 : msg}
             </CustomText>
           </View>
         </View>
 
-        {/* Address */}
-        {orderData.addressType && (
+        {orderData?.addressType && (
           <CustomText
             variant="h8"
             fontFamily={Fonts.SemiBold}
@@ -126,23 +107,52 @@ const LiveTracking = () => {
           </CustomText>
         )}
 
-        {/* Delivery details */}
         <DeliveryDetails
           details={{
-            address: orderData.deliveryLocation?.address,
-            name: orderData.customer?.name,
-            customerPhone: orderData.customer?.phone,
-            receiverPhone: orderData.customer?.secondaryContact?.phone,
+            address: orderData?.deliveryLocation?.address,
+            name: orderData?.customer?.name,
+            customerPhone: orderData?.customer?.phone,
+            receiverPhone: orderData?.customer?.secondaryContact?.phone,
           }}
         />
+
         <OrderSummary order={orderData} />
+
+        <View style={styles.flexRow}>
+          <View style={styles.iconContainer}>
+            <Icon
+              name="cards-heart-outline"
+              color={Colors.disabled}
+              size={RFValue(20)}
+            />
+          </View>
+          <View style={{width: '80%'}}>
+            <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
+              Do you like our app?
+            </CustomText>
+            <CustomText variant="h9" fontFamily={Fonts.Medium}>
+              Hit Like and subscribe button! If you're enjoying, comment your
+              excitement!
+            </CustomText>
+          </View>
+        </View>
+
+        <CustomText
+          fontFamily={Fonts.SemiBold}
+          variant="h7"
+          style={{opacity: 0.6, marginTop: 10}}>
+          "MahilMart – Trusted Quality. Seamless Shopping."
+        </CustomText>
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: Colors.secondary},
+  container: {
+    flex: 1,
+    backgroundColor: Colors.secondary,
+  },
   scrollContent: {
     paddingBottom: 150,
     backgroundColor: Colors.backgroundSecondary,
@@ -150,12 +160,14 @@ const styles = StyleSheet.create({
   },
   flexRow: {
     flexDirection: 'row',
+    alignSelf: 'center',
     gap: 10,
     width: '100%',
     borderRadius: 15,
     marginTop: 15,
-    padding: 10,
+    paddingVertical: 10,
     backgroundColor: '#fff',
+    padding: 10,
     borderBottomWidth: 0.7,
     borderColor: Colors.border,
   },
@@ -166,8 +178,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  addressTypeText: {marginTop: 20, marginBottom: 10, color: Colors.textDark},
-  center: {justifyContent: 'center', alignItems: 'center'},
+  addressTypeText: {
+    marginTop: 20,
+    marginBottom: 10,
+    color: Colors.textDark,
+  },
 });
 
 export default LiveTracking;

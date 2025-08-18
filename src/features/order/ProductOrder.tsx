@@ -87,17 +87,17 @@ const ProductOrder = () => {
         {
           text: 'Proceed',
           onPress: async () => {
-            if (
-              currentOrder &&
-              currentOrder.status !== 'delivered' &&
-              currentOrder.status !== 'cancelled'
-            ) {
-              Alert.alert(
-                'Order Already in Progress',
-                'Please wait for your current order to be delivered before placing a new one.',
-              );
-              return;
-            }
+            // if (
+            //   currentOrder &&
+            //   currentOrder.status !== 'delivered' &&
+            //   currentOrder.status !== 'cancelled'
+            // ) {
+            //   Alert.alert(
+            //     'Order Already in Progress',
+            //     'Please wait for your current order to be delivered before placing a new one.',
+            //   );
+            //   return;
+            // }
 
             const formattedData = cart.map(item => ({
               product: item._id,

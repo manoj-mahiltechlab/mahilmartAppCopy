@@ -6,21 +6,20 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
 import BillDetails from '@features/order/BillDetails';
 
-// ✅ Helper: get image source safely
+// ✅ Helper function to handle different image structures
 const getImageSource = (value: any): {uri: string} | undefined => {
-  if (typeof value === 'string' && value.trim() !== '') return {uri: value};
+  if (typeof value === 'string' && value.startsWith('http'))
+    return {uri: value};
   if (value?.uri && typeof value.uri === 'string') return {uri: value.uri};
   return undefined;
 };
 
 const OrderSummary: FC<{order: any}> = ({order}) => {
-  // Calculate total price
   const totalPrice =
-    order?.items?.reduce((total: number, item: any) => {
-      const product = item?.productId || {};
-      const price = product?.price ?? 0;
-      const qty = item?.quantity ?? 0;
-      return total + price * qty;
+    order?.items?.reduce((total: number, cartItem: any) => {
+      const price = cartItem?.product?.price ?? 0; // ✅ Safe access
+      const count = cartItem?.count ?? 0;
+      return total + price * count;
     }, 0) || 0;
 
   return (
@@ -39,18 +38,17 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
             Order summary
           </CustomText>
           <CustomText variant="h9" fontFamily={Fonts.Medium}>
-            Order ID - #{order?._id}
+            Order ID - #{order?.orderId ?? 'N/A'}
           </CustomText>
         </View>
       </View>
 
       {/* Order Items */}
       {order?.items?.map((item: any, index: number) => {
-        const product = item?.productId || {};
-        const price = product?.price ?? 0;
-        const qty = item?.quantity ?? 0;
-        const name = product?.name ?? 'Unnamed Product';
-        const imageSource = getImageSource(product?.image);
+        const product = item?.product;
+        if (!product) return null;
+
+        const imageSource = getImageSource(product.image);
 
         return (
           <View style={styles.flexRow} key={index}>
@@ -71,29 +69,34 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
                 </View>
               )}
             </View>
-
             <View style={{width: '55%'}}>
               <CustomText
                 numberOfLines={2}
                 variant="h8"
                 fontFamily={Fonts.Medium}>
-                {name}
+                {product.name ?? 'Unnamed Product'}
               </CustomText>
-              <CustomText variant="h9">Qty: {qty}</CustomText>
+              <CustomText variant="h9">{product.quantity ?? 'N/A'}</CustomText>
             </View>
-
             <View style={{width: '20%', alignItems: 'flex-end'}}>
               <CustomText
                 variant="h8"
                 fontFamily={Fonts.Medium}
                 style={{alignSelf: 'flex-end', marginTop: 4}}>
-                ₹{qty * price}
+                ₹{(item.count ?? 0) * (product.price ?? 0)}
+              </CustomText>
+              <CustomText
+                variant="h8"
+                fontFamily={Fonts.Medium}
+                style={{alignSelf: 'flex-end', marginTop: 4}}>
+                {item.count ?? 0}x
               </CustomText>
             </View>
           </View>
         );
       })}
 
+      {/* Bill Details */}
       <BillDetails totalItemPrice={totalPrice} />
     </View>
   );
