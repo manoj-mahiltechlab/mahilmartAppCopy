@@ -16,8 +16,8 @@ const Profile = () => {
   const navigation = useNavigation();
 
   const handleLogout = () => {
-    clearCart();
-    useAuthStore.getState().setUser(null);
+    // clearCart();
+    // useAuthStore.getState().setUser(null);
     tokenStorage.clearAll();
     storage.clearAll();
 

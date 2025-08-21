@@ -31,19 +31,38 @@ const mapStatus = (status: string): string => {
   }
 };
 
-// 🔑 Normalize order object (safe version)
-const normalizeOrder = (order: any) => {
-  if (!order) {
-    console.warn('normalizeOrder called with null/undefined order');
-    return {
-      status: 'unknown',
-      customer: {},
-    };
-  }
+// 🔑 Map backend status -> frontend-friendly status
+const statusMap: Record<string, string> = {
+  pending: 'pending',
+  processing: 'confirmed', // 👈 backend 'processing' will show as 'confirmed'
+  assigned: 'assigned',
+  packed: 'packed',
+  shipped: 'shipped',
+  out_for_delivery: 'out for delivery',
+  delivered: 'delivered',
+  cancelled: 'cancelled',
+};
+
+// 🔄 Frontend → Backend mapping (if updating status from app)
+const reverseStatusMap: Record<string, string> = {
+  confirmed: 'Processing',
+  pending: 'Pending',
+  assigned: 'Assigned',
+  packed: 'Packed',
+  shipped: 'Shipped',
+  'out for delivery': 'Out_for_delivery',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+};
+
+// Normalize order object for frontend
+export const normalizeOrder = (order: any) => {
+  const backendStatus = order?.status?.toLowerCase?.();
+  const status = statusMap[backendStatus] || backendStatus || 'pending';
 
   return {
     ...order,
-    status: mapStatus(order?.status),
+    status,
     customer: order?.customer || {}, // fallback to avoid crashes
   };
 };
@@ -142,35 +161,30 @@ export const createOrder = async (
 };
 
 // ✅ Update Order Status (e.g. after payment success)
-export const updateOrderStatus = async (
-  orderId: string,
-  status: string,
-): Promise<any> => {
+export const updateOrderStatus = async (orderId: string, newStatus: string) => {
   try {
-    const response = await appAxios.patch(`/order/${orderId}/status`, {
-      status, // sending the status payload to backend
+    const backendStatus = reverseStatusMap[newStatus] || newStatus;
+    const response = await appAxios.put(`/orders/${orderId}/status`, {
+      status: backendStatus,
     });
-    return response.data; // return updated order or success message
+    return normalizeOrder(response.data);
   } catch (error: any) {
-    console.error('Update Order Status Error', {
-      message: error?.response?.data?.message || error.message,
-      status: error?.response?.status || 'Unknown',
-    });
-    throw error; // throw again so the caller can handle error
+    console.error(
+      'Update Order Error:',
+      error?.response?.data || error.message,
+    );
+    throw error;
   }
 };
 
 // ✅ Get Order By ID
-export const getOrderById = async (id: string) => {
+export const getOrderById = async (orderId: string) => {
   try {
-    const response = await appAxios.get(`/order/${id}`);
-    return response.data;
+    const response = await appAxios.get(`/order/${orderId}`);
+    return normalizeOrder(response.data);
   } catch (error: any) {
-    console.error('Get Order By ID Error:', {
-      message: error?.response?.data?.message || error.message,
-      status: error?.response?.status || 'Unknown',
-    });
-    throw error;
+    console.error('Get Order Error:', error?.response?.data || error.message);
+    return {status: 'error', message: 'Order not found'}; // better fallback
   }
 };
 
@@ -178,6 +192,7 @@ export const getOrderById = async (id: string) => {
 export const fetchCustomerOrders = async (userId: string) => {
   try {
     const response = await appAxios.get(`/order?customerId=${userId}`);
+
     console.log('API response:', response.data); // ✅ Add this
     return Array.isArray(response.data)
       ? response.data
@@ -196,7 +211,11 @@ export const fetchOrders = async (
 ) => {
   let uri = `/order?branchId=${branchId}`;
   if (status) uri += `&status=${status}`;
-  if (userId) uri += `&deliveryPartnerId=${userId}`;
+
+  // Only add deliveryPartnerId if status != "pending"
+  if (status !== 'pending' && userId) {
+    uri += `&deliveryPartnerId=${userId}`;
+  }
 
   try {
     const response = await appAxios.get(uri);
@@ -214,14 +233,21 @@ export const sendLiveOrderUpdates = async (
   status: string,
 ) => {
   try {
+    const mappedStatus = statusMap[status] || status; // ← map it here
+
     const response = await appAxios.patch(`/order/${id}/status`, {
       deliveryPersonLocation: location,
-      status,
+      status: mappedStatus, // send backend-compatible status
     });
+
+    console.log('Live update response:', response.data);
     return response.data;
-  } catch (error) {
-    console.log('sendLiveOrderUpdates Error', error);
-    return null;
+  } catch (error: any) {
+    console.error(
+      'sendLiveOrderUpdates Error',
+      error.response?.data || error.message,
+    );
+    throw error;
   }
 };
 

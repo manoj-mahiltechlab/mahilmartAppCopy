@@ -49,18 +49,23 @@ const DeliveryDashboard = () => {
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
-        useAuthStore.getState().logout();
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'CustomerLogin'}],
-        });
+        // ❌ remove logout
+        // useAuthStore.getState().logout();
+
+        // ✅ only go back one screen
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          // If there's no back screen, exit the app
+          BackHandler.exitApp();
+        }
 
         return true;
       },
     );
 
     return () => backHandler.remove();
-  }, []);
+  }, [navigation]);
 
   const fetchData = async () => {
     setData([]);

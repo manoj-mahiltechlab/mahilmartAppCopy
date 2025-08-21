@@ -20,11 +20,13 @@ import LiveHeader from '@features/map/LiveHeader';
 import LiveMap from '@features/map/LiveMap';
 import DeliveryDetails from '@features/map/DeliveryDetails';
 import OrderSummary from '@features/map/OrderSummary';
-import {useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import Geolocation from '@react-native-community/geolocation';
 import CustomButton from '@components/ui/CustomButton';
 import {hocStyles} from '@styles/GlobleStyles';
+import {PermissionsAndroid, Platform} from 'react-native';
 
+// ---------- TYPES ----------
 type OrderStatus =
   | 'pending'
   | 'available'
@@ -63,23 +65,67 @@ interface Order {
     };
   };
   items: Array<{
-    product: {
-      name: string;
-    };
+    product: {name: string};
     quantity: number;
   }>;
   createdAt: string;
 }
 
+// ---------- STATUS MAPPINGS ----------
+const backendToFrontend: Record<string, OrderStatus> = {
+  Pending: 'available',
+  Confirmed: 'confirmed',
+  OutForDelivery: 'out_for_delivery',
+  Delivered: 'delivered',
+  Cancelled: 'cancelled',
+};
+
+const frontendToBackend: Record<string, string> = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  out_for_delivery: 'OutForDelivery',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+};
+
+// ---------- NORMALIZER ----------
+// ---------- NORMALIZER ----------
 const normalizeOrder = (order: any): Order => {
-  let status = order.status?.toLowerCase?.();
-  if (status === 'processing') status = 'confirmed';
+  const rawStatus = order.status?.toString?.().trim();
+
+  // Normalize backend status: remove spaces & lowercase
+  const cleanedStatus = rawStatus?.replace(/\s+/g, '').toLowerCase();
+
+  let frontendStatus: OrderStatus;
+
+  switch (cleanedStatus) {
+    case 'pending':
+      frontendStatus = 'available'; // ✅ backend Pending → available
+      break;
+    case 'confirmed':
+      frontendStatus = 'confirmed';
+      break;
+    case 'outfordelivery':
+      frontendStatus = 'out_for_delivery';
+      break;
+    case 'delivered':
+      frontendStatus = 'delivered';
+      break;
+    case 'cancelled':
+      frontendStatus = 'cancelled';
+      break;
+    default:
+      frontendStatus = 'pending'; // fallback instead of "unknown"
+      break;
+  }
+
   return {
     ...order,
-    status,
+    status: frontendStatus,
   };
 };
 
+// ---------- COMPONENT ----------
 const DeliveryMap = () => {
   const user = useAuthStore(state => state.user);
   const [orderData, setOrderData] = useState<Order | null>(null);
@@ -91,14 +137,33 @@ const DeliveryMap = () => {
   const [isLoading, setIsLoading] = useState(true);
   const route = useRoute();
   const {setCurrentOrder} = useAuthStore();
-
   const orderDetails = route.params as {_id: string};
+  const navigation = useNavigation();
 
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  };
+  const OrderActionButtons = () => {
+    const navigation = useNavigation();
+
+    const handleOrderPickup = () => {
+      navigation.navigate('CategoryContainer'); // example
+    };
+
+    return <CustomButton title="Pick Up Order" onPress={handleOrderPickup} />;
+  };
+
+  // ---------- FETCH ORDER ----------
   const fetchOrderDetails = async () => {
     setIsLoading(true);
     try {
       const data = await getOrderById(orderDetails._id);
-      console.log('Order data:', data);
       setOrderData(normalizeOrder(data));
     } catch (error) {
       console.error('Failed to fetch order:', error);
@@ -112,10 +177,11 @@ const DeliveryMap = () => {
     fetchOrderDetails();
 
     const watchId = Geolocation.watchPosition(
-      position => {
-        const {latitude, longitude} = position.coords;
-        setMyLocation({latitude, longitude});
-      },
+      pos =>
+        setMyLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        }),
       error => {
         console.error('Geolocation error:', error);
         Alert.alert('Location Error', 'Please enable location services');
@@ -126,7 +192,7 @@ const DeliveryMap = () => {
     return () => Geolocation.clearWatch(watchId);
   }, []);
 
-  // Handle order acceptance
+  // ---------- ORDER ACTIONS ----------
   const handleAcceptOrder = async () => {
     if (!user?._id) {
       Alert.alert('Error', 'User not authenticated');
@@ -136,16 +202,13 @@ const DeliveryMap = () => {
     setIsProcessing(true);
     try {
       const updatedOrder = await acceptOrder(orderDetails._id, user._id);
-      const normalized = normalizeOrder(updatedOrder);
+      let normalized = normalizeOrder(updatedOrder);
 
-      console.log('Accept API Response:', updatedOrder);
-
-      // 🔑 force status to confirmed if API didn’t update
-      if (
-        normalized.status === 'available' ||
-        normalized.status === 'pending'
-      ) {
+      if (['available', 'pending'].includes(normalized.status)) {
         normalized.status = 'confirmed';
+      }
+      if (!normalized.deliveryPartner) {
+        normalized.deliveryPartner = {_id: user._id, name: user.name || 'You'};
       }
 
       setOrderData(normalized);
@@ -159,10 +222,11 @@ const DeliveryMap = () => {
     }
   };
 
-  // Handle order pickup
   const handleOrderPickup = async () => {
     if (!myLocation) {
-      Alert.alert('Error', 'Cannot determine your current location');
+      console.error(
+        new Error('Cannot determine your current location  handleOrderPickup'),
+      );
       return;
     }
 
@@ -171,21 +235,27 @@ const DeliveryMap = () => {
       const updatedOrder = await sendLiveOrderUpdates(
         orderDetails._id,
         myLocation,
-        'out_for_delivery',
+        frontendToBackend['out_for_delivery'], // ✅ mapped correctly
       );
-      const normalized = normalizeOrder(updatedOrder);
+
+      if (!updatedOrder) throw new Error('Server returned no order data');
+      let normalized = normalizeOrder(updatedOrder);
+
+      if (normalized.status !== 'out_for_delivery') {
+        normalized.status = 'out_for_delivery';
+      }
+
       setOrderData(normalized);
       setCurrentOrder(normalized);
       Alert.alert('Success', "Let's deliver it as soon as possible!");
-    } catch (error) {
-      console.error('Pickup error:', error);
+    } catch (error: any) {
+      console.error('Pickup error:', error?.message || error);
       Alert.alert('Error', 'Failed to update order status');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Handle order delivery
   const handleOrderDelivery = async () => {
     if (!myLocation) {
       Alert.alert('Error', 'Cannot determine your current location');
@@ -197,12 +267,19 @@ const DeliveryMap = () => {
       const updatedOrder = await sendLiveOrderUpdates(
         orderDetails._id,
         myLocation,
-        'delivered',
+        frontendToBackend['delivered'], // ✅ Correct
       );
+
       const normalized = normalizeOrder(updatedOrder);
       setOrderData(normalized);
       setCurrentOrder(null);
-      Alert.alert('Success', 'Order delivered successfully! 🎉');
+
+      Alert.alert('✅ Success', 'Order delivered successfully! 🎉', [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack(), // 🔑 Now works because navigation is defined
+        },
+      ]);
     } catch (error) {
       console.error('Delivery error:', error);
       Alert.alert('Error', 'Failed to mark order as delivered');
@@ -211,7 +288,7 @@ const DeliveryMap = () => {
     }
   };
 
-  // Send periodic location updates
+  // ---------- LIVE LOCATION UPDATES ----------
   useEffect(() => {
     if (
       orderData?.deliveryPartner?._id === user?._id &&
@@ -223,7 +300,7 @@ const DeliveryMap = () => {
           await sendLiveOrderUpdates(
             orderDetails._id,
             myLocation,
-            orderData.status,
+            frontendToBackend[orderData.status] || orderData.status,
           );
         } catch (error) {
           console.error('Live update failed:', error);
@@ -234,10 +311,9 @@ const DeliveryMap = () => {
     }
   }, [orderData, myLocation]);
 
+  // ---------- UI HELPERS ----------
   const getStatusMessage = () => {
-    if (!orderData) return 'Loading order...';
-
-    switch (orderData.status) {
+    switch (orderData?.status) {
       case 'pending':
         return 'Order pending confirmation';
       case 'available':
@@ -256,16 +332,11 @@ const DeliveryMap = () => {
   };
 
   const renderActionButton = () => {
-    if (isLoading) {
+    if (isLoading)
       return <ActivityIndicator size="large" color={Colors.primary} />;
-    }
 
-    if (!orderData || ['delivered', 'cancelled'].includes(orderData.status)) {
+    if (!orderData || ['delivered', 'cancelled'].includes(orderData.status))
       return null;
-    }
-    console.log('DEBUG status:', orderData?.status);
-    console.log('DEBUG deliveryPartner:', orderData?.deliveryPartner);
-    console.log('DEBUG currentUser:', user?._id);
 
     switch (orderData.status) {
       case 'pending':
@@ -278,35 +349,33 @@ const DeliveryMap = () => {
             disabled={isProcessing}
           />
         );
+
       case 'confirmed':
-        return orderData.deliveryPartner?._id === user?._id ? (
+        return (
           <CustomButton
             title="Pick Up Order"
             onPress={handleOrderPickup}
             loading={isProcessing}
-            disabled={isProcessing}
+            disabled={isProcessing || !myLocation}
           />
-        ) : (
-          <CustomText style={styles.waitingText}>
-            Waiting for delivery partner...
-          </CustomText>
         );
+
       case 'out_for_delivery':
-        return orderData.deliveryPartner?._id === user?._id ? (
+        return (
           <CustomButton
             title="Mark as Delivered"
             onPress={handleOrderDelivery}
             loading={isProcessing}
             disabled={isProcessing}
           />
-        ) : null;
+        );
+
       default:
         return null;
     }
   };
 
-  console.log('DEBUG Order Status:', orderData?.status);
-
+  // ---------- RENDER ----------
   if (isLoading && !orderData) {
     return (
       <View style={styles.loadingContainer}>
@@ -314,7 +383,6 @@ const DeliveryMap = () => {
       </View>
     );
   }
-
   if (!orderData) {
     return (
       <View style={styles.container}>
@@ -330,7 +398,6 @@ const DeliveryMap = () => {
         title={getStatusMessage()}
         secondTitle="Delivery details"
       />
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
@@ -343,7 +410,6 @@ const DeliveryMap = () => {
           hasPickedUp={orderData.status === 'out_for_delivery'}
           pickupLocation={orderData.pickupLocation}
         />
-
         <DeliveryDetails
           details={{
             address: orderData?.deliveryLocation?.address ?? 'No address',
@@ -353,9 +419,7 @@ const DeliveryMap = () => {
               orderData?.customer?.secondaryContact?.phone ?? 'N/A',
           }}
         />
-
         <OrderSummary order={orderData} />
-
         <View style={styles.feedbackContainer}>
           <View style={styles.iconContainer}>
             <Icon
@@ -374,7 +438,6 @@ const DeliveryMap = () => {
           </View>
         </View>
       </ScrollView>
-
       <View style={[hocStyles.cartContainer, styles.btnContainer]}>
         {renderActionButton()}
       </View>
@@ -382,16 +445,10 @@ const DeliveryMap = () => {
   );
 };
 
+// ---------- STYLES ----------
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.secondary,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: {flex: 1, backgroundColor: Colors.secondary},
+  loadingContainer: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   scrollContent: {
     paddingBottom: 150,
     backgroundColor: Colors.backgroundSecondary,
@@ -410,9 +467,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.7,
     borderColor: Colors.border,
   },
-  feedbackText: {
-    width: '80%',
-  },
+  feedbackText: {width: '80%'},
   iconContainer: {
     backgroundColor: Colors.backgroundSecondary,
     borderRadius: 100,
@@ -420,9 +475,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  btnContainer: {
-    padding: 35,
-  },
+  btnContainer: {padding: 35},
   waitingText: {
     textAlign: 'center',
     color: Colors.textSecondary,

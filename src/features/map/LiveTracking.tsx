@@ -47,9 +47,15 @@ const LiveTracking = () => {
   if (orderData.status === 'confirmed') {
     msg = 'Arriving Soon';
     time = 'Arriving in 8 minutes';
+  } else if (
+    orderData.status === 'out_for_delivery' ||
+    orderData.status === 'Out For Delivery'
+  ) {
+    msg = 'Out for Delivery';
+    time = 'Arriving in 6 minutes';
   } else if (orderData.status === 'arriving') {
     msg = 'Order Picked Up';
-    time = 'Arriving in 6 minutes';
+    time = 'Arriving in 4 minutes';
   } else if (orderData.status === 'delivered') {
     msg = 'Order Delivered';
     time = 'Faster Delivery⚡';
@@ -85,15 +91,17 @@ const LiveTracking = () => {
               {orderData?.deliveryPartner?.name ||
                 'We will soon assign delivery partner'}
             </CustomText>
+
             {orderData?.deliveryPartner && (
               <CustomText variant="h7" fontFamily={Fonts.Medium}>
                 {orderData?.deliveryPartner?.phone}
               </CustomText>
             )}
-            <CustomText variant="h9" fontFamily={Fonts.Medium}>
+
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
               {orderData?.deliveryPartner
-                ? 'For Delivery instructions you can contact here'
-                : msg}
+                ? 'For delivery instructions you can contact here'
+                : orderData?.status || 'Processing'}
             </CustomText>
           </View>
         </View>
