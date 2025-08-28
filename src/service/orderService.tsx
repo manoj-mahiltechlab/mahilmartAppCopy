@@ -1,4 +1,4 @@
-import {Platform} from 'react-native';
+import {Alert, Platform} from 'react-native';
 import {appAxios} from './apiInterceptors';
 import {BRANCH_ID} from './config';
 import {updateSelectedAddressType} from './customerService';
@@ -183,7 +183,8 @@ export const getOrderById = async (orderId: string) => {
     const response = await appAxios.get(`/order/${orderId}`);
     return normalizeOrder(response.data);
   } catch (error: any) {
-    console.error('Get Order Error:', error?.response?.data || error.message);
+    // console.error('Get Order Error:', error?.response?.data || error.message);
+    Alert.alert('Order Error', errorMessage);
     return {status: 'error', message: 'Order not found'}; // better fallback
   }
 };
@@ -276,5 +277,37 @@ export const acceptOrder = async (orderId: string, userId: string) => {
       status: error?.response?.status || 'Unknown',
     });
     throw error;
+  }
+};
+
+// ✅ Fetch latest active order for a customer
+export const getLatestOrder = async (userId: string) => {
+  try {
+    const response = await appAxios.get(`/order?customerId=${userId}`);
+
+    let orders = Array.isArray(response.data)
+      ? response.data
+      : response.data.orders || [];
+
+    if (!orders.length) return null;
+
+    // ✅ Sort by createdAt (latest first)
+    orders = orders.sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
+    // ✅ Pick the newest order that is not completed/cancelled/failed
+    const activeOrder = orders.find(
+      (o: any) =>
+        !['delivered', 'cancelled', 'failed'].includes(
+          o.status?.toLowerCase?.(),
+        ),
+    );
+
+    return activeOrder ? normalizeOrder(activeOrder) : null;
+  } catch (error) {
+    console.error('Get Latest Order Error:', error);
+    return null;
   }
 };

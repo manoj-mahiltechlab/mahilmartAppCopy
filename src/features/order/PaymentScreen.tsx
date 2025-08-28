@@ -1,16 +1,24 @@
-import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import {useRoute, useNavigation} from '@react-navigation/native';
 import {useCartStore} from '@state/CartStore';
 import {useAuthStore} from '@state/authStore';
 import {createOrder} from '@service/orderService';
-import {navigate} from '@utils/NavigationUtils';
 
 const PaymentScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const {setCurrentOrder} = useAuthStore();
   const {clearCart} = useCartStore();
+
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const {
     cartData = [],
@@ -22,6 +30,9 @@ const PaymentScreen = () => {
   } = route.params || {};
 
   const handlePlaceOrder = async () => {
+    if (isPlacingOrder) return; // 👈 Prevent double tap
+    setIsPlacingOrder(true);
+
     try {
       const res = await createOrder(
         cartData,
@@ -41,7 +52,7 @@ const PaymentScreen = () => {
         throw new Error('Order creation failed.');
       }
 
-      console.log('Order created successfully:', order);
+      console.log('✅ Order created successfully:', order);
 
       setCurrentOrder(order);
       clearCart();
@@ -51,19 +62,28 @@ const PaymentScreen = () => {
         deliveryAddress,
         addressType,
         name: order.customer?.name || '',
-        phone: order.customer?.phone || '',
+        phone: order.customer?.secondaryContact?.phone,
       });
     } catch (error: any) {
       Alert.alert('Order Failed', error.message || 'Please try again later.');
       console.error('❌ Order creation error:', error.response?.data || error);
+    } finally {
+      setIsPlacingOrder(false); // ✅ Re-enable after response
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Total: ₹{totalAmount}</Text>
-      <TouchableOpacity style={styles.payButton} onPress={handlePlaceOrder}>
-        <Text style={styles.buttonText}>Place Order</Text>
+      <TouchableOpacity
+        style={[styles.payButton, isPlacingOrder && {opacity: 0.6}]}
+        onPress={handlePlaceOrder}
+        disabled={isPlacingOrder}>
+        {isPlacingOrder ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Place Order</Text>
+        )}
       </TouchableOpacity>
     </View>
   );

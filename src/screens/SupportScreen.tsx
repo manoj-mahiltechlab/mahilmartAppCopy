@@ -39,7 +39,7 @@ const SupportScreen = () => {
   useEffect(() => {
     setTimeout(() => {
       fetchSupport();
-    }, 100);
+    }, 1000);
   }, [fetchSupport]);
 
   const onRefresh = async () => {

@@ -26,17 +26,15 @@ import {getProductsBySubcategoryId} from '@service/ProductService';
 import withCart from '@features/cart/WithCart';
 import ImageViewing from 'react-native-image-viewing';
 import {fetchProductByProductId} from '@service/authService';
+import {BASE_URL} from '@service/config';
+import RatingStars from '@components/ui/RatingStars';
+import axios from 'axios';
 
 const {width} = Dimensions.get('window');
 const fallbackImage =
   'https://res.cloudinary.com/duvnlj6m2/image/upload/v1749819426/uxxb1eun3m48lkt6bgkb.png';
 
-type Unit = {
-  gram: number;
-  price: number;
-  _id: string;
-};
-
+type Unit = {gram: number; price: number; _id: string; productRef?: string};
 type Product = {
   _id?: string;
   id?: string;
@@ -49,7 +47,7 @@ type Product = {
   subcategory?: string;
   subcategoryId?: string;
   stocks?: number;
-  units?: Unit[]; // added units here
+  units?: Unit[];
 };
 
 type RootStackParamList = {
@@ -77,35 +75,36 @@ const ProductDetails = () => {
     relatedProducts: passedRelated,
   } = route.params;
 
-  const [product, setProduct] = useState<Product>(() => {
-    if (!initialProduct.subcategory && touchedSubcategoryId) {
-      return {...initialProduct, subcategory: touchedSubcategoryId};
-    }
-    return initialProduct;
-  });
-
+  const [product, setProduct] = useState<Product>(() =>
+    !initialProduct.subcategory && touchedSubcategoryId
+      ? {...initialProduct, subcategory: touchedSubcategoryId}
+      : initialProduct,
+  );
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const flatListRef = useRef<FlatList<any>>(null);
-
-  const [isImageViewerVisible, setImageViewerVisible] = useState(false);
-  const [imageIndex, setImageIndex] = useState(0);
   const [loadingProduct, setLoadingProduct] = useState(false);
+  const [loadingRating, setLoadingRating] = useState(true);
+  const [rating, setRating] = useState({
+    avgRating: 0,
+    totalReviews: 0,
+    comments: [] as string[],
+  });
 
-  // State to track selected unit index
+  const flatListRef = useRef<FlatList<any>>(null);
+  const originalRelatedProductsRef = useRef<Product[]>([]);
+  // Add at the top with other states
+  const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews'>(
+    'details',
+  );
+
   const [selectedUnitIndex, setSelectedUnitIndex] = useState(0);
   const selectedUnit = product.units?.[selectedUnitIndex];
 
-  const originalRelatedProductsRef = useRef<Product[]>([]);
-
-  // Calculate displayed price based on selected unit (if any)
-  const displayedPrice =
-    product.units && product.units.length > 0
-      ? product.units[selectedUnitIndex].price
-      : product.price;
-
+  const displayedPrice = selectedUnit?.price ?? product.price;
   const displayedDiscountPrice = product.discountPrice;
+  const [imageIndex, setImageIndex] = useState<number>(0);
+  const [isImageViewerVisible, setImageViewerVisible] = useState(false);
 
   const images = useMemo(() => {
     const mainImage =
@@ -113,15 +112,57 @@ const ProductDetails = () => {
     return [mainImage, ...(product.subImages || [])].filter(Boolean);
   }, [product]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setLoadingProduct(false);
-    }, []),
-  );
-  useEffect(() => {
-    setSelectedUnitIndex(0);
-  }, [product]);
+  useFocusEffect(useCallback(() => setLoadingProduct(false), []));
 
+  useEffect(() => setSelectedUnitIndex(0), [product]);
+  const [reviews, setReviews] = useState<
+    {id: string; comment: string; user: string; rating: number}[]
+  >([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  // Fetch reviews
+  useEffect(() => {
+    if (!product._id && !product.id) return;
+
+    setLoadingReviews(true);
+    axios
+      .get(`${BASE_URL}/reviews/${product._id || product.id}`)
+      .then(res => {
+        const mapped = Array.isArray(res.data)
+          ? res.data.map(r => ({
+              id: r._id,
+              comment: r.comment || 'No comment',
+              rating: r.rating || 0,
+              user: r.userId?.name || 'Anonymous',
+              createdAt: r.createdAt, // ✅ keep date
+              updatedAt: r.updatedAt, // ✅ keep updated time
+              productId: r.productId, // ✅ keep product reference
+            }))
+          : [];
+        setReviews(mapped);
+        console.log('Reviews fetched:', mapped); // ✅ full review details in console
+      })
+      .catch(err => console.error('Failed to fetch reviews:', err))
+      .finally(() => setLoadingReviews(false));
+  }, [product._id, product.id]);
+
+  useEffect(() => {
+    if (reviews.length > 0) {
+      const avg =
+        reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
+      setRating({
+        avgRating: parseFloat(avg.toFixed(1)),
+        totalReviews: reviews.length,
+        comments: reviews.map(r => r.comment),
+      });
+    } else {
+      setRating({avgRating: 0, totalReviews: 0, comments: []});
+    }
+  }, [reviews]);
+  console.log('Product Rating ******** :', rating);
+
+  // Fetch related products
   useEffect(() => {
     const hasPassedRelated =
       Array.isArray(passedRelated) && passedRelated.length > 0;
@@ -203,6 +244,7 @@ const ProductDetails = () => {
         </View>
       </View>
 
+      {/* Sub Images */}
       {product.subImages?.length > 0 && (
         <FlatList
           data={images}
@@ -224,27 +266,64 @@ const ProductDetails = () => {
         />
       )}
 
+      {/* Product Name */}
       <View style={styles.detailsContainer}>
         <CustomText style={styles.name}>{product.name}</CustomText>
 
-        {/* Price and units container */}
+        {/* Product Rating */}
+        {/* ✅ Product Rating (Only show if reviews exist) */}
+        {rating.totalReviews > 0 && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}>
+            {/* Rating Number with Green Badge */}
+            <View
+              style={{
+                backgroundColor: '#4CAF50',
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                borderRadius: 4,
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginRight: 8,
+              }}>
+              <CustomText
+                style={{color: '#fff', fontWeight: '600', fontSize: 13}}>
+                {rating.avgRating.toFixed(1)}
+              </CustomText>
+              <Icon
+                name="star"
+                size={14}
+                color="#fff"
+                style={{marginLeft: 3}}
+              />
+            </View>
+
+            {/* Reviews Count */}
+            <CustomText style={{fontSize: 13, color: '#555'}}>
+              {rating.totalReviews} Reviews
+            </CustomText>
+          </View>
+        )}
+
+        {/* Price & Add */}
         <View style={styles.priceContainer1}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
             {selectedUnit ? (
-              <>
-                {/* If you have discount per unit, replace below accordingly */}
-                <CustomText style={{fontWeight: 'bold', color: '#222'}}>
-                  ₹{selectedUnit.price.toFixed(2)}
-                </CustomText>
-              </>
+              <CustomText style={{fontWeight: 'bold', color: '#222'}}>
+                ₹{selectedUnit.price.toFixed(2)}
+              </CustomText>
             ) : product.discountPrice ? (
               <>
                 <CustomText
                   style={{color: '#777', textDecorationLine: 'line-through'}}>
-                  ₹{product.discountPrice}
+                  ₹{product.price}
                 </CustomText>
                 <CustomText style={{fontWeight: 'bold', color: '#222'}}>
-                  ₹{product.price}
+                  ₹{product.discountPrice}
                 </CustomText>
               </>
             ) : (
@@ -254,18 +333,17 @@ const ProductDetails = () => {
             )}
           </View>
 
-          {/* Pass the selected unit if UniversalAdd supports it */}
           <UniversalAdd
             item={{
               ...product,
-              price: selectedUnit ? selectedUnit.price : product.price,
-              unit: selectedUnit, // optional: you can pass the selected unit for cart
+              price: displayedPrice,
+              unit: selectedUnit,
             }}
           />
         </View>
 
-        {/* Units buttons */}
-        {product.units && product.units.length > 0 && (
+        {/* Units */}
+        {product.units?.length > 0 && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -284,38 +362,21 @@ const ProductDetails = () => {
                     index !== product.units.length - 1 && {marginRight: 10},
                   ]}
                   onPress={async () => {
-                    const productRefId = unit.productRef; // get the referenced product ID
-                    console.log('Selected unit:', unit);
-                    console.log('Referenced product ID:', productRefId);
-
+                    const productRefId = unit.productRef;
                     if (!productRefId) {
-                      console.warn('No referenced product found for this unit');
                       alert('No referenced product found for this unit');
                       return;
                     }
 
-                    setLoadingProduct(true); // optional, show loading
-                    console.log('Fetching product by productRefId...');
-
+                    setLoadingProduct(true);
                     try {
                       const productData = await fetchProductByProductId(
                         productRefId,
                       );
-                      console.log('Fetched product data:', productData);
-
                       if (productData) {
                         setProduct(productData);
                         setSelectedUnitIndex(0);
-                        console.log(
-                          'Product updated with selected unit product',
-                        );
-                      } else {
-                        console.warn(
-                          'Product not found for productRefId:',
-                          productRefId,
-                        );
-                        alert('Product not found');
-                      }
+                      } else alert('Product not found');
                     } catch (err) {
                       console.error('Error fetching product:', err);
                       alert('Error fetching product');
@@ -345,18 +406,118 @@ const ProductDetails = () => {
           </ScrollView>
         )}
 
-        <CustomText style={styles.sectionTitle}>Description</CustomText>
-        <CustomText
-          style={styles.description}
-          numberOfLines={showFullDescription ? undefined : 3}>
-          {product.description || 'No description provided.'}
-        </CustomText>
-        <TouchableOpacity
-          onPress={() => setShowFullDescription(!showFullDescription)}>
-          <CustomText style={styles.toggleMore}>
-            {showFullDescription ? 'Less' : 'More...'}
-          </CustomText>
-        </TouchableOpacity>
+        {/* Tabs */}
+        <View
+          style={{
+            flexDirection: 'row',
+            borderBottomWidth: 1,
+            borderColor: '#ddd',
+            marginTop: 16,
+          }}>
+          <TouchableOpacity
+            style={{flex: 1, alignItems: 'center', padding: 10}}
+            onPress={() => setActiveTab('details')}>
+            <CustomText
+              style={{
+                color: activeTab === 'details' ? '#d00' : '#555',
+                fontWeight: activeTab === 'details' ? 'bold' : '500',
+              }}>
+              Product Details
+            </CustomText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{flex: 1, alignItems: 'center', padding: 10}}
+            onPress={() => setActiveTab('reviews')}>
+            <CustomText
+              style={{
+                color: activeTab === 'reviews' ? '#d00' : '#555',
+                fontWeight: activeTab === 'reviews' ? 'bold' : '500',
+              }}>
+              Reviews ({reviews.length})
+            </CustomText>
+          </TouchableOpacity>
+        </View>
+
+        {/* Tab Content */}
+        <View style={{paddingVertical: 12}}>
+          {activeTab === 'details' && (
+            <>
+              <CustomText style={styles.sectionTitle}>Description</CustomText>
+              <CustomText
+                style={styles.description}
+                numberOfLines={showFullDescription ? undefined : 3}>
+                {product.description || 'No description provided.'}
+              </CustomText>
+              <TouchableOpacity
+                onPress={() => setShowFullDescription(!showFullDescription)}>
+                <CustomText style={styles.toggleMore}>
+                  {showFullDescription ? 'Less' : 'More...'}
+                </CustomText>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {activeTab === 'reviews' && (
+            <View>
+              {loadingReviews ? (
+                <ActivityIndicator size="small" color="#FFB800" />
+              ) : reviews.length > 0 ? (
+                <>
+                  {/* Individual Reviews */}
+                  {reviews.map(rev => (
+                    <View
+                      key={rev.id}
+                      style={{
+                        marginBottom: 12,
+                        backgroundColor: '#fff',
+                        padding: 12,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: '#eee',
+                      }}>
+                      {/* User + Rating */}
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginBottom: 6,
+                        }}>
+                        <CustomText
+                          style={{
+                            fontWeight: '600',
+                            fontSize: 14,
+                            marginRight: 40,
+                          }}>
+                          {rev.user || 'Anonymous'}
+                        </CustomText>
+
+                        {/* ⭐ Show rating always for each review */}
+                        <RatingStars rating={rev.rating} reviews={1} />
+                      </View>
+
+                      {/* Comment */}
+                      <CustomText
+                        style={{
+                          fontSize: 13,
+                          color: '#444',
+                          textAlign: 'right', // Align text to the right
+                          alignSelf: 'flex-end', // Position to the right side
+                          marginTop: 8, // Add some spacing from the rating
+                          fontStyle: 'italic', // Optional: make it italic
+                          paddingRight: 8, // Optional: add some padding from the edge
+                        }}>
+                        {rev.comment}
+                      </CustomText>
+                    </View>
+                  ))}
+                </>
+              ) : (
+                <CustomText>No reviews yet.</CustomText>
+              )}
+            </View>
+          )}
+        </View>
       </View>
 
       {!fromSearch && (
@@ -370,12 +531,15 @@ const ProductDetails = () => {
   return (
     <View style={styles.container}>
       <CustomHeader title="Product Details" />
-      <ImageViewing
-        images={images.map(uri => ({uri}))}
-        imageIndex={imageIndex}
-        visible={isImageViewerVisible}
-        onRequestClose={() => setImageViewerVisible(false)}
-      />
+      {images.length > 0 && (
+        <ImageViewing
+          images={images.map(uri => ({uri}))}
+          imageIndex={imageIndex}
+          visible={isImageViewerVisible}
+          onRequestClose={() => setImageViewerVisible(false)}
+        />
+      )}
+
       {loadingRelated ? (
         <ActivityIndicator style={{marginTop: 20}} />
       ) : (
@@ -410,7 +574,7 @@ const ProductDetails = () => {
               price: item.price,
               discountPrice: item.discountPrice,
               description: item.description,
-              stocks: item.stocks ?? item.stock ?? 0,
+              stocks: item.stocks ?? 0,
               subcategory:
                 item.subcategory || item.subcategoryId || touchedSubcategoryId,
             };
@@ -487,10 +651,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     color: '#333',
   },
-  unitsContainer: {
-    flexDirection: 'row',
-    marginVertical: 8,
-  },
+  unitsContainer: {flexDirection: 'row', marginVertical: 8},
   unitButton: {
     borderWidth: 1,
     borderRadius: 8,
@@ -499,24 +660,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minWidth: 125,
   },
-  unitButtonSelected: {
-    borderColor: '#00bfa5',
-    backgroundColor: '#b2dfdb',
-  },
-  unitButtonUnselected: {
-    borderColor: '#ccc',
-    backgroundColor: '#f7f7f7',
-  },
-  unitTextSelected: {
-    color: '#00796b',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  unitTextUnselected: {
-    color: '#555',
-    fontWeight: '500',
-    fontSize: 14,
-  },
+  unitButtonSelected: {borderColor: '#00bfa5', backgroundColor: '#b2dfdb'},
+  unitButtonUnselected: {borderColor: '#ccc', backgroundColor: '#f7f7f7'},
+  unitTextSelected: {color: '#00796b', fontWeight: '700', fontSize: 14},
+  unitTextUnselected: {color: '#555', fontWeight: '500', fontSize: 14},
   toggleMore: {color: '#007BFF', fontSize: 13, fontWeight: '500'},
 });
 

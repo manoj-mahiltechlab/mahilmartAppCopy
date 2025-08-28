@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useState, useCallback} from 'react';
 import {
   FlatList,
   View,
@@ -6,49 +6,60 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useOrderStore} from '@state/orderStore';
 import ProfileOrderItem from '@features/profile/ProfileOrderItem';
 import {useAuthStore} from '@state/authStore';
 import {fetchCustomerOrders} from '@service/orderService';
-import CustomText from '@components/ui/CustomText';
+import CustomHeader from '@components/ui/CustomHeader';
 
 const PastOrdersScreen = () => {
   const {user} = useAuthStore();
   const {pastOrders, setPastOrders} = useOrderStore();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // only for first load
   const [error, setError] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // pull-to-refresh
+  const navigation = useNavigation();
 
-  // Wrap the loadOrders function in useCallback to prevent unnecessary recreations
-  const loadOrders = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const data = await fetchCustomerOrders(user?._id);
-      console.log('✅ Fetched orders:', data);
-      const validOrders = Array.isArray(data) ? data : data?.orders || [];
-      setPastOrders(validOrders);
-    } catch (err) {
-      console.error('❌ Failed to load orders:', err);
-      setError('Failed to fetch past orders. Please try again.');
-      setPastOrders([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user?._id, setPastOrders]);
+  const pendingOrdersCount =
+    pastOrders?.filter(order => order.status?.toLowerCase() === 'pending')
+      .length || 0;
+
+  const loadOrders = useCallback(
+    async (isRefresh = false) => {
+      if (!user?._id) return;
+      try {
+        if (!isRefresh) setLoading(true); // show spinner only on first load
+        setError('');
+        const data = await fetchCustomerOrders(user._id);
+        const validOrders = Array.isArray(data) ? data : data?.orders || [];
+        setPastOrders(validOrders);
+      } catch (err) {
+        console.error('❌ Failed to load orders:', err);
+        setError('Failed to fetch past orders. Please try again.');
+        setPastOrders([]);
+      } finally {
+        if (!isRefresh) setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user?._id, setPastOrders],
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    loadOrders();
+    loadOrders(true); // ✅ tell loadOrders it's a refresh
   }, [loadOrders]);
 
-  useEffect(() => {
-    if (user?._id) {
-      loadOrders();
-    }
-  }, [user?._id, loadOrders]);
+  // ✅ Reload every time screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders(false);
+    }, [loadOrders]),
+  );
 
   if (loading) {
     return (
@@ -67,10 +78,11 @@ const PastOrdersScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <CustomText variant="h8" style={styles.pastText}>
-        PAST ORDERS
-      </CustomText>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <CustomHeader
+        title="Past Orders"
+        onBackPress={() => navigation.goBack()}
+      />
 
       {pastOrders?.length > 0 ? (
         <FlatList
@@ -81,50 +93,37 @@ const PastOrdersScreen = () => {
           renderItem={({item, index}) => (
             <ProfileOrderItem item={item} index={index} />
           )}
-          contentContainerStyle={styles.flatListContent}
+          style={styles.flatList}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
+          contentContainerStyle={{paddingBottom: 20}}
         />
       ) : (
-        <View style={styles.centerContainer}>
+        <ScrollView
+          contentContainerStyle={styles.centerContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
           <Text style={styles.emptyText}>No past orders yet.</Text>
-        </View>
+        </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  container: {flex: 1, backgroundColor: '#FAFAFA'},
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 16,
   },
-  flatListContent: {
-    padding: 10,
-    flexGrow: 1,
-  },
-  pastText: {
-    marginVertical: 10,
-    opacity: 0.7,
-    textAlign: 'center',
-    paddingTop: 10,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: 'black',
-    textAlign: 'center',
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    fontSize: 16,
-  },
+  flatList: {flex: 1, paddingHorizontal: 12},
+  emptyText: {fontSize: 16, color: 'black', textAlign: 'center'},
+  errorText: {color: 'red', textAlign: 'center', fontSize: 16},
 });
 
 export default PastOrdersScreen;

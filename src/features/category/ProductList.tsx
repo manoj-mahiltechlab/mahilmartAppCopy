@@ -11,7 +11,9 @@ const ProductList: FC<{data: any}> = ({data}) => {
   return (
     <FlatList
       data={data}
-      keyExtractor={item => item._id}
+      // keyExtractor={item => item._id}
+
+      keyExtractor={(item, index) => `${item._id ?? `fallback-${index}`}`}
       renderItem={renderItem}
       style={styles.container}
       contentContainerStyle={styles.content}

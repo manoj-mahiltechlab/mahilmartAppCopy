@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, ScrollView} from 'react-native';
+import {View, StyleSheet, ScrollView, Alert} from 'react-native';
 import {useAuthStore} from '@state/authStore';
 import {getOrderById} from '@service/orderService';
 import {Colors, Fonts} from '@utils/Constants';
@@ -23,10 +23,20 @@ const LiveTracking = () => {
     if (!orderId) return;
     try {
       const data = await getOrderById(orderId);
+
+      if (data?.status === 'error') {
+        Alert.alert('No Orders', data.message || 'Order not found');
+        return;
+      }
+
       setOrderData(data);
-      setCurrentOrder(data); // Optional: in case you're using global state elsewhere
+      setCurrentOrder(data);
     } catch (error) {
-      console.error('Failed to fetch order details:', error);
+      // console.error('Failed to fetch order details:', error);
+      // Alert.alert(
+      //   'Order Error',
+      //   'Unable to fetch order details. Please try again.',
+      // );
     }
   };
 

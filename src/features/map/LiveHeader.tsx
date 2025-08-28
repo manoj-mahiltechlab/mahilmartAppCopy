@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
+import {useNavigation} from '@react-navigation/native';
 
 const LiveHeader: FC<{
   type: 'Customer' | 'Delivery';
@@ -20,6 +21,7 @@ const LiveHeader: FC<{
 }> = ({title, type, secondTitle}) => {
   const isCustomer = type === 'Customer';
   const {currentOrder, setCurrentOrder} = useAuthStore();
+  const navigation = useNavigation();
 
   return (
     <SafeAreaView>
@@ -27,23 +29,28 @@ const LiveHeader: FC<{
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            requestAnimationFrame(() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              // fallback if no back stack exists
               if (isCustomer) {
-                navigate('ProductDashboard');
-                if (currentOrder?.status === 'delivered') {
-                  setCurrentOrder(null);
-                }
+                navigate('BottomTabs', {screen: 'ProductDashboard'});
               } else {
                 navigate('DeliveryDashboard');
               }
-            });
+            }
+
+            if (isCustomer && currentOrder?.status === 'delivered') {
+              setCurrentOrder(null);
+            }
           }}>
           <Icon
             name="chevron-back"
-            size={RFValue(16)}
+            size={RFValue(20)}
             color={isCustomer ? '#fff' : '#000'}
           />
         </TouchableOpacity>
+
         <CustomText
           variant="h7"
           fontFamily={Fonts.Medium}

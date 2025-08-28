@@ -53,41 +53,93 @@ const ProductCategories = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'ProductCategories'>>();
   const [loadingProduct, setLoadingProduct] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const {categoryId, subcategoryId, categoryName, searchResults} =
     route.params || {};
 
-  const fetchProducts = useCallback(async (subId: string, override?: any[]) => {
-    setProductsLoading(true);
-    setShowNoProductMessage(false);
-
+  const fetchProducts = async (subId: string, pageNum = 1, append = false) => {
     try {
-      if (Array.isArray(override) && override.length > 0) {
-        console.log('[fetchProducts] override products:', override);
-        setProducts(override);
-        return;
+      setProductsLoading(true);
+      const result = await getProductsBySubcategoryId(subId, pageNum); // 👈 make sure your API supports pageNum
+
+      if (result.success) {
+        setProducts(prev =>
+          append ? [...prev, ...result.products] : result.products,
+        );
+        setHasMore(result.products.length > 0);
+        setShowNoProductMessage(result.products.length === 0);
+      } else {
+        setProducts([]);
+        setShowNoProductMessage(true);
       }
-
-      const {success, products} = await getProductsBySubcategoryId(subId);
-      const productsArray = Array.isArray(products) ? products : [];
-
-      console.log('[fetchProducts] fetched products:', productsArray);
-      setProducts(productsArray);
-
-      if (!success || productsArray.length === 0) {
-        setTimeout(() => setShowNoProductMessage(true), 50);
-      }
-    } catch (error) {
-      console.error(
-        `[ProductCategories] Error fetching products for subId=${subId}:`,
-        error,
-      );
+    } catch (err) {
+      console.error('[fetchProducts] Error:', err);
       setProducts([]);
-      setTimeout(() => setShowNoProductMessage(true), 50);
+      setShowNoProductMessage(true);
     } finally {
       setProductsLoading(false);
+      setRefreshing(false);
     }
-  }, []);
+  };
+
+  const fetchSubcategories = async () => {
+    try {
+      console.log('[fetchSubcategories] Fetching all subcategories...');
+      const allSubcategories = await withTimeout(getAllSubcategories(), 5000); // ⏳ 5s
+      console.log(
+        '[fetchSubcategories] Subcategories fetched:',
+        allSubcategories,
+      );
+
+      const filteredSubs = allSubcategories.filter(
+        sub =>
+          sub.category === selectedCategory?._id ||
+          sub.category === selectedCategory?.id,
+      );
+
+      setSubcategories(filteredSubs);
+
+      const firstSubId = filteredSubs?.[0]?._id || filteredSubs?.[0]?.id;
+
+      if (subcategoryId) {
+        setSelectedSubId(subcategoryId);
+        fetchProducts(subcategoryId);
+      } else if (firstSubId) {
+        setSelectedSubId(firstSubId);
+        fetchProducts(firstSubId);
+      } else {
+        setProducts([]);
+      }
+    } catch (error: any) {
+      console.error('[fetchSubcategories] Error:', error);
+      Alert.alert(
+        error.name === 'AbortError' ? 'Timeout' : 'Network Error',
+        'Unable to load subcategories. Please try again.',
+      );
+      setSubcategories([]);
+    }
+  };
+  // Refresh handler
+  // ✅ Refresh handler
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setPage(1);
+    if (selectedSubId) {
+      fetchProducts(selectedSubId, 1, false); // fresh fetch
+    }
+  }, [selectedSubId]);
+
+  // ✅ Load more handler
+  const handleLoadMore = useCallback(() => {
+    if (!productsLoading && hasMore && selectedSubId) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchProducts(selectedSubId, nextPage, true); // append mode
+    }
+  }, [productsLoading, hasMore, selectedSubId, page]);
 
   useEffect(() => {
     if (Array.isArray(searchResults) && searchResults.length > 0) {
@@ -209,14 +261,13 @@ const ProductCategories = () => {
       } catch (error) {
         console.error('[fetchSubcategories] Error:', error);
 
-        // ✅ Delay 1 seconds before showing alert
         setTimeout(() => {
           Alert.alert(
             'Server Problem',
             'Unable to connect to the server. Please check your internet connection and try again.',
             [{text: 'OK'}],
           );
-        }, 100);
+        }, 1000);
       }
     };
 
@@ -279,20 +330,22 @@ const ProductCategories = () => {
           : item.image?.uri || fallbackImage;
 
       const transformedItem = {
-        _id: item._id || item.id || '',
+        _id: item._id || item.id || String(index),
         image: imageUri,
-        name: item.name,
+        name: item.name || 'Unnamed Product',
         subImages: Array.isArray(item.subImages) ? item.subImages : [],
-        price: item.price,
-        discountPrice: item.discountPrice || '',
-        description: item.description || '',
+        price: item.price ?? 0,
+        discountPrice: item.discountPrice ?? 0,
+        description: item.description ?? '',
         stocks: item.stocks ?? item.stock ?? 0,
         units: Array.isArray(item.units) ? item.units : [],
         subcategory:
           item.subcategory?._id ||
           item.subcategoryId ||
           item.subcategory ||
-          selectedSubId,
+          selectedSubId ||
+          '',
+        rating: Number(item.rating) || 0, // ✅ ensure rating is always a number
       };
 
       return (
@@ -311,9 +364,10 @@ const ProductCategories = () => {
               product: transformedItem,
               touchedSubcategoryId,
               fromSearch: !!searchResults?.length,
-              relatedProducts, // Pass related products from memory
+              relatedProducts,
             });
-            console.log('transformedItem ::', transformedItem);
+
+            console.log('[renderItem] transformedItem:', transformedItem);
           }}
         />
       );
@@ -336,21 +390,32 @@ const ProductCategories = () => {
         }
         renderItem={renderItem}
         numColumns={2}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.3}
         ListFooterComponent={
-          productsLoading ? (
-            <ActivityIndicator
-              size="small"
-              color={Colors.border}
-              style={{marginVertical: 10}}
-            />
+          productsLoading && products.length > 0 ? (
+            <ActivityIndicator size="small" color={Colors.border} />
           ) : showNoProductMessage && products.length === 0 ? (
             <View style={styles.center}>
               <CustomText>No products found.</CustomText>
+              <TouchableOpacity
+                onPress={handleRefresh}
+                style={{
+                  marginTop: 8,
+                  paddingHorizontal: 16,
+                  paddingVertical: 6,
+                  backgroundColor: '#007bff',
+                  borderRadius: 6,
+                }}>
+                <CustomText style={{color: '#fff'}}>Retry</CustomText>
+              </TouchableOpacity>
             </View>
           ) : null
         }
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
       />
     </View>
   );

@@ -8,6 +8,7 @@ import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
 import CategoryContainer from './CategoryContainer';
 import {getAdImages, getAllSections} from '@service/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type DashboardStackParamList = {
   CategoryOrSubcategory: {categoryId: string; categoryName: string};
@@ -26,7 +27,7 @@ const Content: FC = () => {
     useNavigation<StackNavigationProp<DashboardStackParamList>>();
   const [adData, setAdData] = useState<string[]>([]);
   const [allSections, setAllSections] = useState<any[]>([]);
-  const isFocused = useIsFocused();
+  //const isFocused = useIsFocused();
   const [refreshing, setRefreshing] = useState(false);
 
   const handleCategoryPress = (categoryItem: {id: string; name: string}) => {
@@ -41,28 +42,54 @@ const Content: FC = () => {
     setRefreshing(true);
     try {
       const sectionData = await getAllSections();
+
       if (sectionData?.success && Array.isArray(sectionData.sections)) {
         setAllSections(sectionData.sections);
-        //    console.log('✅ Sections updated:', sectionData.sections);
+
+        // ✅ save to cache
+        await AsyncStorage.setItem(
+          'cachedSections',
+          JSON.stringify(sectionData.sections),
+        );
       } else {
-        setAllSections([]);
-        console.warn('⚠️ No sections found');
+        // ✅ fallback immediately
+        const cached = await AsyncStorage.getItem('cachedSections');
+        if (cached) {
+          setAllSections(JSON.parse(cached));
+        }
       }
     } catch (error) {
-      console.error('❌ Failed to fetch sections:', error);
+      // ❌ don’t log big error, just fallback
+      const cached = await AsyncStorage.getItem('cachedSections');
+      if (cached) {
+        setAllSections(JSON.parse(cached));
+      }
     } finally {
       setRefreshing(false);
     }
   }, []);
 
-  // Fetch on screen focus
   useEffect(() => {
-    if (isFocused) {
-      fetchSections();
-    }
-  }, [isFocused, fetchSections]);
+    const loadCache = async () => {
+      const cached = await AsyncStorage.getItem('cachedSections');
+      if (cached) {
+        setAllSections(JSON.parse(cached));
+        console.log('✅ Initial cache loaded');
+      }
+    };
+    loadCache();
+  }, []);
+
+  // Fetch on screen focus
+  // useEffect(() => {
+  //   if (isFocused) {
+  //     fetchSections();
+  //   }
+  // }, [isFocused, fetchSections]);
+  // Auto-polling every 15 sec
   // Auto-polling every 15 sec
   useEffect(() => {
+    fetchSections(); // ✅ first load immediately when component mounts
     const interval = setInterval(() => {
       fetchSections();
     }, 15000); // 15 sec
@@ -74,12 +101,21 @@ const Content: FC = () => {
     const fetchAds = async () => {
       try {
         const images = await getAdImages('Home');
-
-        setAdData(images);
-      } catch (error) {
-        console.error('❌ Failed to fetch ad images:', error);
+        if (images?.length) {
+          setAdData(images);
+          await AsyncStorage.setItem('cachedAds', JSON.stringify(images));
+        }
+      } catch {
+        const cached = await AsyncStorage.getItem('cachedAds');
+        if (cached) setAdData(JSON.parse(cached));
       }
     };
+
+    // load initial cache
+    (async () => {
+      const cached = await AsyncStorage.getItem('cachedAds');
+      if (cached) setAdData(JSON.parse(cached));
+    })();
 
     fetchAds();
     const interval = setInterval(fetchAds, 5000);

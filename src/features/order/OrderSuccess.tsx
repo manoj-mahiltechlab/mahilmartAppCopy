@@ -10,13 +10,14 @@ import {useRoute} from '@react-navigation/native';
 
 const OrderSuccess: FC = () => {
   const route = useRoute();
+  const {customer} = useAuthStore();
 
   const {
     orderId,
     deliveryAddress = 'No address information',
     addressType = 'unknown',
-    name = 'Anonymous',
-    phone = 'XXXXXXXXXX',
+    name = customer?.name || 'Anonymous',
+    phone = route.params?.phone || customer?.phone || 'XXXXXXXXXX', // ✅ prefer passed phone
   } = route.params || {};
 
   useEffect(() => {

@@ -81,6 +81,37 @@ export const getProductsBySubcategoryId = async (subcategoryId: string) => {
   }
 };
 
+// export const getSubcategoriesByCategoryId = async (categoryId: string) => {
+//   try {
+//     const url = `${BASE_URL}/subcategories/category/${categoryId}`;
+//     console.log('📡 Fetching subcategories from:', url);
+
+//     const response = await axios.get(url);
+//     const data = response.data;
+
+//     if (!Array.isArray(data)) {
+//       console.warn('⚠️ Unexpected subcategory response:', data);
+//       return [];
+//     }
+
+//     return data.map((sub: any) => ({
+//       id: sub._id || sub.id,
+//       name: sub.name,
+//       category: sub.category,
+//       image: {
+//         uri: sub.image || '',
+//       },
+//     }));
+//   } catch (error: any) {
+//     Alert.alert(
+//       'Server Problem',
+//       'Unable to connect to the server. Please check your internet connection and try again.',
+//       [{text: 'OK'}],
+//     );
+
+//     return [];
+//   }
+// };
 export const getSubcategoriesByCategoryId = async (categoryId: string) => {
   try {
     const url = `${BASE_URL}/subcategories/category/${categoryId}`;

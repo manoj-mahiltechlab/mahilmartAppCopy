@@ -131,7 +131,7 @@ import {StyleSheet, TouchableOpacity, View, Image, Alert} from 'react-native';
 import {Colors, Fonts} from '@utils/Constants';
 import {useAuthStore} from '@state/authStore';
 import {useNavigationState} from '@react-navigation/native';
-import {getOrderById} from '@service/orderService';
+import {getOrderById, getLatestOrder} from '@service/orderService';
 import {SOCKET_URL} from '@service/config';
 import {io, Socket} from 'socket.io-client';
 import {hocStyles} from '@styles/GlobleStyles';
@@ -152,14 +152,47 @@ const withLiveStatus = <P extends object>(
       async (orderId: string) => {
         try {
           const data = await getOrderById(orderId);
+
+          if (!data || typeof data !== 'object' || !('_id' in data)) {
+            setCurrentOrder(null);
+            return;
+          }
+
+          if (['delivered', 'cancelled', 'failed'].includes(data.status)) {
+            setCurrentOrder(null);
+            return;
+          }
+
           setCurrentOrder(data);
         } catch (err) {
           console.error('Failed to fetch order details', err);
-          Alert.alert('Error', 'Could not update order status');
+          setCurrentOrder(null);
         }
       },
       [setCurrentOrder],
     );
+
+    // 🔹 Always check latest active order on mount
+    useEffect(() => {
+      const init = async () => {
+        const userId = useAuthStore.getState().customer?._id;
+        if (!userId) return;
+
+        // ✅ If we already have an order, refresh it
+        if (currentOrder?._id) {
+          await fetchOrderDetails(currentOrder._id);
+        } else {
+          // ✅ Otherwise, fetch latest active order
+          const latest = await getLatestOrder(userId);
+          if (latest) {
+            setCurrentOrder(latest);
+          } else {
+            setCurrentOrder(null);
+          }
+        }
+      };
+      init();
+    }, [currentOrder?._id, fetchOrderDetails, setCurrentOrder]);
 
     const handleViewOrder = useCallback(() => {
       if (!currentOrder?._id) {
@@ -169,7 +202,7 @@ const withLiveStatus = <P extends object>(
       navigate('LiveTracking', {orderId: currentOrder._id});
     }, [currentOrder?._id]);
 
-    // Socket connection and event handling
+    // 🔹 Setup socket
     useEffect(() => {
       if (!currentOrder?._id) return;
 
@@ -184,22 +217,19 @@ const withLiveStatus = <P extends object>(
       );
 
       setSocketInstance(socket);
-
-      return () => {
-        socket.disconnect();
-      };
+      return () => socket.disconnect();
     }, [currentOrder?._id, fetchOrderDetails]);
 
-    // Cleanup socket on unmount
     useEffect(() => {
       return () => {
         socketInstance?.disconnect();
       };
     }, [socketInstance]);
 
+    // 🔹 Hide banner if no active order or not on dashboard
     if (
       !currentOrder ||
-      currentOrder.status === 'delivered' ||
+      ['delivered', 'cancelled', 'failed'].includes(currentOrder.status) ||
       routeName !== 'ProductDashboard'
     ) {
       return <WrappedComponent {...props} />;
@@ -220,10 +250,9 @@ const withLiveStatus = <P extends object>(
                 style={styles.icon}
               />
             </View>
-
             <View style={styles.statusTextContainer}>
               <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
-                Order is {currentOrder?.status || 'processing'}
+                Order is {currentOrder?.status ?? 'pending'}
               </CustomText>
               <CustomText variant="h9" fontFamily={Fonts.Medium}>
                 {itemCount} {itemCount === 1 ? 'item' : 'items'} in current
@@ -247,19 +276,13 @@ const withLiveStatus = <P extends object>(
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: {flex: 1},
   orderStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  flexRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
+  flexRow: {flexDirection: 'row', alignItems: 'center', gap: 10},
   img: {
     backgroundColor: Colors.backgroundSecondary,
     borderRadius: 100,
@@ -267,13 +290,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  icon: {
-    width: 20,
-    height: 20,
-  },
-  statusTextContainer: {
-    width: '68%',
-  },
+  icon: {width: 20, height: 20},
+  statusTextContainer: {width: '68%'},
   viewButton: {
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -281,9 +299,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.secondary,
     borderRadius: 5,
   },
-  viewButtonText: {
-    color: Colors.secondary,
-  },
+  viewButtonText: {color: Colors.secondary},
 });
 
 export default withLiveStatus;

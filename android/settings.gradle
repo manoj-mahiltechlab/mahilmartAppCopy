@@ -1,7 +1,27 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
-plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
-rootProject.name = 'grocery_app'
-include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
-include ':appModule'
+pluginManagement {
+    includeBuild("../node_modules/@react-native/gradle-plugin")
+
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    plugins {
+        id "org.jetbrains.kotlin.android" version "2.2.0"
+        id "org.jetbrains.kotlin.jvm" version "2.2.0"
+    }
+}
+
+plugins {
+    id("com.facebook.react.settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    ex.autolinkLibrariesFromCommand()
+}
+
+rootProject.name = "grocery_app"
+include(":app")
+includeBuild("../node_modules/@react-native/gradle-plugin")
+include(":appModule")

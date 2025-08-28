@@ -17,6 +17,7 @@ import OrderList from '@features/order/OrderList';
 import CartList from '@features/cart/CartList';
 import SearchResults from '../screens/SearchResults';
 import SupportScreen from '../screens/SupportScreen';
+import ProductReviews from '@features/category/ProductReviews';
 
 export type CustomerStackParamList = {
   ProductDashboard: undefined;
@@ -33,7 +34,8 @@ export type CustomerStackParamList = {
   Profile: undefined;
   PaymentScreen: undefined;
   SearchResults: undefined;
-  Support: undefined; // 👈 Important
+  Support: undefined;
+  ProductReviews: {productId: string}; // ✅ added
 };
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
@@ -59,6 +61,11 @@ const CustomerStack = () => {
       <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
       <Stack.Screen name="SearchResults" component={SearchResults} />
       <Stack.Screen name="Support" component={SupportScreen} />
+      <Stack.Screen
+        name="ProductReviews"
+        component={ProductReviews}
+        options={{title: 'Product Reviews'}}
+      />
     </Stack.Navigator>
   );
 };

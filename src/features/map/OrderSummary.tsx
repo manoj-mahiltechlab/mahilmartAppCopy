@@ -17,7 +17,11 @@ const getImageSource = (value: any): {uri: string} | undefined => {
 const OrderSummary: FC<{order: any}> = ({order}) => {
   const totalPrice =
     order?.items?.reduce((total: number, cartItem: any) => {
-      const price = cartItem?.product?.price ?? 0; // ✅ Safe access
+      const product = cartItem?.product;
+      // 👇 Prefer sellingPrice, fallback to discountPrice, then MRP
+      const price =
+        product?.sellingPrice ?? product?.discountPrice ?? product?.price ?? 0;
+
       const count = cartItem?.count ?? 0;
       return total + price * count;
     }, 0) || 0;
@@ -49,6 +53,11 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
         if (!product) return null;
 
         const imageSource = getImageSource(product.image);
+        const price =
+          product?.sellingPrice ??
+          product?.discountPrice ??
+          product?.price ??
+          0;
 
         return (
           <View style={styles.flexRow} key={index}>
@@ -83,7 +92,7 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
                 variant="h8"
                 fontFamily={Fonts.Medium}
                 style={{alignSelf: 'flex-end', marginTop: 4}}>
-                ₹{(item.count ?? 0) * (product.price ?? 0)}
+                ₹{(item.count ?? 0) * price}
               </CustomText>
               <CustomText
                 variant="h8"

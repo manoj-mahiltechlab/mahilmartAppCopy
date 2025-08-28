@@ -1,24 +1,31 @@
-apply plugin: "com.android.application"
-apply plugin: "org.jetbrains.kotlin.android"
-apply plugin: "com.facebook.react"
+plugins {
+    id "com.android.application"
+    id "org.jetbrains.kotlin.android"
+    id "com.facebook.react"
+}
 
+// ✅ React Native config
 react {
     project.ext.vectoricons = [
         iconFontNames: ['MaterialCommunityIcons.ttf', 'MaterialIcons.ttf', 'Ionicons.ttf']
     ]
-    apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
     autolinkLibrariesWithApp()
 }
 
+// ✅ vector icons font linking (must be outside `react {}`)
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+
+def jscFlavor = 'io.github.react-native-community:jsc-android:241213.1.0'
+
+// ✅ Use true/false flags
 def enableProguardInReleaseBuilds = true
-def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 android {
+    namespace "com.grocery_app"
+
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
-
-    namespace "com.grocery_app"
 
     defaultConfig {
         applicationId "com.grocery_app"
@@ -54,8 +61,8 @@ android {
         }
         release {
             signingConfig signingConfigs.release
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
@@ -64,7 +71,7 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android")
 
-    // ✅ Location services to fix FusedLocationProviderClient crash
+    // ✅ Location services
     implementation 'com.google.android.gms:play-services-location:21.0.1'
 
     // ✅ AndroidX Startup and WorkManager
@@ -78,3 +85,12 @@ dependencies {
     }
 }
 
+// ✅ Force Kotlin versions to avoid conflicts
+configurations.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21"
+        force "org.jetbrains.kotlin:kotlin-stdlib-common:2.0.21"
+        force "org.jetbrains.kotlin:kotlin-reflect:2.0.21"
+    }
+}

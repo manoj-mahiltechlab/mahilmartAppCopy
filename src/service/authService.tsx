@@ -6,6 +6,7 @@ import {useAuthStore} from '@state/authStore';
 import {appAxios} from './apiInterceptors';
 import {resetAndNavigate} from '@utils/NavigationUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Alert} from 'react-native';
 
 export const customerLogin = async (phone: string) => {
   try {
@@ -175,7 +176,7 @@ export const searchProducts = async (query: string) => {
 export const getSupportInfo = async () => {
   try {
     const res = await axios.get(`${BASE_URL}/support`);
-    return res.data.data; // This returns { email, phone, whatsapp, createdAt, updatedAt }
+    return res.data.data;
   } catch (error) {
     console.log('Fetch Support Info Error:', error);
     return null;
@@ -184,11 +185,10 @@ export const getSupportInfo = async () => {
 export const getAdImages = async (title: string) => {
   try {
     const response = await axios.get(`${BASE_URL}/adData/get?title=${title}`);
-    // console.log('All fetched images:', response.data);
-    return response.data.images; // ✅ RETURN the images
+
+    return response.data.images;
   } catch (error) {
-    console.error('Error fetching ad images:', error.message);
-    return []; // return empty array on error
+    return [];
   }
 };
 
@@ -198,7 +198,7 @@ export const getAllSections = async () => {
     // console.log('📦 All sections fetched:', response.data);
     return response.data; // ✅ Not response.data.sections
   } catch (error) {
-    console.error('❌ Failed to fetch all sections:', error);
+    // console.error('❌ Failed to fetch all sections:', error);
     return {success: false, sections: []};
   }
 };
