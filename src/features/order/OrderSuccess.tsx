@@ -17,7 +17,10 @@ const OrderSuccess: FC = () => {
     deliveryAddress = 'No address information',
     addressType = 'unknown',
     name = customer?.name || 'Anonymous',
-    phone = route.params?.phone || customer?.phone || 'XXXXXXXXXX', // ✅ prefer passed phone
+    customerPhone = route.params?.customerPhone ||
+      customer?.phone ||
+      'XXXXXXXXXX',
+    receiverPhone = route.params?.receiverPhone || null,
   } = route.params || {};
 
   useEffect(() => {
@@ -84,8 +87,17 @@ const OrderSuccess: FC = () => {
         variant="h8"
         style={styles.contactText}
         fontFamily={Fonts.Medium}>
-        📞 {name} ({phone})
+        📞 {name} ({customerPhone})
       </CustomText>
+
+      {receiverPhone && (
+        <CustomText
+          variant="h8"
+          style={styles.contactText}
+          fontFamily={Fonts.Medium}>
+          📞 Receiver: {receiverPhone}
+        </CustomText>
+      )}
     </View>
   );
 };

@@ -19,21 +19,33 @@ const PaymentScreen = () => {
   const {clearCart} = useCartStore();
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<
+    'COD' | 'UPI' | 'CARD' | 'WALLET'
+  >('COD'); // default COD
 
   const {
     cartData = [],
     totalAmount = 0,
+    deliveryCharge = 0,
     deliveryAddress = '',
     addressType = 'primary',
     liveLocation = {},
     branchId,
   } = route.params || {};
 
+  const subTotal = totalAmount - deliveryCharge;
+
   const handlePlaceOrder = async () => {
-    if (isPlacingOrder) return; // 👈 Prevent double tap
+    if (isPlacingOrder) return;
     setIsPlacingOrder(true);
 
     try {
+      if (paymentMethod !== 'COD') {
+        Alert.alert('Coming Soon', `${paymentMethod} payment not enabled yet.`);
+        setIsPlacingOrder(false);
+        return;
+      }
+
       const res = await createOrder(
         cartData,
         totalAmount,
@@ -44,15 +56,11 @@ const PaymentScreen = () => {
         },
         branchId,
         addressType,
+        paymentMethod,
       );
 
       const order = res?.order;
-
-      if (!order?._id) {
-        throw new Error('Order creation failed.');
-      }
-
-      console.log('✅ Order created successfully:', order);
+      if (!order?._id) throw new Error('Order creation failed.');
 
       setCurrentOrder(order);
       clearCart();
@@ -62,19 +70,66 @@ const PaymentScreen = () => {
         deliveryAddress,
         addressType,
         name: order.customer?.name || '',
-        phone: order.customer?.secondaryContact?.phone,
+        customerPhone: order.customer?.phone,
+        receiverPhone: order.customer?.secondaryContact?.phone,
       });
     } catch (error: any) {
       Alert.alert('Order Failed', error.message || 'Please try again later.');
       console.error('❌ Order creation error:', error.response?.data || error);
     } finally {
-      setIsPlacingOrder(false); // ✅ Re-enable after response
+      setIsPlacingOrder(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Total: ₹{totalAmount}</Text>
+      {/* ✅ Bill Breakdown */}
+      <View style={styles.billBox}>
+        <Text style={styles.label}>Subtotal: </Text>
+        <Text style={styles.value}>₹{subTotal}</Text>
+      </View>
+      <View style={styles.billBox}>
+        <Text style={styles.label}>Delivery Charge: </Text>
+        <Text
+          style={[
+            styles.value,
+            {color: deliveryCharge === 0 ? 'green' : 'red'},
+          ]}>
+          {deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}
+        </Text>
+      </View>
+      <View style={[styles.billBox, styles.totalBox]}>
+        <Text style={styles.totalText}>Grand Total: </Text>
+        <Text style={styles.totalText}>₹{totalAmount}</Text>
+      </View>
+
+      {/* ✅ Payment Method Selector */}
+      <Text style={[styles.label, {marginTop: 20}]}>Select Payment Method</Text>
+      {['COD', 'UPI', 'CARD', 'WALLET'].map(method => (
+        <TouchableOpacity
+          key={method}
+          style={[
+            styles.methodButton,
+            paymentMethod === method && styles.methodSelected,
+          ]}
+          onPress={() => setPaymentMethod(method as any)}>
+          <Text
+            style={[
+              styles.methodText,
+              paymentMethod === method && styles.methodTextSelected,
+            ]}>
+            {method === 'COD'
+              ? 'Cash on Delivery'
+              : method === 'UPI'
+              ? 'UPI / Wallet'
+              : method === 'CARD'
+              ? 'Credit / Debit Card'
+              : 'Wallet Balance'}
+          </Text>
+        </TouchableOpacity>
+      ))}
+
+      {/* ✅ Place Order button */}
       <TouchableOpacity
         style={[styles.payButton, isPlacingOrder && {opacity: 0.6}]}
         onPress={handlePlaceOrder}
@@ -82,7 +137,9 @@ const PaymentScreen = () => {
         {isPlacingOrder ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Place Order</Text>
+          <Text style={styles.buttonText}>
+            {paymentMethod === 'COD' ? 'Place COD Order' : 'Proceed to Pay'}
+          </Text>
         )}
       </TouchableOpacity>
     </View>
@@ -94,22 +151,65 @@ export default PaymentScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
     padding: 20,
+    backgroundColor: '#fff',
   },
-  text: {
-    fontSize: 20,
-    marginBottom: 20,
+  billBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginVertical: 6,
+  },
+  label: {
+    fontSize: 16,
+    color: '#555',
+  },
+  value: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  totalBox: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+    paddingTop: 10,
+  },
+  totalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  methodButton: {
+    padding: 12,
+    marginVertical: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+  },
+  methodSelected: {
+    borderColor: '#0f9d58',
+    backgroundColor: '#e8f5e9',
+  },
+  methodText: {
+    fontSize: 15,
+    color: '#333',
+  },
+  methodTextSelected: {
+    color: '#0f9d58',
+    fontWeight: 'bold',
   },
   payButton: {
     backgroundColor: '#0f9d58',
     paddingVertical: 12,
-    paddingHorizontal: 25,
     borderRadius: 8,
+    marginTop: 30,
+    width: '100%',
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
   },
 });

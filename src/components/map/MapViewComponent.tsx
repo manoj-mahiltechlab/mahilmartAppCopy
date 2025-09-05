@@ -46,17 +46,20 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
       showsIndoors={false}
       showsScale={false}
       showsIndoorLevelPicker={false}>
-      {deliveryPersonLocation && (hasPickedUp || hasAccepted) && (
-        <MapViewDirections
-          origin={deliveryPersonLocation}
-          destination={hasAccepted ? pickUpLocation : deliveryLocation}
-          precision="high"
-          apikey={GOOGLE_MAP_API}
-          strokeColor="#2871F2"
-          strokeWidth={5}
-          onError={err => console.log('MapViewDirections Error:', err)}
-        />
-      )}
+      {deliveryPersonLocation &&
+        (hasPickedUp || hasAccepted) &&
+        deliveryLocation &&
+        pickUpLocation && (
+          <MapViewDirections
+            origin={deliveryPersonLocation}
+            destination={hasAccepted ? pickUpLocation : deliveryLocation}
+            precision="high"
+            apikey={GOOGLE_MAP_API}
+            strokeColor="#2871F2"
+            strokeWidth={5}
+            onError={err => console.log('[Directions Caught Error]:', err)}
+          />
+        )}
 
       <Markers
         deliveryPersonLocation={deliveryPersonLocation}

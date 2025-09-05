@@ -36,6 +36,7 @@
     "react-native-gesture-handler": "^2.27.1",
     "react-native-gradle-plugin": "^0.71.19",
     "react-native-image-viewing": "^0.2.2",
+    "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-maps": "^1.20.1",
     "react-native-maps-directions": "^1.9.0",

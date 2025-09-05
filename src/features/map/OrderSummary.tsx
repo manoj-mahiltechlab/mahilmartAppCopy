@@ -15,13 +15,16 @@ const getImageSource = (value: any): {uri: string} | undefined => {
 };
 
 const OrderSummary: FC<{order: any}> = ({order}) => {
+  const activeItems =
+    order?.items?.filter((item: any) => item?.status !== 'Cancelled') || [];
+  const cancelledItems =
+    order?.items?.filter((item: any) => item?.status === 'Cancelled') || [];
+
   const totalPrice =
-    order?.items?.reduce((total: number, cartItem: any) => {
+    activeItems.reduce((total: number, cartItem: any) => {
       const product = cartItem?.product;
-      // 👇 Prefer sellingPrice, fallback to discountPrice, then MRP
       const price =
         product?.sellingPrice ?? product?.discountPrice ?? product?.price ?? 0;
-
       const count = cartItem?.count ?? 0;
       return total + price * count;
     }, 0) || 0;
@@ -47,8 +50,8 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
         </View>
       </View>
 
-      {/* Order Items */}
-      {order?.items?.map((item: any, index: number) => {
+      {/* Active Items */}
+      {activeItems.map((item: any, index: number) => {
         const product = item?.product;
         if (!product) return null;
 
@@ -60,7 +63,7 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
           0;
 
         return (
-          <View style={styles.flexRow} key={index}>
+          <View style={styles.flexRow} key={`active-${index}`}>
             <View style={styles.iconContainer}>
               {imageSource ? (
                 <Image source={imageSource} style={styles.img} />
@@ -85,7 +88,6 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
                 fontFamily={Fonts.Medium}>
                 {product.name ?? 'Unnamed Product'}
               </CustomText>
-              <CustomText variant="h9">{product.quantity ?? 'N/A'}</CustomText>
             </View>
             <View style={{width: '20%', alignItems: 'flex-end'}}>
               <CustomText
@@ -105,7 +107,92 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
         );
       })}
 
-      {/* Bill Details */}
+      {/* Cancelled Items Section */}
+      {cancelledItems.length > 0 && (
+        <View style={{marginTop: 10}}>
+          <CustomText
+            variant="h8"
+            fontFamily={Fonts.SemiBold}
+            style={{marginLeft: 10, color: 'red'}}>
+            Cancelled Items
+          </CustomText>
+
+          {cancelledItems.map((item: any, index: number) => {
+            const product = item?.product;
+            if (!product) return null;
+
+            const imageSource = getImageSource(product.image);
+            const price =
+              product?.sellingPrice ??
+              product?.discountPrice ??
+              product?.price ??
+              0;
+
+            return (
+              <View
+                style={[
+                  styles.flexRow,
+                  styles.cancelledRow,
+                  index === cancelledItems.length - 1 && {borderBottomWidth: 0}, // no border for last item
+                ]}
+                key={`cancel-${index}`}>
+                <View style={styles.iconContainer}>
+                  {imageSource ? (
+                    <Image source={imageSource} style={styles.img} />
+                  ) : (
+                    <View
+                      style={[
+                        styles.img,
+                        {
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          backgroundColor: '#ddd',
+                        },
+                      ]}>
+                      <CustomText>No Img</CustomText>
+                    </View>
+                  )}
+                </View>
+                <View style={{width: '55%'}}>
+                  <CustomText
+                    numberOfLines={2}
+                    variant="h8"
+                    fontFamily={Fonts.Medium}
+                    style={{textDecorationLine: 'line-through', color: '#666'}}>
+                    {product.name ?? 'Unnamed Product'}
+                  </CustomText>
+                  {/* Cancelled Badge */}
+                  <View style={styles.cancelledBadge}>
+                    <CustomText style={styles.cancelledBadgeText}>
+                      Cancelled
+                    </CustomText>
+                  </View>
+                </View>
+                <View style={{width: '20%', alignItems: 'flex-end'}}>
+                  <CustomText
+                    variant="h8"
+                    fontFamily={Fonts.Medium}
+                    style={{
+                      marginTop: 4,
+                      textDecorationLine: 'line-through',
+                      color: '#999',
+                    }}>
+                    ₹{(item.count ?? 0) * price}
+                  </CustomText>
+                  <CustomText
+                    variant="h8"
+                    fontFamily={Fonts.Medium}
+                    style={{marginTop: 4}}>
+                    {item.count ?? 0}x
+                  </CustomText>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {/* Bill Details (only active items included in total) */}
       <BillDetails totalItemPrice={totalPrice} />
     </View>
   );
@@ -137,6 +224,26 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 0.7,
     borderColor: Colors.border,
+  },
+  cancelledRow: {
+    backgroundColor: '#ffecec',
+    borderColor: '#ffb3b3',
+    opacity: 0.9,
+  },
+
+  cancelledBadge: {
+    backgroundColor: '#ff4d4d',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+
+  cancelledBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: Fonts.Medium,
   },
 });
 

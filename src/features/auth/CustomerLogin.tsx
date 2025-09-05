@@ -110,19 +110,30 @@ const CustomerLogin = () => {
 
       if (response?.success) {
         // ✅ Save the OTP token to storage for later use
-        await AsyncStorage.setItem('otpToken', response.otpToken);
-
+        if (response.otpToken) {
+          await AsyncStorage.setItem('otpToken', response.otpToken);
+        }
         navigation.navigate('VerifyOtp', {phoneNumber});
       } else {
         Alert.alert('OTP Failed', response?.message || 'Please try again.');
       }
     } catch (err: any) {
+      const status = err?.response?.status;
       const errorMessage =
         err?.response?.data?.message || err?.message || 'Something went wrong';
 
       console.log('❌ OTP Send Error:', errorMessage);
 
-      Alert.alert('OTP Failed', errorMessage);
+      if (status === 429) {
+        // 🚀 OTP already sent, still allow navigation
+        Alert.alert(
+          'Info',
+          'OTP already sent. Please use the code you received.',
+        );
+        navigation.navigate('VerifyOtp', {phoneNumber});
+      } else {
+        Alert.alert('OTP Failed', errorMessage);
+      }
     } finally {
       setLoading(false);
     }

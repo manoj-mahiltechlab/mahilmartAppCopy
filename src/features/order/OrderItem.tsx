@@ -13,11 +13,22 @@ const getImageSource = (value: any): {uri: string} | undefined => {
 };
 
 const OrderItem: FC<{item: any}> = ({item}) => {
-  const product = item?.item;
+  const product = item?.product ?? item?.item;
   const imageSource = getImageSource(product?.image);
+
+  const unitPrice =
+    item?.price ??
+    product?.sellingPrice ??
+    product?.discountPrice ??
+    product?.price ??
+    0;
+
+  const qty = item?.count ?? item?.quantity ?? 0;
+  const totalPrice = unitPrice * qty;
 
   return (
     <View style={styles.flexRow}>
+      {/* Image */}
       <View style={styles.imgContainer}>
         {imageSource ? (
           <Image source={imageSource} style={styles.img} />
@@ -36,20 +47,22 @@ const OrderItem: FC<{item: any}> = ({item}) => {
         )}
       </View>
 
+      {/* Name + Quantity */}
       <View style={{width: '55%'}}>
         <CustomText numberOfLines={2} variant="h8" fontFamily={Fonts.Medium}>
-          {product?.name}
+          {product?.name ?? 'Unnamed Product'}
         </CustomText>
-        <CustomText variant="h9">{product?.quantity}</CustomText>
+        <CustomText variant="h9">{qty}x</CustomText>
       </View>
 
+      {/* Counter + Price */}
       <View style={{width: '20%', alignItems: 'flex-end'}}>
         <UniversalAdd item={product} />
         <CustomText
           variant="h8"
           fontFamily={Fonts.Medium}
           style={{alignSelf: 'flex-end', marginTop: 4}}>
-          ₹{item.count * item.price} {/* discounted price */}
+          ₹{totalPrice}
         </CustomText>
       </View>
     </View>
@@ -74,7 +87,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 12,
     borderBottomWidth: 0.6,
-    borderTopColor: Colors.border,
+    borderBottomColor: Colors.border, // ✅ fixed
   },
 });
 

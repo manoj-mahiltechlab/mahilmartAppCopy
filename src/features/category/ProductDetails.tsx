@@ -135,13 +135,13 @@ const ProductDetails = () => {
               comment: r.comment || 'No comment',
               rating: r.rating || 0,
               user: r.userId?.name || 'Anonymous',
-              createdAt: r.createdAt, // ✅ keep date
-              updatedAt: r.updatedAt, // ✅ keep updated time
-              productId: r.productId, // ✅ keep product reference
+              createdAt: r.createdAt,
+              updatedAt: r.updatedAt,
+              productId: r.productId,
             }))
           : [];
         setReviews(mapped);
-        console.log('Reviews fetched:', mapped); // ✅ full review details in console
+        console.log('Reviews fetched:', mapped);
       })
       .catch(err => console.error('Failed to fetch reviews:', err))
       .finally(() => setLoadingReviews(false));
@@ -270,7 +270,6 @@ const ProductDetails = () => {
       <View style={styles.detailsContainer}>
         <CustomText style={styles.name}>{product.name}</CustomText>
 
-        {/* Product Rating */}
         {/* ✅ Product Rating (Only show if reviews exist) */}
         {rating.totalReviews > 0 && (
           <View

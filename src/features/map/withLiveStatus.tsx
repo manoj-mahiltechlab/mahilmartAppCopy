@@ -200,6 +200,7 @@ const withLiveStatus = <P extends object>(
         return;
       }
       navigate('LiveTracking', {orderId: currentOrder._id});
+      console.log('Current Order in HOC:', currentOrder);
     }, [currentOrder?._id]);
 
     // 🔹 Setup socket

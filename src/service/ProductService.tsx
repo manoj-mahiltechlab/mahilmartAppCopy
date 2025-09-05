@@ -58,7 +58,7 @@ export const getProductsBySubcategoryId = async (subcategoryId: string) => {
       );
       return {success: false, products: []};
     }
-    console.log('products in subcategory related:: ', response.data);
+    // console.log('products in subcategory related:: ', response.data);
 
     return {
       success: true,

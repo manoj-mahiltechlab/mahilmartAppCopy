@@ -2,94 +2,113 @@ import {View, StyleSheet} from 'react-native';
 import React, {FC} from 'react';
 import {Colors, Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import {opacity} from 'react-native-reanimated/lib/typescript/Colors';
 import {RFValue} from 'react-native-responsive-fontsize';
 
 const ReportItem: FC<{
-  iconName: string;
-  underline?: boolean;
   title: string;
   price: number;
-}> = ({iconName, underline, title, price}) => {
+  highlightColor?: string;
+}> = ({title, price, highlightColor}) => {
   return (
-    <View style={[styles.flexRowBetween, {marginBottom: 10}]}>
-      <View style={styles.flexRow}>
-        <Icon
-          name={iconName}
-          style={{opacity: 0.7}}
-          size={RFValue(12)}
-          color={Colors.text}
-        />
-        <CustomText
-          style={{
-            textDecorationLine: underline ? 'underline' : 'none',
-            textDecorationStyle: 'dashed',
-          }}
-          variant="h8">
-          {title}
-        </CustomText>
-      </View>
-      <CustomText variant="h8">₹{price}</CustomText>
+    <View style={styles.flexRowBetween}>
+      {/* Title */}
+      <CustomText variant="h8" style={styles.itemText}>
+        {title}
+      </CustomText>
+
+      {/* Amount with conditional highlight */}
+      <CustomText
+        variant="h8"
+        style={[
+          styles.itemText,
+          highlightColor && {color: highlightColor, fontFamily: Fonts.SemiBold},
+        ]}>
+        {price === 0 && title.toLowerCase().includes('delivery')
+          ? 'FREE'
+          : `₹${price}`}
+      </CustomText>
     </View>
   );
 };
 
 const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
+  // ✅ Delivery charge condition
+  const deliveryCharge = totalItemPrice >= 500 ? 0 : 40;
+  const grandTotal = totalItemPrice + deliveryCharge;
+
   return (
     <View style={styles.container}>
-      <CustomText style={styles.text} fontFamily={Fonts.SemiBold}>
-        Bill Details
+      {/* Title */}
+      <CustomText style={styles.header} fontFamily={Fonts.SemiBold}>
+        Price Details
       </CustomText>
+
+      {/* Bill Items */}
       <View style={styles.billContainer}>
         <ReportItem
-          iconName="article"
-          title="Items total"
+          title="Price (Items)"
           price={totalItemPrice}
+          highlightColor="blue" // ✅ Highlight in blue
         />
-        <ReportItem iconName="pedal-bike" title="Delivery charge" price={0} />
-        <ReportItem iconName="shopping-bag" title="Handling charge" price={0} />
-        <ReportItem iconName="cloudy-snowing" title="Surge charge" price={0} />
+
+        <ReportItem
+          title="Delivery Charges"
+          price={deliveryCharge}
+          highlightColor={deliveryCharge === 0 ? 'green' : 'red'} // ✅ Green or Red
+        />
+
+        <ReportItem title="Handling Charges" price={0} />
+        <ReportItem title="Surge Charges" price={0} />
       </View>
-      <View style={[styles.flexRowBetween, {marginBottom: 15}]}>
-        <CustomText
-          variant="h7"
-          style={styles.text}
-          fontFamily={Fonts.SemiBold}>
+
+      {/* Grand Total */}
+      <View style={styles.grandTotalRow}>
+        <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
           Grand Total
         </CustomText>
-        <CustomText style={styles.text} fontFamily={Fonts.SemiBold}>
-          ₹{totalItemPrice + 0}
+        <CustomText
+          variant="h6"
+          fontFamily={Fonts.SemiBold}
+          style={{color: Colors.text}}>
+          ₹{grandTotal}
         </CustomText>
       </View>
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    borderRadius: 15,
-    marginVertical: 15,
+    borderRadius: 8,
+    marginVertical: 10,
+    padding: 14,
+    borderWidth: 0.7,
+    borderColor: Colors.border,
   },
-  text: {
-    marginHorizontal: 10,
-    marginTop: 15,
+  header: {
+    fontSize: RFValue(14),
+    marginBottom: 12,
+    color: '#333',
   },
   billContainer: {
-    padding: 10,
-    paddingBottom: 0,
-    borderBottomColor: Colors.border,
     borderBottomWidth: 0.7,
+    borderColor: Colors.border,
+    paddingBottom: 10,
+    marginBottom: 10,
   },
   flexRowBetween: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    flexDirection: 'row',
+    marginVertical: 6,
   },
-  flexRow: {
+  itemText: {
+    color: '#444',
+  },
+  grandTotalRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
 });
 

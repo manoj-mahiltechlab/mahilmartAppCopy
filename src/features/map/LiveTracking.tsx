@@ -1,5 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, ScrollView, Alert} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import {useAuthStore} from '@state/authStore';
 import {getOrderById} from '@service/orderService';
 import {Colors, Fonts} from '@utils/Constants';
@@ -10,10 +16,11 @@ import CustomText from '@components/ui/CustomText';
 import OrderSummary from './OrderSummary';
 import DeliveryDetails from './DeliveryDetails';
 import LiveMap from './LiveMap';
-import {useRoute} from '@react-navigation/native';
+import {useRoute, useNavigation} from '@react-navigation/native';
 
 const LiveTracking = () => {
   const route = useRoute();
+  const navigation = useNavigation();
   const {orderId} = route.params || {};
 
   const {setCurrentOrder} = useAuthStore();
@@ -23,20 +30,14 @@ const LiveTracking = () => {
     if (!orderId) return;
     try {
       const data = await getOrderById(orderId);
-
       if (data?.status === 'error') {
         Alert.alert('No Orders', data.message || 'Order not found');
         return;
       }
-
       setOrderData(data);
       setCurrentOrder(data);
     } catch (error) {
-      // console.error('Failed to fetch order details:', error);
-      // Alert.alert(
-      //   'Order Error',
-      //   'Unable to fetch order details. Please try again.',
-      // );
+      console.error('Failed to fetch order details:', error);
     }
   };
 
@@ -44,12 +45,7 @@ const LiveTracking = () => {
     fetchOrderDetails();
   }, [orderId]);
 
-  if (!orderId) {
-    console.error('No orderId provided!');
-    return null;
-  }
-
-  if (!orderData) return null;
+  if (!orderId || !orderData) return null;
 
   let msg = 'Packing your order';
   let time = 'Arriving in 10 minutes';
@@ -74,6 +70,8 @@ const LiveTracking = () => {
   return (
     <View style={styles.container}>
       <LiveHeader type="Customer" title={msg} secondTitle={time} />
+
+      {/* Scrollable content */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
@@ -135,47 +133,37 @@ const LiveTracking = () => {
         />
 
         <OrderSummary order={orderData} />
-
-        <View style={styles.flexRow}>
-          <View style={styles.iconContainer}>
-            <Icon
-              name="cards-heart-outline"
-              color={Colors.disabled}
-              size={RFValue(20)}
-            />
-          </View>
-          <View style={{width: '80%'}}>
-            <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
-              Do you like our app?
-            </CustomText>
-            <CustomText variant="h9" fontFamily={Fonts.Medium}>
-              Hit Like and subscribe button! If you're enjoying, comment your
-              excitement!
-            </CustomText>
-          </View>
-        </View>
-
-        <CustomText
-          fontFamily={Fonts.SemiBold}
-          variant="h7"
-          style={{opacity: 0.6, marginTop: 10}}>
-          "MahilMart – Trusted Quality. Seamless Shopping."
-        </CustomText>
       </ScrollView>
+
+      {/* Buttons always visible */}
+      <View style={styles.fixedButtonRow}>
+        <TouchableOpacity
+          style={[styles.button, {backgroundColor: '#388E3C'}]}
+          onPress={() =>
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: 'BottomTabs',
+                  params: {screen: 'Home'},
+                },
+              ],
+            })
+          }>
+          <CustomText
+            variant="h6"
+            fontFamily={Fonts.SemiBold}
+            style={{color: '#fff'}}>
+            Continue Shopping
+          </CustomText>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.secondary,
-  },
-  scrollContent: {
-    paddingBottom: 150,
-    backgroundColor: Colors.backgroundSecondary,
-    padding: 15,
-  },
+  container: {flex: 1, backgroundColor: Colors.secondary},
   flexRow: {
     flexDirection: 'row',
     alignSelf: 'center',
@@ -200,6 +188,33 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 10,
     color: Colors.textDark,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 10,
+  },
+  button: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  fixedButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    padding: 15,
+    backgroundColor: Colors.backgroundSecondary,
+    borderTopWidth: 0.7,
+    borderColor: Colors.border,
+  },
+  scrollContent: {
+    paddingBottom: 20, // keep some space for buttons
+    backgroundColor: Colors.backgroundSecondary,
+    padding: 15,
+    flexGrow: 1,
   },
 });
 

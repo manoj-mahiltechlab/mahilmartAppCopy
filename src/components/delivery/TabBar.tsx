@@ -4,18 +4,25 @@ import {Colors, Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 
 interface TabBarProps {
-  selectedTab: 'available' | 'delivered';
-  onTabChange: (tab: 'available' | 'delivered') => void;
+  selectedTab: 'available' | 'accepted' | 'delivered';
+  onTabChange: (tab: 'available' | 'accepted' | 'delivered') => void;
 }
 
 const TabBar: FC<TabBarProps> = ({selectedTab, onTabChange}) => {
   return (
     <View style={styles.tabContainer}>
+      {/* Available Orders */}
       <TouchableOpacity
-        activeOpacity={0.5}
-        style={[styles.tab, selectedTab === 'available' && styles.activeTab]}
+        activeOpacity={0.7}
+        style={[
+          styles.tab,
+          styles.leftTab,
+          selectedTab === 'available' && styles.activeTab,
+        ]}
         onPress={() => onTabChange('available')}>
         <CustomText
+          numberOfLines={1}
+          ellipsizeMode="tail"
           variant="h8"
           fontFamily={Fonts.SemiBold}
           style={[
@@ -27,16 +34,48 @@ const TabBar: FC<TabBarProps> = ({selectedTab, onTabChange}) => {
           Available
         </CustomText>
       </TouchableOpacity>
+
+      {/* Accepted Orders */}
       <TouchableOpacity
-        activeOpacity={0.8}
-        style={[styles.tab, selectedTab !== 'available' && styles.activeTab]}
-        onPress={() => onTabChange('delivered')}>
+        activeOpacity={0.7}
+        style={[
+          styles.tab,
+          styles.middleTab,
+          selectedTab === 'accepted' && styles.activeTab,
+        ]}
+        onPress={() => onTabChange('accepted')}>
         <CustomText
+          numberOfLines={1}
+          ellipsizeMode="tail"
           variant="h8"
           fontFamily={Fonts.SemiBold}
           style={[
             styles.tabText,
-            selectedTab !== 'available'
+            selectedTab === 'accepted'
+              ? styles.activeTabText
+              : styles.inactiveTabText,
+          ]}>
+          Accepted
+        </CustomText>
+      </TouchableOpacity>
+
+      {/* Delivered Orders */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={[
+          styles.tab,
+          styles.rightTab,
+          selectedTab === 'delivered' && styles.activeTab,
+        ]}
+        onPress={() => onTabChange('delivered')}>
+        <CustomText
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          variant="h8"
+          fontFamily={Fonts.SemiBold}
+          style={[
+            styles.tabText,
+            selectedTab === 'delivered'
               ? styles.activeTabText
               : styles.inactiveTabText,
           ]}>
@@ -50,24 +89,40 @@ const TabBar: FC<TabBarProps> = ({selectedTab, onTabChange}) => {
 const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 10,
-  },
-  tab: {
-    paddingVertical: 10,
+    marginHorizontal: 15,
+    marginBottom: 12,
     borderRadius: 25,
     borderWidth: 2,
-    width: '38%',
-    margin: 10,
     borderColor: Colors.border,
+    // overflow: 'hidden',  ❌ remove this
+  },
+  tab: {
+    flex: 1, // equal space for all
+    paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  leftTab: {
+    borderTopLeftRadius: 25,
+    borderBottomLeftRadius: 25,
+    borderRightWidth: 1,
+    borderColor: Colors.border,
+  },
+  middleTab: {
+    borderRightWidth: 1,
+    borderColor: Colors.border,
+  },
+  rightTab: {
+    borderTopRightRadius: 25,
+    borderBottomRightRadius: 25,
   },
   activeTab: {
     backgroundColor: Colors.secondary,
-    borderColor: Colors.secondary,
   },
   tabText: {
-    color: Colors.text,
+    textAlign: 'center',
+    paddingHorizontal: 4,
   },
   activeTabText: {
     color: '#fff',

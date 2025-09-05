@@ -62,7 +62,7 @@ const UniversalAdd: FC<{item: any}> = ({item}) => {
         </TouchableOpacity>
       ) : (
         <View style={styles.counterContainer}>
-          <TouchableOpacity onPressOut={() => removeItem(item._id || item.id)}>
+          <TouchableOpacity onPress={() => removeItem(item._id || item.id)}>
             <Icon name="minus" color="#fff" size={RFValue(15)} />
           </TouchableOpacity>
 

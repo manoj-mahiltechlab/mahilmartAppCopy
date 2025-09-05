@@ -234,14 +234,23 @@ export const sendLiveOrderUpdates = async (
   status: string,
 ) => {
   try {
-    const mappedStatus = statusMap[status] || status; // ← map it here
+    if (!id) {
+      console.error('❌ sendLiveOrderUpdates called with missing id');
+      return;
+    }
 
-    const response = await appAxios.patch(`/order/${id}/status`, {
+    const mappedStatus = statusMap[status] || status;
+
+    const payload = {
       deliveryPersonLocation: location,
-      status: mappedStatus, // send backend-compatible status
-    });
+      status: mappedStatus,
+    };
 
-    console.log('Live update response:', response.data);
+    console.log('📦 Sending live order update:', {id, payload});
+
+    const response = await appAxios.patch(`/order/${id}/status`, payload);
+
+    console.log('✅ Live update response:', response.data);
     return response.data;
   } catch (error: any) {
     console.error(

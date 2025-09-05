@@ -124,7 +124,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
         <View style={styles.subImagesContainer}>
           {(item.subImages || []).slice(0, 3).map((subImg, idx) => (
             <Image
-              key={idx}
+              key={`${item._id}-sub-${idx}`}
               source={getImageSource(subImg)}
               style={styles.subImageThumb}
               resizeMode="cover"
@@ -154,6 +154,18 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
             </View>
           </View>
 
+          {/* ✅ Stock details */}
+          {item.stocks !== undefined &&
+            (item.stocks === 0 ? (
+              <CustomText style={[styles.stockText, styles.stockOut]}>
+                Out of stock
+              </CustomText>
+            ) : item.stocks < 11 ? (
+              <CustomText style={[styles.stockText, styles.stockLow]}>
+                Only {item.stocks} left in stock!
+              </CustomText>
+            ) : null)}
+
           {/* Always at the bottom */}
           <View style={styles.priceContainer}>
             <View style={styles.priceWrapper}>
@@ -172,7 +184,23 @@ const ProductItem: FC<ProductItemProps> = ({index, item, onPress}) => {
                 </CustomText>
               )}
             </View>
-            <UniversalAdd item={item} />
+
+            {item.stocks === 0 ? (
+              <TouchableOpacity
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#d9534f',
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                }}>
+                <CustomText style={{color: '#d9534f', fontSize: RFValue(11)}}>
+                  Notify Me
+                </CustomText>
+              </TouchableOpacity>
+            ) : (
+              <UniversalAdd item={item} />
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -286,6 +314,20 @@ const styles = StyleSheet.create({
     color: '#2e7231ff',
     fontSize: RFValue(13),
     fontWeight: 'bold',
+  },
+  stockText: {
+    fontSize: RFValue(11),
+    marginBottom: 6,
+  },
+  stockIn: {
+    color: '#2e7231', // green
+  },
+  stockLow: {
+    color: '#d9534f', // red (low stock / out of stock)
+  },
+  stockOut: {
+    color: '#d9534f',
+    fontWeight: '600',
   },
 });
 

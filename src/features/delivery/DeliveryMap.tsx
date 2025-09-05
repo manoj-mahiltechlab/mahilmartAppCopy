@@ -164,7 +164,26 @@ const DeliveryMap = () => {
     setIsLoading(true);
     try {
       const data = await getOrderById(orderDetails._id);
-      setOrderData(normalizeOrder(data));
+      const normalized = normalizeOrder(data);
+
+      setOrderData(prev => {
+        // 🔑 Prevent UI flicker from old backend status
+        if (!prev) return normalized;
+
+        // If we already moved forward, don’t go backwards
+        const priority: Record<OrderStatus, number> = {
+          pending: 0,
+          available: 1,
+          confirmed: 2,
+          out_for_delivery: 3,
+          delivered: 4,
+          cancelled: 5,
+        };
+
+        return priority[normalized.status] < priority[prev.status]
+          ? prev
+          : normalized;
+      });
     } catch (error) {
       console.error('Failed to fetch order:', error);
       Alert.alert('Error', 'Failed to load order details');
@@ -199,6 +218,9 @@ const DeliveryMap = () => {
       return;
     }
 
+    // 🔥 Optimistic update: show "Pick Up Order" instantly
+    setOrderData(prev => (prev ? {...prev, status: 'confirmed'} : prev));
+
     setIsProcessing(true);
     try {
       const updatedOrder = await acceptOrder(orderDetails._id, user._id);
@@ -207,12 +229,14 @@ const DeliveryMap = () => {
       if (['available', 'pending'].includes(normalized.status)) {
         normalized.status = 'confirmed';
       }
+
       if (!normalized.deliveryPartner) {
         normalized.deliveryPartner = {_id: user._id, name: user.name || 'You'};
       }
 
-      setOrderData(normalized);
+      setOrderData(prev => ({...prev, ...normalized}));
       setCurrentOrder(normalized);
+
       Alert.alert('Success', 'Order accepted successfully!');
     } catch (error: any) {
       console.error('Accept order error:', error);
@@ -224,9 +248,7 @@ const DeliveryMap = () => {
 
   const handleOrderPickup = async () => {
     if (!myLocation) {
-      console.error(
-        new Error('Cannot determine your current location  handleOrderPickup'),
-      );
+      Alert.alert('Error', 'Cannot determine your current location');
       return;
     }
 
@@ -235,18 +257,19 @@ const DeliveryMap = () => {
       const updatedOrder = await sendLiveOrderUpdates(
         orderDetails._id,
         myLocation,
-        frontendToBackend['out_for_delivery'], // ✅ mapped correctly
+        frontendToBackend['out_for_delivery'],
       );
 
-      if (!updatedOrder) throw new Error('Server returned no order data');
       let normalized = normalizeOrder(updatedOrder);
 
+      // ✅ Force pickup instantly
       if (normalized.status !== 'out_for_delivery') {
         normalized.status = 'out_for_delivery';
       }
 
-      setOrderData(normalized);
+      setOrderData(prev => ({...prev, ...normalized}));
       setCurrentOrder(normalized);
+
       Alert.alert('Success', "Let's deliver it as soon as possible!");
     } catch (error: any) {
       console.error('Pickup error:', error?.message || error);
@@ -267,18 +290,17 @@ const DeliveryMap = () => {
       const updatedOrder = await sendLiveOrderUpdates(
         orderDetails._id,
         myLocation,
-        frontendToBackend['delivered'], // ✅ Correct
+        frontendToBackend['delivered'],
       );
 
-      const normalized = normalizeOrder(updatedOrder);
-      setOrderData(normalized);
+      let normalized = normalizeOrder(updatedOrder);
+      normalized.status = 'delivered'; // ✅ Force instant delivery
+
+      setOrderData(prev => ({...prev, ...normalized}));
       setCurrentOrder(null);
 
       Alert.alert('✅ Success', 'Order delivered successfully! 🎉', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(), // 🔑 Now works because navigation is defined
-        },
+        {text: 'OK', onPress: () => navigation.goBack()},
       ]);
     } catch (error) {
       console.error('Delivery error:', error);
@@ -332,11 +354,9 @@ const DeliveryMap = () => {
   };
 
   const renderActionButton = () => {
-    if (isLoading)
-      return <ActivityIndicator size="large" color={Colors.primary} />;
+    if (!orderData) return null;
 
-    if (!orderData || ['delivered', 'cancelled'].includes(orderData.status))
-      return null;
+    if (['delivered', 'cancelled'].includes(orderData.status)) return null;
 
     switch (orderData.status) {
       case 'pending':
@@ -345,18 +365,28 @@ const DeliveryMap = () => {
           <CustomButton
             title="Accept Delivery"
             onPress={handleAcceptOrder}
-            loading={isProcessing}
-            disabled={isProcessing}
+            loading={isProcessing || isLoading}
+            disabled={isProcessing || isLoading}
           />
         );
 
       case 'confirmed':
+        if (!myLocation) {
+          return (
+            <CustomButton
+              title="Please wait...some seconds"
+              onPress={() => {}}
+              disabled={true}
+              loading={false}
+            />
+          );
+        }
         return (
           <CustomButton
             title="Pick Up Order"
             onPress={handleOrderPickup}
-            loading={isProcessing}
-            disabled={isProcessing || !myLocation}
+            loading={isProcessing || isLoading}
+            disabled={isProcessing || isLoading}
           />
         );
 
@@ -365,8 +395,8 @@ const DeliveryMap = () => {
           <CustomButton
             title="Mark as Delivered"
             onPress={handleOrderDelivery}
-            loading={isProcessing}
-            disabled={isProcessing}
+            loading={isProcessing || isLoading}
+            disabled={isProcessing || isLoading}
           />
         );
 
@@ -375,18 +405,12 @@ const DeliveryMap = () => {
     }
   };
 
-  // ---------- RENDER ----------
-  if (isLoading && !orderData) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  // ---------- RENDER ---------
   if (!orderData) {
     return (
       <View style={styles.container}>
-        <CustomText>Failed to load order details</CustomText>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <CustomText>Loading order details...</CustomText>
       </View>
     );
   }
@@ -452,7 +476,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 150,
     backgroundColor: Colors.backgroundSecondary,
-    padding: 15,
+    padding: 5,
   },
   feedbackContainer: {
     flexDirection: 'row',

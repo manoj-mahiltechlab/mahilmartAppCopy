@@ -66,9 +66,18 @@ const ProductCategories = () => {
       const result = await getProductsBySubcategoryId(subId, pageNum); // 👈 make sure your API supports pageNum
 
       if (result.success) {
-        setProducts(prev =>
-          append ? [...prev, ...result.products] : result.products,
-        );
+        setProducts(prev => {
+          const merged = append
+            ? [...prev, ...result.products]
+            : result.products;
+          const unique = merged.filter(
+            (p, index, self) =>
+              index ===
+              self.findIndex(x => (x._id || x.id) === (p._id || p.id)),
+          );
+          return unique;
+        });
+
         setHasMore(result.products.length > 0);
         setShowNoProductMessage(result.products.length === 0);
       } else {
@@ -386,7 +395,7 @@ const ProductCategories = () => {
       <FlatList
         data={overrideProducts.length > 0 ? overrideProducts : products}
         keyExtractor={(item, index) =>
-          String(item._id || item.id || item.name || index)
+          `${item._id || item.id || item.name || 'item'}-${index}`
         }
         renderItem={renderItem}
         numColumns={2}

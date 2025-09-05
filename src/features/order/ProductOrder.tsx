@@ -87,18 +87,6 @@ const ProductOrder = () => {
         {
           text: 'Proceed',
           onPress: async () => {
-            // if (
-            //   currentOrder &&
-            //   currentOrder.status !== 'delivered' &&
-            //   currentOrder.status !== 'cancelled'
-            // ) {
-            //   Alert.alert(
-            //     'Order Already in Progress',
-            //     'Please wait for your current order to be delivered before placing a new one.',
-            //   );
-            //   return;
-            // }
-
             const formattedData = cart.map(item => ({
               product: item._id,
               quantity: item.count,
@@ -135,6 +123,10 @@ const ProductOrder = () => {
             setLoading(true);
 
             try {
+              // ✅ Delivery charge logic
+              const deliveryCharge = totalItemPrice >= 500 ? 0 : 40;
+              const grandTotal = totalItemPrice + deliveryCharge;
+
               // Save selected address type to user profile
               await updateSelectedAddressType(
                 user._id,
@@ -142,10 +134,11 @@ const ProductOrder = () => {
                 selectedAddress,
               );
 
-              // 👉 Now send all info to PaymentScreen (no order yet)
+              // 👉 Send grand total + deliveryCharge to PaymentScreen
               navigate('PaymentScreen', {
                 cartData: formattedData,
-                totalAmount: totalItemPrice,
+                totalAmount: grandTotal, // ✅ includes delivery charge
+                deliveryCharge, // ✅ pass separately if you want to show it
                 deliveryAddress: selectedAddress,
                 addressType: activeAddressType,
                 userId: user._id,
