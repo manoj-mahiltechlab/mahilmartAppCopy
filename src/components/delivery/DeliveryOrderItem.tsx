@@ -21,21 +21,38 @@ interface Order {
   createdAt: string;
   status: 'confirmed' | 'completed';
 }
+
 function getStatusColor(status: string) {
   switch (status.toLowerCase()) {
-    case 'available':
-      return '#28a745';
-    case 'confirmed':
-      return '#007bff';
-    case 'delivered':
-      return '#17a2b8';
-    case 'cancelled':
-      return '#dc3545';
     case 'pending':
-      return '#ffc107';
+      return '#ffc107'; // yellow
+    case 'processing':
+      return '#6f42c1'; // purple
+    case 'confirmed':
+      return '#007bff'; // blue
+    case 'packed':
+      return '#28a745'; // green
+    case 'picked_up':
+      return '#20c997'; // teal
+    case 'out_for_delivery':
+      return '#17a2b8'; // cyan
+    case 'delivered':
+      return '#28a745'; // success green
+    case 'cancelled':
+      return '#dc3545'; // red
     default:
-      return '#6c757d';
+      return '#6c757d'; // gray
   }
+}
+
+/** ✅ Format backend status → human readable */
+function formatStatusText(status: string) {
+  if (!status) return '';
+  return status
+    .replace(/_/g, ' ') // underscores → spaces
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase → space
+    .toLowerCase()
+    .replace(/\b\w/g, char => char.toUpperCase()); // capitalize words
 }
 
 const DeliveryOrderItem: FC<{item: Order; index: number}> = ({item, index}) => {
@@ -50,10 +67,11 @@ const DeliveryOrderItem: FC<{item: Order; index: number}> = ({item, index}) => {
             variant="h8"
             fontFamily={Fonts.SemiBold}
             style={[styles.statusText, {color: getStatusColor(item.status)}]}>
-            {item.status}
+            {formatStatusText(item.status)}
           </CustomText>
         </View>
       </View>
+
       <View style={styles.itemContainer}>
         {item.items
           .slice(0, 2)
@@ -77,13 +95,14 @@ const DeliveryOrderItem: FC<{item: Order; index: number}> = ({item, index}) => {
         <TouchableOpacity
           style={styles.iconContainer}
           onPress={() => {
+            console.log('➡️ Passing to DeliveryMap:', item); // 👈 log here
             navigate('DeliveryMap', {
               ...item,
             });
           }}>
           <Icon
             name="arrow-right-circle"
-            size={RFValue(24)}
+            size={RFValue(25)}
             color={Colors.primary}
           />
         </TouchableOpacity>

@@ -1,13 +1,14 @@
-export enum Colors {
-  primary = '#FDCC00',
-  primary_light = '#FDCC00',
-  secondary = '#388E3C',
-  white = '#FFFFFF',
-  text = '#363636',
-  disabled = '#9197a6',
-  border = '#d0d4dc',
-  backgroundSecondary = '#f5f6fb',
-}
+export const Colors = {
+  primary: '#FDCC00',
+  primary_light: '#FDCC00',
+  secondary: '#388E3C',
+  white: '#FFFFFF',
+  text: '#363636',
+  disabled: '#9197a6',
+  border: '#d0d4dc',
+  backgroundSecondary: '#f5f6fb',
+  deliveryHighlight: '#E6F7FF', // 🔹 light blue tint
+} as const;
 export enum Fonts {
   Regular = 'Okra-Regular',
   Medium = 'Okra-Medium',

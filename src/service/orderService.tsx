@@ -6,64 +6,60 @@ import {updateSelectedAddressType} from './customerService';
 const mapStatus = (status: string): string => {
   if (!status) return 'pending';
 
-  switch (status.toLowerCase()) {
-    case 'pending':
-    case 'available':
+  switch (status) {
+    case 'Pending':
       return 'pending';
 
-    case 'processing':
-    case 'assigned':
-    case 'confirmed':
+    case 'Processing':
+      return 'processing';
+
+    case 'Confirmed':
       return 'confirmed';
 
-    case 'out_for_delivery':
-    case 'shipped':
+    case 'Packed':
+      return 'packed';
+
+    case 'Picked_Up':
+      return 'picked_up';
+
+    case 'OutForDelivery':
       return 'out_for_delivery';
 
-    case 'delivered':
+    case 'Delivered':
       return 'delivered';
 
-    case 'cancelled':
+    case 'Cancelled':
       return 'cancelled';
 
     default:
-      return 'pending';
+      return status.toLowerCase(); // fallback
   }
 };
 
-// 🔑 Map backend status -> frontend-friendly status
-const statusMap: Record<string, string> = {
-  pending: 'pending',
-  processing: 'confirmed', // 👈 backend 'processing' will show as 'confirmed'
-  assigned: 'assigned',
-  packed: 'packed',
-  shipped: 'shipped',
-  out_for_delivery: 'out for delivery',
-  delivered: 'delivered',
-  cancelled: 'cancelled',
+// ✅ Consistent frontend ↔ backend mapping
+export const statusMap: Record<string, string> = {
+  Pending: 'pending',
+  Processing: 'processing',
+  Confirmed: 'confirmed',
+  Packed: 'available', // frontend sees packed as available
+  Picked_Up: 'picked_up',
+  OutForDelivery: 'out_for_delivery',
+  Delivered: 'delivered',
+  Cancelled: 'cancelled',
 };
 
-// 🔄 Frontend → Backend mapping (if updating status from app)
-const reverseStatusMap: Record<string, string> = {
-  confirmed: 'Processing',
-  pending: 'Pending',
-  assigned: 'Assigned',
-  packed: 'Packed',
-  shipped: 'Shipped',
-  'out for delivery': 'Out_for_delivery',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
-};
+// Reverse mapping (frontend → backend)
+export const reverseStatusMap: Record<string, string> = Object.fromEntries(
+  Object.entries(statusMap).map(([backend, frontend]) => [frontend, backend]),
+);
 
-// Normalize order object for frontend
+// normalize backend → frontend
 export const normalizeOrder = (order: any) => {
-  const backendStatus = order?.status?.toLowerCase?.();
-  const status = statusMap[backendStatus] || backendStatus || 'pending';
-
+  if (!order || !order.status) return order;
+  const backendStatus = order.status;
   return {
     ...order,
-    status,
-    customer: order?.customer || {}, // fallback to avoid crashes
+    status: statusMap[backendStatus] || backendStatus.toLowerCase(),
   };
 };
 
@@ -164,7 +160,7 @@ export const createOrder = async (
 export const updateOrderStatus = async (orderId: string, newStatus: string) => {
   try {
     const backendStatus = reverseStatusMap[newStatus] || newStatus;
-    const response = await appAxios.put(`/orders/${orderId}/status`, {
+    const response = await appAxios.patch(`/order/${orderId}/status`, {
       status: backendStatus,
     });
     return normalizeOrder(response.data);
@@ -183,9 +179,10 @@ export const getOrderById = async (orderId: string) => {
     const response = await appAxios.get(`/order/${orderId}`);
     return normalizeOrder(response.data);
   } catch (error: any) {
-    // console.error('Get Order Error:', error?.response?.data || error.message);
-    Alert.alert('Order Error', errorMessage);
-    return {status: 'error', message: 'Order not found'}; // better fallback
+    const msg =
+      error?.response?.data?.message || error.message || 'Order not found';
+    Alert.alert('Order Error', msg);
+    return {status: 'error', message: msg}; // better fallback
   }
 };
 
@@ -211,46 +208,44 @@ export const fetchOrders = async (
   branchId: string,
 ) => {
   let uri = `/order?branchId=${branchId}`;
-  if (status) uri += `&status=${status}`;
+  if (status) uri += `&status=${reverseStatusMap[status] || status}`;
 
-  // Only add deliveryPartnerId if status != "pending"
-  if (status !== 'pending' && userId) {
+  if (
+    status &&
+    ['accepted', 'delivered'].includes(status.toLowerCase()) &&
+    userId
+  ) {
     uri += `&deliveryPartnerId=${userId}`;
   }
 
-  try {
-    const response = await appAxios.get(uri);
-    return response.data;
-  } catch (error) {
-    console.log('Fetch Delivery Order Error', error);
-    return null;
-  }
+  const response = await appAxios.get(uri);
+  return Array.isArray(response.data)
+    ? response.data.map(normalizeOrder)
+    : response.data.orders.map(normalizeOrder);
 };
 
 // ✅ Send Live Order Updates (Delivery Location + Status)
+// orderService.tsx
+
 export const sendLiveOrderUpdates = async (
   id: string,
   location: any,
   status: string,
 ) => {
   try {
-    if (!id) {
-      console.error('❌ sendLiveOrderUpdates called with missing id');
-      return;
-    }
+    if (!id) return;
 
-    const mappedStatus = statusMap[status] || status;
+    // ✅ use reverseStatusMap to always send backend format
+    const backendStatus = reverseStatusMap[status] || status;
 
     const payload = {
       deliveryPersonLocation: location,
-      status: mappedStatus,
+      status: backendStatus,
     };
 
     console.log('📦 Sending live order update:', {id, payload});
 
     const response = await appAxios.patch(`/order/${id}/status`, payload);
-
-    console.log('✅ Live update response:', response.data);
     return response.data;
   } catch (error: any) {
     console.error(
@@ -261,18 +256,17 @@ export const sendLiveOrderUpdates = async (
   }
 };
 
-// ✅ Confirm Order (e.g. at handover)
-export const confirmOrder = async (id: string, location: any) => {
+// ✅ Confirm/Packing Order (for branch/admin only)
+export const packOrder = async (id: string) => {
   try {
-    const response = await appAxios.post(`/order/${id}/confirm`, {
-      deliveryPersonLocation: location,
-    });
+    const response = await appAxios.post(`/order/${id}/confirm`);
     return response.data;
   } catch (error) {
-    console.log('confirmOrder Error', error);
+    console.log('packOrder Error', error);
     return null;
   }
 };
+
 // ✅ Accept Order
 export const acceptOrder = async (orderId: string, userId: string) => {
   try {
@@ -281,11 +275,13 @@ export const acceptOrder = async (orderId: string, userId: string) => {
     });
     return response.data;
   } catch (error: any) {
-    console.error('Accept Order Error:', {
-      message: error?.response?.data?.message || error.message,
-      status: error?.response?.status || 'Unknown',
-    });
-    throw error;
+    const message = error?.response?.data?.message || error.message;
+    const status = error?.response?.status || 'Unknown';
+
+    console.error('Accept Order Error:', {message, status});
+
+    // Throw a structured error to handle gracefully in the UI
+    throw {message, status};
   }
 };
 

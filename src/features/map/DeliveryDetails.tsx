@@ -9,7 +9,9 @@ interface DeliveryDetailsProps {
   details: {
     address?: string;
     name?: string;
-    phone?: string;
+    phone?: string; // optional fallback
+    customerPhone?: string;
+    receiverPhone?: string;
   };
 }
 
@@ -17,9 +19,10 @@ const DeliveryDetails: FC<DeliveryDetailsProps> = ({details}) => {
   const {
     address = '------',
     name = 'Anonymous',
-    phone = 'XXXXXXXXXX',
+    customerPhone = 'N/A',
+    receiverPhone,
   } = details || {};
-  console.log('current Address 🏠', details);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -70,11 +73,11 @@ const DeliveryDetails: FC<DeliveryDetailsProps> = ({details}) => {
             {name}
           </CustomText>
           <CustomText variant="h8" fontFamily={Fonts.Regular}>
-            Customer: {details.customerPhone || 'N/A'}
+            Customer: {customerPhone}
           </CustomText>
-          {details.receiverPhone ? (
+          {receiverPhone ? (
             <CustomText variant="h8" fontFamily={Fonts.Regular}>
-              Receiver: {details.receiverPhone}
+              Receiver: {receiverPhone}
             </CustomText>
           ) : null}
         </View>
@@ -89,8 +92,11 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginVertical: 15,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.deliveryHighlight,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
+
   flexRow: {
     flexDirection: 'row',
     alignItems: 'center',

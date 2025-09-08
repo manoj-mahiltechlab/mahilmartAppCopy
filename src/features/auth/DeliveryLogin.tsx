@@ -25,12 +25,37 @@ import {RootStackParamList} from '@navigation/Navigation';
 
 type DeliveryNavProp = StackNavigationProp<RootStackParamList, 'DeliveryLogin'>;
 
+const brandStyle: 'flipkart' | 'amazon' | 'alibaba' = 'flipkart'; // change this to test styles
+
+const brandThemes = {
+  flipkart: {
+    primary: '#2874F0',
+    accent: '#FF9F00',
+    buttonBg: '#2874F0',
+    buttonText: '#fff',
+  },
+  amazon: {
+    primary: '#232F3E',
+    accent: '#FF9900',
+    buttonBg: '#FF9900',
+    buttonText: '#111',
+  },
+  alibaba: {
+    primary: '#FF6A00',
+    accent: '#FF9F00',
+    buttonBg: '#FF6A00',
+    buttonText: '#fff',
+  },
+};
+
 const DeliveryLogin: FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<DeliveryNavProp>();
   const [showPassword, setShowPassword] = useState(false);
+
+  const theme = brandThemes[brandStyle];
 
   const handleLogin = async () => {
     if (!email || password.length < 8) {
@@ -41,7 +66,6 @@ const DeliveryLogin: FC = () => {
     setLoading(true);
     try {
       const res = await deliveryLogin(email, password);
-      console.log('Login Response:', res); // <-- Add this
 
       if (res?.success) {
         navigation.reset({
@@ -52,7 +76,6 @@ const DeliveryLogin: FC = () => {
         Alert.alert('Login Failed', 'Invalid credentials.');
       }
     } catch (error) {
-      console.error('Login error:', error); // <-- Add this
       Alert.alert('Login Failed', 'Email or password is incorrect.');
     } finally {
       setLoading(false);
@@ -60,15 +83,18 @@ const DeliveryLogin: FC = () => {
   };
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
+    <GestureHandlerRootView style={{flex: 1, backgroundColor: theme.primary}}>
       <CustomSafeAreaView>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={{flex: 1}}>
+          style={{flex: 1}}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // adjust offset for header height
+        >
           <ScrollView
+            contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag">
-            <View style={styles.container}>
+            <View style={[styles.card, {backgroundColor: '#fff'}]}>
               <View style={styles.lottieContainer}>
                 <LottieView
                   autoPlay
@@ -79,62 +105,73 @@ const DeliveryLogin: FC = () => {
                 />
               </View>
 
-              <CustomText variant="h3" fontFamily={Fonts.Bold}>
+              <CustomText
+                variant="h3"
+                fontFamily={Fonts.Bold}
+                style={{color: theme.primary}}>
                 Delivery Partner Portal
               </CustomText>
               <CustomText
                 variant="h6"
-                style={styles.text}
+                style={[styles.text, {color: theme.accent}]}
                 fontFamily={Fonts.SemiBold}>
                 Faster than Flash⚡
               </CustomText>
 
-              <CustomInput
-                onChangeText={setEmail}
-                value={email}
-                placeholder="Email"
-                inputMode="email"
-                left={
-                  <Icon
-                    name="mail"
-                    color="#F8890E"
-                    style={{marginLeft: 10}}
-                    size={RFValue(18)}
-                  />
-                }
-              />
-
-              <CustomInput
-                onChangeText={setPassword}
-                value={password}
-                placeholder="Password"
-                secureTextEntry={!showPassword}
-                left={
-                  <Icon
-                    name="key-sharp"
-                    color="#F8890E"
-                    style={{marginLeft: 10}}
-                    size={RFValue(18)}
-                  />
-                }
-                right={
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(prev => !prev)}>
+              <View style={styles.inputContainer}>
+                <CustomInput
+                  onChangeText={setEmail}
+                  value={email}
+                  placeholder="Email"
+                  inputMode="email"
+                  left={
                     <Icon
-                      name={showPassword ? 'eye-off' : 'eye'}
+                      name="mail"
+                      color={theme.accent}
+                      style={{marginLeft: 10}}
                       size={RFValue(18)}
-                      color="#F8890E"
                     />
-                  </TouchableOpacity>
-                }
-              />
+                  }
+                />
+              </View>
 
-              <CustomButton
-                title="Login"
-                onPress={handleLogin}
-                loading={loading}
-                disabled={!email || password.length < 8}
-              />
+              <View style={styles.inputContainer}>
+                <CustomInput
+                  onChangeText={setPassword}
+                  value={password}
+                  placeholder="Password"
+                  secureTextEntry={!showPassword}
+                  left={
+                    <Icon
+                      name="key-sharp"
+                      color={theme.accent}
+                      style={{marginLeft: 10}}
+                      size={RFValue(18)}
+                    />
+                  }
+                  right={
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(prev => !prev)}>
+                      <Icon
+                        name={showPassword ? 'eye-off' : 'eye'}
+                        size={RFValue(18)}
+                        color={theme.accent}
+                      />
+                    </TouchableOpacity>
+                  }
+                />
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <CustomButton
+                  title="Login"
+                  onPress={handleLogin}
+                  loading={loading}
+                  disabled={!email || password.length < 8}
+                  style={{backgroundColor: theme.buttonBg}}
+                  textStyle={{color: theme.buttonText}}
+                />
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -144,23 +181,42 @@ const DeliveryLogin: FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
     padding: 20,
+  },
+  card: {
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
     alignItems: 'center',
+  },
+  lottieContainer: {
+    height: screenHeight * 0.18,
+    width: '100%',
+    marginBottom: 20,
   },
   lottie: {
     height: '100%',
     width: '100%',
   },
-  lottieContainer: {
-    height: screenHeight * 0.12,
-    width: '100%',
-  },
   text: {
-    marginTop: 2,
-    marginBottom: 25,
+    marginTop: 4,
+    marginBottom: 30,
     opacity: 0.8,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 15,
+  },
+  buttonContainer: {
+    width: '100%',
+    marginTop: 15,
   },
 });
 
