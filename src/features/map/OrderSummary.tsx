@@ -20,14 +20,13 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
   const cancelledItems =
     order?.items?.filter((item: any) => item?.status === 'Cancelled') || [];
 
-  const totalPrice =
-    activeItems.reduce((total: number, cartItem: any) => {
-      const product = cartItem?.product;
-      const price =
-        product?.sellingPrice ?? product?.discountPrice ?? product?.price ?? 0;
-      const count = cartItem?.count ?? 0;
-      return total + price * count;
-    }, 0) || 0;
+  const totalPrice = activeItems.reduce((total: number, item: any) => {
+    const product = item?.product ?? {};
+    const price =
+      product?.sellingPrice ?? product?.discountPrice ?? product?.price ?? 0;
+    const count = item?.count ?? 1; // default to 1 if missing
+    return total + price * count;
+  }, 0);
 
   return (
     <View style={styles.container}>

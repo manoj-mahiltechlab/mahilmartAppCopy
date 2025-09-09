@@ -36,7 +36,19 @@ const mapStatus = (status: string): string => {
   }
 };
 
-// ✅ Consistent frontend ↔ backend mapping
+// // ✅ Consistent frontend ↔ backend mapping
+// export const statusMap: Record<string, string> = {
+//   Pending: 'pending',
+//   Processing: 'processing',
+//   Confirmed: 'confirmed',
+//   Packed: 'available', // frontend sees packed as available
+//   Picked_Up: 'picked_up',
+//   OutForDelivery: 'out_for_delivery',
+//   Delivered: 'delivered',
+//   Cancelled: 'cancelled',
+// };
+
+// inside orderService.ts normalizeOrder()
 export const statusMap: Record<string, string> = {
   Pending: 'pending',
   Processing: 'processing',
@@ -55,11 +67,25 @@ export const reverseStatusMap: Record<string, string> = Object.fromEntries(
 
 // normalize backend → frontend
 export const normalizeOrder = (order: any) => {
-  if (!order || !order.status) return order;
+  if (!order) return null;
+
   const backendStatus = order.status;
   return {
-    ...order,
-    status: statusMap[backendStatus] || backendStatus.toLowerCase(),
+    _id: order._id,
+    orderId: order.orderId || 'N/A',
+    items: Array.isArray(order.items) ? order.items : [],
+    totalAmount: order.totalAmount ?? 0,
+    deliveryCharges: order.deliveryCharges ?? 0,
+    status:
+      statusMap[backendStatus] || backendStatus?.toLowerCase() || 'pending',
+    deliveryPartner: order.deliveryPartner || null,
+    deliveryLocation: order.deliveryLocation || {
+      address: 'No address',
+      lat: 0,
+      lng: 0,
+    },
+    customer: order.customer || {name: 'Unknown Customer', phone: 'N/A'},
+    createdAt: order.createdAt || new Date().toISOString(),
   };
 };
 

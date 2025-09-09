@@ -62,7 +62,7 @@ const DeliveryDashboard = () => {
     return () => backHandler.remove();
   }, [navigation]);
 
-  /** 🔹 Fetch Orders */
+  // 🔹 Fetch Orders
   const fetchData = useCallback(async () => {
     try {
       setRefreshing(true);
@@ -70,7 +70,7 @@ const DeliveryDashboard = () => {
 
       const statusMap: Record<string, string> = {
         available: '', // fetch all → then filter packed
-        accepted: 'accepted',
+        accepted: '', // we'll filter manually
         delivered: 'delivered',
       };
 
@@ -78,20 +78,36 @@ const DeliveryDashboard = () => {
 
       const fetchedData = await fetchOrders(
         backendStatus,
-        user?.id,
+        user?._id, // ✅ use _id for consistency
         user?.branch,
       );
 
       let filtered = fetchedData || [];
 
-      // 🔹 Available tab → show only packed
+      // 🔹 Available tab → show only available + packed
       if (selectedTab === 'available') {
         filtered = filtered.filter((o: any) =>
           ['available', 'packed'].includes(o.status?.toLowerCase()),
         );
       }
 
-      // 🔹 Remove cancelled/pending globally
+      // 🔹 Accepted tab → only orders for this delivery partner
+      if (selectedTab === 'accepted' && user?._id) {
+        filtered = filtered.filter(
+          (o: any) =>
+            o?.deliveryPartner?._id === user._id &&
+            !['delivered', 'cancelled'].includes(o.status?.toLowerCase()), // ✅ exclude delivered
+        );
+      }
+
+      // 🔹 Delivered tab → already handled via backendStatus
+      if (selectedTab === 'delivered' && user?._id) {
+        filtered = filtered.filter(
+          (o: any) => o?.deliveryPartner?._id === user._id,
+        );
+      }
+
+      // 🔹 Remove globally cancelled/pending (safety net)
       filtered = filtered.filter(
         (o: any) => !['cancelled', 'pending'].includes(o.status?.toLowerCase()),
       );
@@ -104,7 +120,7 @@ const DeliveryDashboard = () => {
       setRefreshing(false);
       setLoading(false);
     }
-  }, [selectedTab, user?.id, user?.branch]);
+  }, [selectedTab, user?._id, user?.branch]);
 
   useEffect(() => {
     fetchData();
