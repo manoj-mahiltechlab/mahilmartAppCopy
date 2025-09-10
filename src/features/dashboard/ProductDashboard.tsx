@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default withLiveStatus(
-  withCart(withCollapsibleContext(ProductDashboard)),
-);
+// export default withLiveStatus(
+//   withCart(withCollapsibleContext(ProductDashboard)),
+// );
+export default withCart(withCollapsibleContext(ProductDashboard));

@@ -12,14 +12,14 @@ const OrderSuccess: FC = () => {
   const route = useRoute();
   const {customer} = useAuthStore();
 
+  const {user} = useAuthStore();
+
   const {
     orderId,
     deliveryAddress = 'No address information',
     addressType = 'unknown',
-    name = customer?.name || 'Anonymous',
-    customerPhone = route.params?.customerPhone ||
-      customer?.phone ||
-      'XXXXXXXXXX',
+    name = user?.name || 'Anonymous',
+    customerPhone = route.params?.customerPhone || user?.phone || 'XXXXXXXXXX',
     receiverPhone = route.params?.receiverPhone || null,
   } = route.params || {};
 
@@ -72,7 +72,7 @@ const OrderSuccess: FC = () => {
           variant="h4"
           fontFamily={Fonts.SemiBold}
           style={styles.deliveryText}>
-          Delivering to {formattedAddressType}
+          Delivering to {formattedAddressType} Address
         </CustomText>
       </View>
 

@@ -29,27 +29,37 @@ export const customerLogin = async (phone: string) => {
 export const deliveryLogin = async (email: string, password: string) => {
   try {
     const response = await axios.post(`${BASE_URL}/delivery/login`, {
-      email,
-      password,
+      email: email.trim().toLowerCase(),
+      password: password.trim(),
     });
 
     const {accessToken, refreshToken, deliveryPartner} = response.data;
+
+    // ✅ Store in MMKV instead of AsyncStorage
     tokenStorage.set('accessToken', accessToken);
     tokenStorage.set('refreshToken', refreshToken);
 
     const {setUser} = useAuthStore.getState();
-    setUser(deliveryPartner);
+    setUser({...deliveryPartner, token: accessToken});
 
-    return {success: true}; // ✅ <-- this was missing
-  } catch (error) {
-    console.log('Login Error', error);
-    return {success: false}; // ✅ Return failure status too
+    return {success: true, deliveryPartner, accessToken};
+  } catch (error: any) {
+    console.error(
+      'Delivery Login Error:',
+      error.response?.data || error.message,
+    );
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Login failed',
+    };
   }
 };
 
 export const refresh_Tokens = async () => {
   try {
     const refreshToken = tokenStorage.getString('refreshToken');
+
+    console.log('Sending refresh token:', refreshToken);
 
     if (!refreshToken) {
       console.warn('⚠ No refresh token available. Logging out.');
@@ -114,17 +124,10 @@ export const updateUserLocation = async (data: any, setUser: any) => {
 };
 export const sendCustomerOtp = async (phone: string) => {
   try {
-    const response = await axios.post(`${BASE_URL}/customer/send-otp`, {
-      phone,
-    });
+    const response = await axios.post(`${BASE_URL}/customer/send-otp`, {phone});
     return response.data;
   } catch (error: any) {
-    console.error(
-      '❌ OTP Send Error:',
-      error?.response?.data || error.message,
-      '\nStatus:',
-      error?.response?.status,
-    );
+    console.error('❌ OTP Send Error:', error?.response?.data || error.message);
     throw error;
   }
 };
@@ -143,21 +146,14 @@ export const verifyCustomerOtp = async (
 
   const {accessToken, refreshToken, customer} = res.data;
 
+  // ✅ Store both tokens
   tokenStorage.set('accessToken', accessToken);
   tokenStorage.set('refreshToken', refreshToken);
 
   const {setUser} = useAuthStore.getState();
-  setUser({
-    ...customer,
-    token: accessToken,
-  });
+  setUser({...customer, token: accessToken});
 
-  return {
-    success: true,
-    accessToken,
-    refreshToken,
-    customer,
-  };
+  return {success: true, accessToken, refreshToken, customer};
 };
 
 export const searchProducts = async (query: string) => {

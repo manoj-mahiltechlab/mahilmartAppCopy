@@ -85,6 +85,7 @@ const ProductDetails = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [loadingRating, setLoadingRating] = useState(true);
+  const unitListRef = useRef<FlatList<any>>(null);
   const [rating, setRating] = useState({
     avgRating: 0,
     totalReviews: 0,
@@ -114,7 +115,6 @@ const ProductDetails = () => {
 
   useFocusEffect(useCallback(() => setLoadingProduct(false), []));
 
-  useEffect(() => setSelectedUnitIndex(0), [product]);
   const [reviews, setReviews] = useState<
     {id: string; comment: string; user: string; rating: number}[]
   >([]);
@@ -343,22 +343,28 @@ const ProductDetails = () => {
 
         {/* Units */}
         {product.units?.length > 0 && (
-          <ScrollView
+          <FlatList
+            ref={unitListRef}
+            data={product.units}
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.unitsContainer}
-            contentContainerStyle={{paddingHorizontal: 10}}>
-            {product.units.map((unit, index) => {
+            keyExtractor={item => item._id}
+            contentContainerStyle={{paddingHorizontal: 10}}
+            getItemLayout={(_, index) => ({
+              length: 135, // approximate width of each item (minWidth + marginRight)
+              offset: 135 * index,
+              index,
+            })}
+            renderItem={({item: unit, index}) => {
               const isSelected = index === selectedUnitIndex;
               return (
                 <TouchableOpacity
-                  key={unit._id}
                   style={[
                     styles.unitButton,
                     isSelected
                       ? styles.unitButtonSelected
                       : styles.unitButtonUnselected,
-                    index !== product.units.length - 1 && {marginRight: 10},
+                    index !== product.units!.length - 1 && {marginRight: 10},
                   ]}
                   onPress={async () => {
                     const productRefId = unit.productRef;
@@ -374,8 +380,16 @@ const ProductDetails = () => {
                       );
                       if (productData) {
                         setProduct(productData);
-                        setSelectedUnitIndex(0);
-                      } else alert('Product not found');
+                        setSelectedUnitIndex(index);
+
+                        // ✅ Now scroll works because FlatList knows item size
+                        unitListRef.current?.scrollToIndex({
+                          index,
+                          animated: true,
+                        });
+                      } else {
+                        alert('Product not found');
+                      }
                     } catch (err) {
                       console.error('Error fetching product:', err);
                       alert('Error fetching product');
@@ -401,8 +415,8 @@ const ProductDetails = () => {
                   </CustomText>
                 </TouchableOpacity>
               );
-            })}
-          </ScrollView>
+            }}
+          />
         )}
 
         {/* Tabs */}

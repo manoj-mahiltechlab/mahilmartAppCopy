@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import {GestureHandlerRootView, ScrollView} from 'react-native-gesture-handler';
 import LottieView from 'lottie-react-native';
@@ -25,7 +26,7 @@ import {RootStackParamList} from '@navigation/Navigation';
 
 type DeliveryNavProp = StackNavigationProp<RootStackParamList, 'DeliveryLogin'>;
 
-const brandStyle: 'flipkart' | 'amazon' | 'alibaba' = 'flipkart'; // change this to test styles
+const brandStyle: 'flipkart' | 'amazon' | 'alibaba' = 'flipkart'; // change to test
 
 const brandThemes = {
   flipkart: {
@@ -33,18 +34,24 @@ const brandThemes = {
     accent: '#FF9F00',
     buttonBg: '#2874F0',
     buttonText: '#fff',
+    radius: 12,
+    elevation: 4,
   },
   amazon: {
     primary: '#232F3E',
     accent: '#FF9900',
     buttonBg: '#FF9900',
     buttonText: '#111',
+    radius: 4,
+    elevation: 6,
   },
   alibaba: {
     primary: '#FF6A00',
     accent: '#FF9F00',
     buttonBg: '#FF6A00',
     buttonText: '#fff',
+    radius: 20,
+    elevation: 3,
   },
 };
 
@@ -58,14 +65,17 @@ const DeliveryLogin: FC = () => {
   const theme = brandThemes[brandStyle];
 
   const handleLogin = async () => {
-    if (!email || password.length < 8) {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || trimmedPassword.length < 8) {
       Alert.alert('Invalid Input', 'Please enter valid email and password.');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await deliveryLogin(email, password);
+      const res = await deliveryLogin(trimmedEmail, trimmedPassword);
 
       if (res?.success) {
         navigation.reset({
@@ -73,7 +83,7 @@ const DeliveryLogin: FC = () => {
           routes: [{name: 'DeliveryDashboard'}],
         });
       } else {
-        Alert.alert('Login Failed', 'Invalid credentials.');
+        Alert.alert('Login Failed', res.message || 'Invalid credentials.');
       }
     } catch (error) {
       Alert.alert('Login Failed', 'Email or password is incorrect.');
@@ -88,13 +98,21 @@ const DeliveryLogin: FC = () => {
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // adjust offset for header height
-        >
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag">
-            <View style={[styles.card, {backgroundColor: '#fff'}]}>
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: '#fff',
+                  borderRadius: theme.radius,
+                  elevation: theme.elevation,
+                  shadowColor: theme.primary,
+                },
+              ]}>
               <View style={styles.lottieContainer}>
                 <LottieView
                   autoPlay
@@ -108,7 +126,7 @@ const DeliveryLogin: FC = () => {
               <CustomText
                 variant="h3"
                 fontFamily={Fonts.Bold}
-                style={{color: theme.primary}}>
+                style={{color: theme.primary, marginBottom: 6}}>
                 Delivery Partner Portal
               </CustomText>
               <CustomText
@@ -118,12 +136,18 @@ const DeliveryLogin: FC = () => {
                 Faster than Flash⚡
               </CustomText>
 
+              {/* Email */}
               <View style={styles.inputContainer}>
                 <CustomInput
                   onChangeText={setEmail}
                   value={email}
                   placeholder="Email"
                   inputMode="email"
+                  containerStyle={{
+                    borderColor: theme.accent,
+                    borderWidth: 1,
+                    borderRadius: 8,
+                  }}
                   left={
                     <Icon
                       name="mail"
@@ -135,12 +159,18 @@ const DeliveryLogin: FC = () => {
                 />
               </View>
 
+              {/* Password */}
               <View style={styles.inputContainer}>
                 <CustomInput
                   onChangeText={setPassword}
                   value={password}
                   placeholder="Password"
                   secureTextEntry={!showPassword}
+                  containerStyle={{
+                    borderColor: theme.accent,
+                    borderWidth: 1,
+                    borderRadius: 8,
+                  }}
                   left={
                     <Icon
                       name="key-sharp"
@@ -162,15 +192,26 @@ const DeliveryLogin: FC = () => {
                 />
               </View>
 
+              {/* Button with Press Effect */}
               <View style={styles.buttonContainer}>
-                <CustomButton
-                  title="Login"
-                  onPress={handleLogin}
-                  loading={loading}
-                  disabled={!email || password.length < 8}
-                  style={{backgroundColor: theme.buttonBg}}
-                  textStyle={{color: theme.buttonText}}
-                />
+                <Pressable
+                  style={({pressed}) => [
+                    {
+                      transform: [{scale: pressed ? 0.96 : 1}],
+                    },
+                  ]}>
+                  <CustomButton
+                    title="Login"
+                    onPress={handleLogin}
+                    loading={loading}
+                    disabled={!email || password.length < 8}
+                    style={{
+                      backgroundColor: theme.buttonBg,
+                      borderRadius: theme.radius,
+                    }}
+                    textStyle={{color: theme.buttonText}}
+                  />
+                </Pressable>
               </View>
             </View>
           </ScrollView>
@@ -187,13 +228,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    borderRadius: 12,
     padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
     alignItems: 'center',
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   lottieContainer: {
     height: screenHeight * 0.18,
@@ -205,9 +243,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   text: {
-    marginTop: 4,
-    marginBottom: 30,
-    opacity: 0.8,
+    marginBottom: 25,
+    opacity: 0.9,
     textAlign: 'center',
   },
   inputContainer: {
