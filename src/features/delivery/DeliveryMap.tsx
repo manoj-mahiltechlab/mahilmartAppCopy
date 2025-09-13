@@ -120,8 +120,14 @@ const DeliveryMap = () => {
     useCallback(() => {
       const init = async () => {
         const hasPermission = await requestLocationPermission();
-        if (!hasPermission) return;
+        if (!hasPermission) {
+          Alert.alert(
+            'Location Permission Denied',
+            'You can still deliver orders without location.',
+          );
+        }
 
+        // Try fetching location
         Geolocation.getCurrentPosition(
           pos => {
             setMyLocation({
@@ -129,10 +135,18 @@ const DeliveryMap = () => {
               longitude: pos.coords.longitude,
             });
           },
-          error => console.error('Location fetch error', error),
-          {enableHighAccuracy: true},
+          error => {
+            console.warn('Location fetch error', error);
+            setMyLocation(null); // set null if location is unavailable
+            Alert.alert(
+              'Location Unavailable',
+              'Your location is off. Delivery will proceed without GPS.',
+            );
+          },
+          {enableHighAccuracy: true, timeout: 10000, maximumAge: 1000},
         );
 
+        // Fetch order details regardless of location
         fetchOrderDetails();
       };
 
@@ -261,31 +275,22 @@ const DeliveryMap = () => {
   // submit OTP -> call backend verifyDeliveryOtp and mark delivered on success
   const submitOtp = async () => {
     if (!otp) return Alert.alert('Enter OTP', 'Please enter the customer OTP');
-    if (!myLocation) return Alert.alert('Error', 'Location unavailable');
     if (!orderData) return Alert.alert('Error', 'Order not loaded');
 
     setIsProcessing(true);
     try {
-      const locationPayload = {
-        lat: myLocation.latitude,
-        lng: myLocation.longitude,
-      };
+      const locationPayload = myLocation
+        ? {lat: myLocation.latitude, lng: myLocation.longitude}
+        : {lat: 0, lng: 0}; // default location if GPS is off
 
-      // verifyDeliveryOtp(orderId, otp, location) — this should match your service signature
       const updatedOrder = await verifyDeliveryOtp(
         orderData._id,
         otp,
         locationPayload,
       );
 
-      // if backend returns order object directly (as in your server), it will be updatedOrder
-      // otherwise adapt to res.data as needed
-      if (updatedOrder && (updatedOrder.status || updatedOrder.order)) {
-        // normalize different possible shapes:
-        const normalized = normalizeOrder(updatedOrder?.order ?? updatedOrder);
-        setOrderData(normalized);
-      }
-
+      const normalized = normalizeOrder(updatedOrder?.order ?? updatedOrder);
+      setOrderData(normalized);
       setCurrentOrder(null);
       setShowOtpModal(false);
 
@@ -376,10 +381,9 @@ const DeliveryMap = () => {
             title="Mark as Delivered"
             onPress={handleOrderDelivery}
             loading={isProcessing || isLoading}
-            disabled={isProcessing || isLoading || !myLocation}
+            disabled={isProcessing || isLoading} // removed !myLocation
           />
         );
-
       default:
         return null;
     }
