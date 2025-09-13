@@ -17,7 +17,6 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withSequence,
-  Easing,
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -34,15 +33,16 @@ import {Fonts, lightColors} from '@utils/Constants';
 import {RootStackParamList} from '@navigation/Navigation';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import {sendCustomerOtp} from '@service/authService';
+import {mmkvStorage} from '@state/storage';
+import {useAuthStore} from '@state/authStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const bottomColors = [...lightColors].reverse();
 
-// ...all imports remain same
-
 const CustomerLogin = () => {
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamList, 'CustomerLogin'>>();
+  const setUser = useAuthStore(state => state.setUser);
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,6 +55,24 @@ const CustomerLogin = () => {
   const rotate = useSharedValue(0);
 
   const isPhoneValid = /^\d{10}$/.test(phoneNumber);
+
+  useEffect(() => {
+    if (/^\d{10}$/.test(phoneNumber) && !autoLoginTriggered) {
+      setAutoLoginTriggered(true); // prevent repeated triggers
+      sendOtp(); // call the sendOtp function
+    }
+  }, [phoneNumber]);
+
+  // ✅ Persistent login: Skip OTP if auth token exists
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = mmkvStorage.getItem('authToken'); // <-- use getItem
+      if (token) {
+        navigation.replace('BottomTabs'); // token exists → auto-login
+      }
+    };
+    checkToken();
+  }, []);
 
   // 🚀 Animations
   useEffect(() => {
@@ -90,7 +108,6 @@ const CustomerLogin = () => {
 
   const floatingLogoStyle = useAnimatedStyle(() => {
     const scale = 1.05 + Math.sin(Date.now() / 1000) * 0.05;
-
     return {
       transform: [
         {translateY: floating.value},
@@ -101,59 +118,40 @@ const CustomerLogin = () => {
     };
   });
 
-  // 📲 Send OTP Handler
+  // 📲 Send OTP
   const sendOtp = async () => {
+    if (!isPhoneValid) {
+      Alert.alert('Invalid Input', 'Enter a valid 10-digit number.');
+      return;
+    }
     setLoading(true);
     try {
       const response = await sendCustomerOtp(phoneNumber);
-      console.log('📲 OTP response:', response);
-
-      if (response?.success) {
-        // ✅ Save the OTP token to storage for later use
-        if (response.otpToken) {
-          await AsyncStorage.setItem('otpToken', response.otpToken);
-        }
+      if (response?.success && response.otpToken) {
+        await AsyncStorage.setItem('otpToken', response.otpToken);
         navigation.navigate('VerifyOtp', {phoneNumber});
       } else {
         Alert.alert('OTP Failed', response?.message || 'Please try again.');
       }
     } catch (err: any) {
       const status = err?.response?.status;
-      const errorMessage =
+      const msg =
         err?.response?.data?.message || err?.message || 'Something went wrong';
-
-      console.log('❌ OTP Send Error:', errorMessage);
-
       if (status === 429) {
-        // 🚀 OTP already sent, still allow navigation
         Alert.alert(
           'Info',
           'OTP already sent. Please use the code you received.',
         );
         navigation.navigate('VerifyOtp', {phoneNumber});
       } else {
-        Alert.alert('OTP Failed', errorMessage);
+        Alert.alert('OTP Failed', msg);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto login on valid phone number (one-time)
-  useEffect(() => {
-    if (isPhoneValid && !autoLoginTriggered) {
-      setAutoLoginTriggered(true);
-      sendOtp();
-    }
-  }, [isPhoneValid]);
-
-  const handleAuth = () => {
-    if (!isPhoneValid) {
-      Alert.alert('Invalid Input', 'Enter a valid 10-digit number.');
-      return;
-    }
-    sendOtp();
-  };
+  const handleAuth = () => sendOtp();
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -190,8 +188,9 @@ const CustomerLogin = () => {
 
                 <CustomInput
                   onChangeText={text => {
-                    setPhoneNumber(text.slice(0, 10));
-                    setAutoLoginTriggered(false);
+                    const trimmed = text.slice(0, 10);
+                    setPhoneNumber(trimmed);
+                    if (!/^\d{10}$/.test(trimmed)) setAutoLoginTriggered(false);
                   }}
                   onClear={() => {
                     setPhoneNumber('');
@@ -282,12 +281,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 12,
   },
-
-  logoImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 100,
-  },
+  logoImage: {width: '100%', height: '100%', borderRadius: 100},
   content: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -310,14 +304,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8f9fc',
   },
-  gradient: {
-    paddingTop: '0%',
-    width: '100%',
-  },
-  termsText: {
-    textAlign: 'center',
-    opacity: 0.6,
-  },
+  gradient: {paddingTop: '0%', width: '100%'},
+  termsText: {textAlign: 'center', opacity: 0.6},
 });
 
 export default CustomerLogin;

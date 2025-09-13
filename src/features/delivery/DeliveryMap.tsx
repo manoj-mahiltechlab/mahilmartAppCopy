@@ -7,13 +7,17 @@ import {
   ActivityIndicator,
   PermissionsAndroid,
   Platform,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  Text,
 } from 'react-native';
 import {useAuthStore} from '@state/authStore';
 import {
   getOrderById,
   sendLiveOrderUpdates,
   acceptOrder,
-  normalizeOrder, // ✅ use from orderService
+  normalizeOrder,
 } from '@service/orderService';
 import {Colors} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
@@ -29,6 +33,7 @@ import {
 import Geolocation from '@react-native-community/geolocation';
 import CustomButton from '@components/ui/CustomButton';
 import {hocStyles} from '@styles/GlobleStyles';
+import {sendDeliveryOtp, verifyDeliveryOtp} from '@service/orderService';
 
 // ---------- TYPES ----------
 type OrderStatus =
@@ -60,6 +65,10 @@ const DeliveryMap = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const orderDetails = route.params as {_id: string};
+
+  // OTP modal state - single source of truth
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState('');
 
   const [orderData, setOrderData] = useState<Order | null>(null);
   const [myLocation, setMyLocation] = useState<{
@@ -93,35 +102,14 @@ const DeliveryMap = () => {
     return true;
   };
 
-  // const fetchOrder = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const data = await getOrderById(orderDetails._id);
-  //     const normalized = normalizeOrder(data); // ✅ normalize here
-  //     setOrderData(normalized);
-  //   } catch (err) {
-  //     console.error('Fetch order error:', err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  // ✅ Fetch Order
   const fetchOrderDetails = async () => {
     setIsLoading(true);
     try {
       const data = await getOrderById(orderDetails._id);
       const normalized = normalizeOrder(data);
       setOrderData(normalized);
-
-      if (__DEV__) {
-        console.log('📦 Order:', {
-          id: normalized._id,
-          status: normalized.status,
-          deliveryPartner: normalized.deliveryPartner?.name,
-        });
-      }
     } catch (error: any) {
-      if (__DEV__) console.error('❌ Fetch order failed:', error);
+      console.error('❌ Fetch order failed:', error);
       Alert.alert('Error', 'Failed to load order details');
     } finally {
       setIsLoading(false);
@@ -152,7 +140,7 @@ const DeliveryMap = () => {
     }, []),
   );
 
-  // ✅ Init
+  // ✅ Init continuous watch
   useEffect(() => {
     const init = async () => {
       const hasPermission = await requestLocationPermission();
@@ -216,6 +204,7 @@ const DeliveryMap = () => {
       setIsProcessing(false);
     }
   };
+
   const handleOrderPickup = async () => {
     if (!myLocation) return Alert.alert('Error', 'Location unavailable');
     setIsProcessing(true);
@@ -241,25 +230,74 @@ const DeliveryMap = () => {
     }
   };
 
+  // Send OTP to customer and open modal
   const handleOrderDelivery = async () => {
+    try {
+      if (!orderData?.customer?.phone)
+        return Alert.alert('Error', 'Customer phone missing');
+
+      setIsProcessing(true);
+      const res = await sendDeliveryOtp(
+        orderData._id,
+        orderData.customer.phone,
+      );
+      // sendDeliveryOtp returns response.data from backend
+      if (res?.success) {
+        Alert.alert('OTP Sent', `OTP sent to ${orderData.customer.phone}`);
+        setOtp('');
+        setShowOtpModal(true);
+      } else {
+        console.error('Send OTP returned not-success:', res);
+        Alert.alert('Error', res?.message || 'Failed to send OTP');
+      }
+    } catch (error) {
+      console.error('Send OTP Error:', error);
+      Alert.alert('Error', 'Failed to send OTP');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // submit OTP -> call backend verifyDeliveryOtp and mark delivered on success
+  const submitOtp = async () => {
+    if (!otp) return Alert.alert('Enter OTP', 'Please enter the customer OTP');
     if (!myLocation) return Alert.alert('Error', 'Location unavailable');
+    if (!orderData) return Alert.alert('Error', 'Order not loaded');
+
     setIsProcessing(true);
     try {
-      const updatedOrder = await sendLiveOrderUpdates(
-        orderDetails._id,
-        myLocation,
-        'Delivered',
+      const locationPayload = {
+        lat: myLocation.latitude,
+        lng: myLocation.longitude,
+      };
+
+      // verifyDeliveryOtp(orderId, otp, location) — this should match your service signature
+      const updatedOrder = await verifyDeliveryOtp(
+        orderData._id,
+        otp,
+        locationPayload,
       );
-      const normalized = normalizeOrder(updatedOrder);
-      normalized.status = 'delivered';
-      setOrderData(normalized);
+
+      // if backend returns order object directly (as in your server), it will be updatedOrder
+      // otherwise adapt to res.data as needed
+      if (updatedOrder && (updatedOrder.status || updatedOrder.order)) {
+        // normalize different possible shapes:
+        const normalized = normalizeOrder(updatedOrder?.order ?? updatedOrder);
+        setOrderData(normalized);
+      }
+
       setCurrentOrder(null);
+      setShowOtpModal(false);
+
       Alert.alert('✅ Delivered', 'Order delivered successfully 🎉', [
         {text: 'OK', onPress: () => navigation.goBack()},
       ]);
-    } catch (error) {
-      console.error('Delivery error:', error);
-      Alert.alert('Error', 'Failed to mark delivered');
+    } catch (error: any) {
+      console.error('Submit OTP Error:', error);
+      Alert.alert(
+        '❌ OTP Error',
+        error?.response?.data?.message || 'Invalid OTP',
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -293,7 +331,7 @@ const DeliveryMap = () => {
       case 'pending':
         return 'Order pending confirmation';
       case 'confirmed':
-      case 'packed': // ✅ handle packed
+      case 'packed':
         return 'Ready for pickup';
       case 'out_for_delivery':
         return 'Delivery in progress';
@@ -305,7 +343,7 @@ const DeliveryMap = () => {
         return 'Order status unknown';
     }
   };
-  console.log('Rendering Action Button:', orderData?.status);
+
   const renderActionButton = () => {
     if (!orderData || ['delivered', 'cancelled'].includes(orderData.status))
       return null;
@@ -320,14 +358,15 @@ const DeliveryMap = () => {
             disabled={isProcessing || isLoading || !myLocation}
           />
         );
+
       case 'available':
       case 'confirmed':
         return (
           <CustomButton
             title="Pick Up Order"
-            onPress={handleOrderPickup} // handleOrderPickup will alert if location missing
+            onPress={handleOrderPickup}
             loading={isProcessing || isLoading}
-            disabled={isProcessing || isLoading} // ✅ no !myLocation here
+            disabled={isProcessing || isLoading}
           />
         );
 
@@ -337,7 +376,7 @@ const DeliveryMap = () => {
             title="Mark as Delivered"
             onPress={handleOrderDelivery}
             loading={isProcessing || isLoading}
-            disabled={isProcessing || isLoading || !myLocation} // still needs location for delivery
+            disabled={isProcessing || isLoading || !myLocation}
           />
         );
 
@@ -395,9 +434,51 @@ const DeliveryMap = () => {
         />
         <OrderSummary order={orderData ?? {items: [], orderId: 'N/A'}} />
       </ScrollView>
+
       <View style={[hocStyles.cartContainer, styles.btnContainer]}>
         {renderActionButton()}
       </View>
+
+      <Modal
+        visible={showOtpModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowOtpModal(false);
+          setOtp('');
+        }}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <CustomText style={{fontSize: 18, marginBottom: 10}}>
+              Enter Customer OTP
+            </CustomText>
+            <TextInput
+              style={styles.otpInput}
+              value={otp}
+              onChangeText={setOtp}
+              keyboardType="numeric"
+              maxLength={6}
+              placeholder="Enter OTP"
+            />
+            <TouchableOpacity
+              style={[styles.otpButton, isProcessing && {opacity: 0.7}]}
+              onPress={submitOtp}
+              disabled={isProcessing}>
+              <Text style={{color: '#fff', fontSize: 16}}>
+                Confirm Delivery
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setShowOtpModal(false);
+                setOtp('');
+              }}>
+              <Text style={{marginTop: 10, color: 'red'}}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -409,6 +490,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 25,
     backgroundColor: Colors.backgroundSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    width: '80%',
+    alignItems: 'center',
+  },
+  otpInput: {
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 8,
+    padding: 10,
+    width: '100%',
+    textAlign: 'center',
+    fontSize: 18,
+    marginBottom: 15,
+  },
+  otpButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
 });
 

@@ -133,27 +133,30 @@ export const sendCustomerOtp = async (phone: string) => {
 };
 
 // ✅ Step 2: Verify OTP
+
 export const verifyCustomerOtp = async (
   phone: string,
   otp: string,
   otpToken: string,
 ) => {
-  const res = await axios.post(`${BASE_URL}/customer/verify-otp`, {
-    phone,
-    otp,
-    otpToken,
-  });
+  try {
+    const res = await axios.post(`${BASE_URL}/customer/verify-otp`, {
+      phone,
+      otp,
+      otpToken,
+    });
+    const {accessToken, refreshToken, customer} = res.data;
 
-  const {accessToken, refreshToken, customer} = res.data;
+    tokenStorage.set('accessToken', accessToken);
+    tokenStorage.set('refreshToken', refreshToken);
+    const {setUser} = useAuthStore.getState();
+    setUser({...customer, token: accessToken});
 
-  // ✅ Store both tokens
-  tokenStorage.set('accessToken', accessToken);
-  tokenStorage.set('refreshToken', refreshToken);
-
-  const {setUser} = useAuthStore.getState();
-  setUser({...customer, token: accessToken});
-
-  return {success: true, accessToken, refreshToken, customer};
+    return {success: true, accessToken, refreshToken, customer};
+  } catch (error: any) {
+    console.error('Verify OTP Error:', error?.response?.data || error.message);
+    return {success: false, error};
+  }
 };
 
 export const searchProducts = async (query: string) => {

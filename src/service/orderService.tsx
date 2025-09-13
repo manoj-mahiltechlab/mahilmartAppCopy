@@ -1,7 +1,8 @@
 import {Alert, Platform} from 'react-native';
 import {appAxios} from './apiInterceptors';
-import {BRANCH_ID} from './config';
+import {BASE_URL, BRANCH_ID} from './config';
 import {updateSelectedAddressType} from './customerService';
+import axios from 'axios';
 
 const mapStatus = (status: string): string => {
   if (!status) return 'pending';
@@ -340,5 +341,32 @@ export const getLatestOrder = async (userId: string) => {
   } catch (error) {
     console.error('Get Latest Order Error:', error);
     return null;
+  }
+};
+// orderService.ts
+export const verifyDeliveryOtp = async (orderId: string, otp: string) => {
+  try {
+    const res = await appAxios.post(`/order/${orderId}/verify-otp`, {otp});
+    return {success: true, data: res.data};
+  } catch (error: any) {
+    console.error(
+      'Verify Delivery OTP error:',
+      error?.response?.data || error.message,
+    );
+    return {success: false, error: error?.response?.data || error.message};
+  }
+};
+
+// ✅ Send Delivery OTP to customer
+export const sendDeliveryOtp = async (orderId: string) => {
+  try {
+    const res = await appAxios.post(`/order/${orderId}/send-otp`);
+    return {success: true, data: res.data};
+  } catch (error: any) {
+    console.error(
+      'Send Delivery OTP error:',
+      error?.response?.data || error.message,
+    );
+    return {success: false, error: error?.response?.data || error.message};
   }
 };

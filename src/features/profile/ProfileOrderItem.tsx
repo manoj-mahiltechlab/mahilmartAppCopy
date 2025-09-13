@@ -314,7 +314,7 @@ const ProfileOrderItem = ({
                       </CustomText>
                     </View>
 
-                    {/* Edit after 24h */}
+                    {/* Edit after 24h
                     {canEditReview(orderItem.reviewAt, 24) ? (
                       <TouchableOpacity
                         style={[styles.editBtn, {marginTop: 6}]}
@@ -332,7 +332,9 @@ const ProfileOrderItem = ({
                         style={{fontSize: 12, color: '#888', marginTop: 6}}>
                         You can edit after 24h
                       </CustomText>
-                    )}
+                    )
+                    
+                    } */}
                   </View>
                 ) : (
                   <TouchableOpacity
